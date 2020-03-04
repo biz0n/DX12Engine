@@ -6,6 +6,7 @@
 #include <string>
 #include <memory>
 #include <tchar.h>
+#include <wrl.h>
 
 using int8 = int8_t;
 using int16 = int16_t;
