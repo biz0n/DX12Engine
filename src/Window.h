@@ -4,6 +4,7 @@
 #include <Windows.h>
 #include "Types.h"
 #include "Event.h"
+#include "Events.h"
 
 class Window
 {
@@ -39,6 +40,8 @@ public:
 
     Event<void(int32, int32)> OnResize;
     Event<void(bool)> OnActiveChanged;
+    Event<void(KeyEvent)> OnKeyPressed;
+    Event<void()> OnPaint;
 
 private:
     static LRESULT CALLBACK HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept;

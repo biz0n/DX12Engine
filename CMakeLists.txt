@@ -9,6 +9,19 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib) # Output directory f
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin) # Output directory for shared lib (.DLL)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin) # Output directory for executables (.EXE)
 
+set( ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "Build Assimp Tools" FORCE )
+set( ASSIMP_BUILD_SAMPLES OFF CACHE BOOL "Build Assimp Samples" FORCE )
+set( ASSIMP_BUILD_TESTS OFF CACHE BOOL "Build Assimp Tests" FORCE )
+
+add_subdirectory( src/Libraries/assimp )
+
+add_subdirectory( src/Libraries/DirectXTex )
+
+set_target_properties( assimp IrrXML uninstall UpdateAssimpLibsDebugSymbolsAndDLLs zlib zlibstatic 
+    PROPERTIES
+        FOLDER src/Libraries/assimp 
+)
+
 add_compile_definitions(DEBUG)
 
 project(d3d12)
@@ -23,4 +36,18 @@ aux_source_directory("src" SOURCES)
 
 add_executable(d3d12 WIN32 ${SOURCES} ${HEADERS} ${IMGUI})
 
-target_link_libraries(d3d12 PRIVATE "d3d12.lib" "dxgi.lib" "d3dcompiler.lib")
+set_property(TARGET d3d12 PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/src")
+
+target_link_libraries(d3d12 PRIVATE "d3d12.lib" "dxgi.lib" "d3dcompiler.lib" "assimp" "DirectXTex")
+
+set_source_files_properties( src/Resources/Shaders/VertexShader.hlsl PROPERTIES 
+    VS_SHADER_TYPE Vertex
+    VS_SHADER_MODEL 5.1
+    VS_SHADER_ENTRYPOINT main
+)
+
+set_source_files_properties( src/Resources/Shaders/PixelShader.hlsl PROPERTIES 
+    VS_SHADER_TYPE Pixel
+    VS_SHADER_MODEL 5.1
+    VS_SHADER_ENTRYPOINT main
+)

@@ -3,6 +3,7 @@
 #include <d3d12.h>
 #include <D3Dcompiler.h>
 #include "Types.h"
+#include "Exceptions.h"
 
 class Utils
 {
@@ -31,5 +32,12 @@ public:
         ThrowIfFailed(hr);
 
         return byteCode;
+    }
+
+    static std::wstring ToWide( const std::string& narrow )
+    {
+        wchar_t wide[512];
+        mbstowcs_s( nullptr,wide,narrow.c_str(),_TRUNCATE );
+        return wide;
     }
 };

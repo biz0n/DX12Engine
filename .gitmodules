@@ -1,0 +1,6 @@
+[submodule "src/Libraries/assimp"]
+	path = src/Libraries/assimp
+	url = git@github.com:assimp/assimp.git
+[submodule "src/Libraries/DirectXTex"]
+	path = src/Libraries/DirectXTex
+	url = git@github.com:microsoft/DirectXTex.git

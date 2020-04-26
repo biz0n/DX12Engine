@@ -1,5 +1,9 @@
 #include "Window.h"
+#include "Libraries/imgui/imgui.h"
+#include "Libraries/imgui/imgui_impl_win32.h"
 #include <iostream>
+
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 Window::WindowClass Window::WindowClass::wndClass;
 
@@ -23,6 +27,8 @@ Window::WindowClass::WindowClass() noexcept : hInst(GetModuleHandle(nullptr))
     {
         MessageBox(0, TEXT("RegisterClass Failed."), 0, 0);
     }
+
+    
 }
 
 Window::WindowClass::~WindowClass()
@@ -58,6 +64,13 @@ Window::Window(int32 width, int32 height, const TCHAR *name)
     {
         MessageBox(0, TEXT("RegisterClass Failed."), 0, 0);
     }
+
+
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGui::StyleColorsDark();
+    ImGui_ImplWin32_Init(hWnd);
 
     ShowWindow(hWnd, SW_SHOW);
     UpdateWindow(hWnd);
@@ -97,6 +110,9 @@ LRESULT CALLBACK Window::HandleMsgThunk(HWND hWnd, UINT msg, WPARAM wParam, LPAR
 
 LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
 {
+    if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
+        return true;
+
     switch (msg)
     {
     case WM_CLOSE:
@@ -171,7 +187,17 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
         // Don't beep when we alt-enter.
         return MAKELRESULT(0, MNC_CLOSE);
 
+    case WM_SYSKEYDOWN:
+    case WM_KEYDOWN:
+    {
+        KeyCode::Key key = (KeyCode::Key)wParam;
+        KeyEvent event(key, KeyEvent::KeyState::Pressed);
+        OnKeyPressed(event);
+        return 0;
+    }
+    case WM_SYSKEYUP:
     case WM_KEYUP:
+    {
         if (wParam == VK_ESCAPE)
         {
             PostQuitMessage(0);
@@ -180,8 +206,19 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
         {
             SetFullscreen(!mIsFullscreen);
         }
+        KeyCode::Key key = (KeyCode::Key)wParam;
+        KeyEvent event(key, KeyEvent::KeyState::Released);
+        OnKeyPressed(event);
+        return 0;
+    
+    }
+    case WM_CHAR:
+        return 0;
+    case WM_PAINT:
+        OnPaint();
         return 0;
     }
+    
 
     return DefWindowProc(hWnd, msg, wParam, lParam);
 }

@@ -30,8 +30,13 @@ using TString = std::basic_string<TCHAR, std::char_traits<TCHAR>, std::allocator
 using Size = std::size_t;
 using Index = std::size_t;
 
+using Byte = std::byte;
+
 template <typename T>
 using Optional = std::optional<T>;
+
+template <typename T>
+using ComPtr = Microsoft::WRL::ComPtr<T>;
 
 template <typename T>
 using SharedPtr = std::shared_ptr<T>;
