@@ -37,8 +37,7 @@ bool Game::Initialize()
     //loadedScene = loader.LoadScene("Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\FlightHelmet\\glTF\\FlightHelmet.gltf", 1.0f);
     //loadedScene = loader.LoadScene("Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\DamagedHelmet\\glTF\\DamagedHelmet.gltf", 1.0f);
 
-    mImGuiManager = MakeUnique<ImGuiManager>();
-    mImGuiManager->Initialize(Graphics().GetDevice(), Graphics().SwapChainBufferCount, DXGI_FORMAT_R8G8B8A8_UNORM);
+    mImGuiManager = MakeUnique<ImGuiManager>(Graphics().GetDevice(), Graphics().SwapChainBufferCount, DXGI_FORMAT_R8G8B8A8_UNORM);
 
     mGlobalResourceStateTracker = Graphics().mGlobalResourceStateTracker;
     for (uint32 i = 0; i < Graphics().SwapChainBufferCount; ++i)
@@ -250,7 +249,6 @@ void Game::UploadMeshes(ComPtr<ID3D12GraphicsCommandList> commandList, Node *nod
 
 void Game::Deinitialize()
 {
-    mImGuiManager->Deinitialize();
 }
 
 void Game::Update(const Timer &time)
@@ -402,6 +400,7 @@ void Game::Draw(const Timer &time)
 
      ImGui::Begin("Hello, world!");
      ImGui::Text("This is some useful text.");
+    
      ImGui::End();
 
     auto rtv = Graphics().GetCurrentRenderTargetView();
