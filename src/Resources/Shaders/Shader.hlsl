@@ -7,6 +7,8 @@ ConstantBuffer<FrameUniform> FrameCB : register(b1);
 
 ConstantBuffer<MaterialUniform> MaterialCB : register(b2);
 
+StructuredBuffer<LightUniform> Lights : register(t0, space1);
+
 Texture2D diffuseTexture : register(t0);
 
 Texture2D metallicRoughnessTexture : register(t1);
@@ -57,44 +59,62 @@ VertexShaderOutput mainVS(VertexPosColor IN)
 
 float4 mainPS(VertexShaderOutput IN) : SV_TARGET
 {
-    LightingResult lit = ComputeLighting( 
-        FrameCB.LightProperties, 
-        float4(FrameCB.EyePos, 1.0f), 
-        float4(IN.PositionW, 1.0f), 
-        normalize(IN.NormalW), 
-        MaterialCB.SpecularPower );
-     
-     float4 albedo = diffuseTexture.Sample(gsamPointWrap, IN.TextureCoord);
+     float4 baseColor = diffuseTexture.Sample(gsamPointWrap, IN.TextureCoord);
 
      float3 n = normalTexture.Sample(gsamPointWrap, IN.TextureCoord).rgb;
      n = float3(n.r, 1-n.g, n.b);
      float scale = MaterialCB.NormalScale;
      float3 N = (n * 2.0 - 1.0) * float3(scale, scale, 1.0);
      N = normalize(mul(N, IN.TBN));
-     float4 metallicRoughness = metallicRoughnessTexture.Sample(gsamPointWrap, IN.TextureCoord);
-     float4 c = ComputeLighting2(
-         FrameCB.LightProperties,
-         float4(FrameCB.EyePos, 1.0f),
-         float4(IN.PositionW, 1.0f),
-         N,
-        // normalize(IN.NormalW),
-         metallicRoughness.r,
-         clamp(metallicRoughness.g, 0.04, 1.0),
-         albedo.rgb,
-         MaterialCB.Ambient
-     );
-    
-    float4 d = float4(1.0f, 1.0f, 1.0f, 1.0f);// diffuseTexture.Sample(gsamPointWrap, IN.TextureCoord);
-    float4 emissive = MaterialCB.Emissive;
-    float4 ambient = MaterialCB.Ambient * float4(FrameCB.LightProperties.GlobalAmbient, 1.0f);
-    float4 diffuse = MaterialCB.Diffuse * lit.Diffuse;
-    float4 specular = MaterialCB.Specular * lit.Specular;
- 
-    float4 texColor = d;
+
+    float4 metallicRoughness = metallicRoughnessTexture.Sample(gsamPointWrap, IN.TextureCoord);
+
+    float metallic = MaterialCB.MetallicFactor * metallicRoughness.r;
+    float roughness = MaterialCB.RoughnessFactor * clamp(metallicRoughness.g, 0.04, 1.0);
+    float3 V = normalize(FrameCB.EyePos - IN.PositionW);
+
+    float3 F0 = 0.04; 
+    F0 = lerp(F0, baseColor.rgb, metallic);
+	           
+    float3 directLuminance = 0.0f;
+
+    for(int i = 0; i < FrameCB.LightsCount; ++i) 
+    {
+        LightUniform light = Lights[i];
+
+        if ( !light.Enabled ) continue;
+
+        float3 luminance = 0.0f;
+        switch( light.LightType )
+        {
+        case DIRECTIONAL_LIGHT:
+            {
+                luminance = ApplyDirectionalLight(light, IN.PositionW, F0, N, V, baseColor.rgb, metallic, roughness);
+            }
+            break;
+        case POINT_LIGHT: 
+            {
+                luminance = ApplyPointLight(light, IN.PositionW, F0, N, V, baseColor.rgb, metallic, roughness);
+            }
+            break;
+        case SPOT_LIGHT:
+            {
+                luminance = ApplySpotLight(light, IN.PositionW, F0, N, V, baseColor.rgb, metallic, roughness);
+            }
+            break;
+        }
+
+        directLuminance += luminance;
+    }   
+
+    float3 ambient = 0.03 * baseColor.rgb * MaterialCB.Ambient.rgb;
+    float3 color = ambient + directLuminance;
+	
+    color = color / (color + 1.0f);
+    color = pow(color, 1.0/2.2);  
      
  
-    float4 finalColor = c;//( emissive + ambient + diffuse + specular ) * texColor;
-    finalColor.a = albedo.a;
+    float4 finalColor = float4(color, baseColor.a);
  
     return finalColor;
 }

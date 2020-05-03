@@ -78,6 +78,54 @@ UniquePtr<SceneObject> SceneLoader::LoadScene(String path, float32 scale)
 
     ParseNode(aScene, aScene->mRootNode, scene.get(), nullptr, context);
 
+
+
+    std::vector<LightUniform> lights;
+
+    LightUniform directionalLight = {};
+    directionalLight.Color = {10.0f, 10.0f, 10.0f};
+    directionalLight.DirectionWS = {0.2f, -1.0f, 0.2f};
+    directionalLight.Enabled = false;
+    directionalLight.LightType = DIRECTIONAL_LIGHT;
+    //lights.emplace_back(directionalLight);
+
+    /*LightUniform spotLight = {};
+    spotLight.Color = {20.0f, 20.0f, 20.0f};
+    auto target = mCamera.GetTarget();
+    spotLight.DirectionWS = target;
+    spotLight.PositionWS = cb.EyePos; 
+    spotLight.InnerConeAngle = DirectX::XMConvertToRadians(10.0f);
+    spotLight.OuterConeAngle = DirectX::XMConvertToRadians(14.0f);
+
+    spotLight.ConstantAttenuation = 0.0f;
+    spotLight.LinearAttenuation = 0.00f;
+    spotLight.QuadraticAttenuation = 1.0f;
+    spotLight.Enabled = false;
+    spotLight.LightType = SPOT_LIGHT;
+    lights.emplace_back(spotLight);*/
+
+    LightUniform pointLight = {};
+    pointLight.Color = {50.0f, 30.0f, 10.0f};
+    pointLight.PositionWS = {4.0f, 5.0f, -2.0f};
+
+
+    pointLight.QuadraticAttenuation = 1.0f;
+    pointLight.Enabled = true;
+    pointLight.LightType = POINT_LIGHT;
+    lights.emplace_back(pointLight);
+
+    LightUniform pointLight2 = {};
+    pointLight2.Color = {20.0f, 20.0f, 20.0f};
+    pointLight2.PositionWS = {00.0f, 2.0f, 0.0f};
+
+
+    pointLight2.QuadraticAttenuation = 1.0f;
+    pointLight2.Enabled = true;
+    pointLight2.LightType = POINT_LIGHT;
+    lights.emplace_back(pointLight2);
+
+    scene->lights = std::move(lights);
+
     return scene;
 }
 

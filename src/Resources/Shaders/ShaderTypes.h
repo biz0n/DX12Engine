@@ -41,34 +41,26 @@ struct MaterialUniform
 
 struct LightUniform
 {
-    float4 PositionWS;
-    float4 DirectionWS;
-    float4 Color;
+    float3 PositionWS;
+    int LightType;
 
-    float SpotAngle;
+    float3 DirectionWS;
+    bool Enabled;
+
+    float3 Color;
     float ConstantAttenuation;
+
     float LinearAttenuation;
     float QuadraticAttenuation;
-
-    int LightType;
-    bool Enabled;
-    float2 Padding;
-};
-
-struct LightProperties
-{
-    float3 GlobalAmbient;
-    int LightsCount;
-    LightUniform Lights[MAX_LIGHTS];
+    float InnerConeAngle;
+    float OuterConeAngle;
 };
 
 struct FrameUniform
 {
     float4x4 ViewProj;
     float3 EyePos;
-    float Padding;
-
-    LightProperties LightProperties;
+    int LightsCount;
 };
 
 #endif

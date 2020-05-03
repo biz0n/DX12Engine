@@ -1,7 +1,7 @@
 #include "Game.h"
 #include "Utils.h"
 #include <stdlib.h>
-#include "Resources/Shaders/ShaderTypes.h"
+#include "ShaderTypes.h"
 #include "RenderUtils.h"
 
 #include "RootSignature.h"
@@ -110,37 +110,39 @@ bool Game::Initialize()
 
     auto inputLayout = Vertex::GetInputLayout();
 
-    CD3DX12_DESCRIPTOR_RANGE texTable1;
+    CD3DX12_DESCRIPTOR_RANGE1 texTable1;
 	texTable1.Init(
         D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 
         1,  // number of descriptors
         0); // register t0
 
-    CD3DX12_DESCRIPTOR_RANGE texTable2;
+    CD3DX12_DESCRIPTOR_RANGE1 texTable2;
 	texTable2.Init(
         D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 
         1,  // number of descriptors
         1); // register t1
 
-    CD3DX12_DESCRIPTOR_RANGE texTable3;
+    CD3DX12_DESCRIPTOR_RANGE1 texTable3;
 	texTable3.Init(
         D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 
         1,  // number of descriptors
         2); // register t2
 
-    CD3DX12_ROOT_PARAMETER rootParameters[6];
+    CD3DX12_ROOT_PARAMETER1 rootParameters[7];
 
-    rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+    rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_VERTEX);
 
-    rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_ALL);
+    rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_ALL);
 
-    rootParameters[2].InitAsConstantBufferView(2, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[2].InitAsConstantBufferView(2, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_PIXEL);
 
-    rootParameters[3].InitAsDescriptorTable(1, &texTable1, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[3].InitAsShaderResourceView(0, 1, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_PIXEL);
 
-    rootParameters[4].InitAsDescriptorTable(1, &texTable2, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[4].InitAsDescriptorTable(1, &texTable1, D3D12_SHADER_VISIBILITY_PIXEL);
 
-    rootParameters[5].InitAsDescriptorTable(1, &texTable3, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[5].InitAsDescriptorTable(1, &texTable2, D3D12_SHADER_VISIBILITY_PIXEL);
+
+    rootParameters[6].InitAsDescriptorTable(1, &texTable3, D3D12_SHADER_VISIBILITY_PIXEL);
 
     D3D12_STATIC_SAMPLER_DESC sampler = CD3DX12_STATIC_SAMPLER_DESC(
 		0, // shaderRegister
@@ -151,7 +153,8 @@ bool Game::Initialize()
 
     
 
-    CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(_countof(rootParameters), rootParameters, 1, &sampler,
+    CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSigDesc;
+    rootSigDesc.Init_1_1(_countof(rootParameters), rootParameters, 1, &sampler,
                                             D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
     mRootSignature = MakeUnique<RootSignature>(Graphics().GetDevice(), &rootSigDesc);
@@ -344,7 +347,7 @@ void Game::Draw(ComPtr<ID3D12GraphicsCommandList> commandList, Node *node, Uploa
             D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
             resourceStateTracker->ResourceBarrier(barrier);
 
-            dynamicDescriptorHeap->StageDescriptor(3, 0, 1, mesh->material->GetAlbedoTexture()->allocaion.GetDescriptor());
+            dynamicDescriptorHeap->StageDescriptor(4, 0, 1, mesh->material->GetAlbedoTexture()->allocaion.GetDescriptor());
         }
 
         if (mesh->material->HasMetallicRoughnessTexture())
@@ -355,7 +358,7 @@ void Game::Draw(ComPtr<ID3D12GraphicsCommandList> commandList, Node *node, Uploa
             D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
             resourceStateTracker->ResourceBarrier(barrier);
 
-            dynamicDescriptorHeap->StageDescriptor(4, 0, 1, mesh->material->GetMetallicRoughnessTexture()->allocaion.GetDescriptor());
+            dynamicDescriptorHeap->StageDescriptor(5, 0, 1, mesh->material->GetMetallicRoughnessTexture()->allocaion.GetDescriptor());
         }
 
         if (mesh->material->HasNormalTexture())
@@ -366,7 +369,7 @@ void Game::Draw(ComPtr<ID3D12GraphicsCommandList> commandList, Node *node, Uploa
             D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
             resourceStateTracker->ResourceBarrier(barrier);
 
-            dynamicDescriptorHeap->StageDescriptor(5, 0, 1, mesh->material->GetNormalTexture()->allocaion.GetDescriptor());
+            dynamicDescriptorHeap->StageDescriptor(6, 0, 1, mesh->material->GetNormalTexture()->allocaion.GetDescriptor());
         }
 
         commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -399,7 +402,7 @@ void Game::Draw(const Timer &time)
             ImGui::ShowDemoWindow(&show_demo_window);
 
      ImGui::Begin("Hello, world!");
-     ImGui::Text("This is some useful text.");
+        ImGui::Text("This is some useful text.");
     
      ImGui::End();
 
@@ -445,58 +448,17 @@ void Game::Draw(const Timer &time)
 
     cb.EyePos = mCamera.GetPosition();
 
-    LightUniform directionalLight = {};
-    directionalLight.Color = {1.0f, 1.0f, 1.0f, 1.0f};
-    directionalLight.DirectionWS = {0.2f, -1.0f, 0.2f, 1.0f};
-    directionalLight.Enabled = true;
-    directionalLight.LightType = DIRECTIONAL_LIGHT;
-    cb.LightProperties.Lights[0] = directionalLight;
+    cb.LightsCount = static_cast<uint32>(loadedScene->lights.size());
 
-    LightUniform spotLight = {};
-    spotLight.Color = {1.0f, 1.0f, 1.0f, 1.0f};
-    auto target = mCamera.GetTarget();
-    spotLight.DirectionWS = DirectX::XMFLOAT4(target.x, target.y, target.z, 0.0f );
-    spotLight.PositionWS = {cb.EyePos.x, cb.EyePos.y, cb.EyePos.z, 1.0f}; // {0.0f, 5.0f, 0.0f, 1.0f};
-    spotLight.SpotAngle = DirectX::XMConvertToRadians(10.0f);
-
-    spotLight.ConstantAttenuation = 0.05f;
-    spotLight.LinearAttenuation = 0.00f;
-    spotLight.Enabled = true;
-    spotLight.LightType = SPOT_LIGHT;
-    //cb.LightProperties.Lights[1] = spotLight;
-
-    LightUniform pointLight = {};
-    pointLight.Color = {50.0f, 30.0f, 10.0f, 1.0f};
-    pointLight.DirectionWS = {1.0f, -0.0f, 0.0f, 1.0f};
-    pointLight.PositionWS = {4.0f, 5.0f, -2.0f, 1.0f};
-    pointLight.SpotAngle = DirectX::XMConvertToRadians(5.0f);
-
-    pointLight.ConstantAttenuation = 0.01f;
-    pointLight.LinearAttenuation = 0.08f;
-    pointLight.QuadraticAttenuation = 0;
-    pointLight.Enabled = true;
-    pointLight.LightType = POINT_LIGHT;
-    cb.LightProperties.Lights[2] = pointLight;
-
-    LightUniform pointLight2 = {};
-    pointLight2.Color = {20.0f, 20.0f, 20.0f, 1.0f};
-    pointLight2.DirectionWS = {1.0f, -0.0f, 0.0f, 1.0f};
-    pointLight2.PositionWS = {00.0f, 2.0f, 0.0f, 1.0f};
-    pointLight2.SpotAngle = DirectX::XMConvertToRadians(5.0f);
-
-    pointLight2.ConstantAttenuation = 0.01f;
-    pointLight2.LinearAttenuation = 0.08f;
-    pointLight2.Enabled = true;
-    pointLight2.LightType = POINT_LIGHT;
-    cb.LightProperties.Lights[3] = pointLight2;
-
-    cb.LightProperties.LightsCount = 16;
-
-    cb.LightProperties.GlobalAmbient = {0.3f, 0.3f, 0.3f};
     auto cbAllocation = mUploadBuffer[currentBackBufferIndex]->Allocate(sizeof(FrameUniform));
     cbAllocation.CopyTo(&cb);
 
     commandList->SetGraphicsRootConstantBufferView(1, cbAllocation.GPU);
+
+    auto lightsAllocation = mUploadBuffer[currentBackBufferIndex]->Allocate(loadedScene->lights.size() * sizeof(LightUniform), sizeof(LightUniform));
+    memcpy(lightsAllocation.CPU, loadedScene->lights.data(), loadedScene->lights.size() * sizeof(LightUniform));
+
+    commandList->SetGraphicsRootShaderResourceView(3, lightsAllocation.GPU);
 
     for (auto &node : loadedScene->nodes)
     {

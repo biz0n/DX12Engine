@@ -2,13 +2,14 @@
 
 #include "Exceptions.h"
 
-RootSignature::RootSignature(ComPtr<ID3D12Device> device, const D3D12_ROOT_SIGNATURE_DESC *description)
+RootSignature::RootSignature(ComPtr<ID3D12Device> device, const CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC *description)
     : mDescriptorTableBitMask(0), mSamplerTableBitMask(0), mNumDescriptorsPerTable{0}
 {
-    mNumRootParameters = description->NumParameters;
-    for (uint32 i = 0; i < description->NumParameters; ++i)
+    auto desc = &description->Desc_1_1;
+    mNumRootParameters = desc->NumParameters;
+    for (uint32 i = 0; i < desc->NumParameters; ++i)
     {
-        const auto &rootParameter = description->pParameters[i];
+        const auto &rootParameter = desc->pParameters[i];
 
         if (rootParameter.ParameterType == D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE)
         {
@@ -38,7 +39,7 @@ RootSignature::RootSignature(ComPtr<ID3D12Device> device, const D3D12_ROOT_SIGNA
 
     ComPtr<ID3DBlob> serializedRootSig = nullptr;
     ComPtr<ID3DBlob> errorBlob = nullptr;
-    HRESULT hr = D3D12SerializeRootSignature(description, D3D_ROOT_SIGNATURE_VERSION_1,
+    HRESULT hr = D3DX12SerializeVersionedRootSignature(description, D3D_ROOT_SIGNATURE_VERSION_1_1,
                                              serializedRootSig.GetAddressOf(), errorBlob.GetAddressOf());
     ThrowIfFailed(hr);
 

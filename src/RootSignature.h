@@ -3,10 +3,12 @@
 #include "Types.h"
 #include <d3d12.h>
 
+#include "d3dx12.h"
+
 class RootSignature
 {
 public:
-    RootSignature(ComPtr<ID3D12Device> device, const D3D12_ROOT_SIGNATURE_DESC *description);
+    RootSignature(ComPtr<ID3D12Device> device, const CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC *description);
 
     ComPtr<ID3D12RootSignature> GetD3D12RootSignature() const { return mRootSignature; }
 

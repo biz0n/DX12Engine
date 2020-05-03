@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Types.h"
-#include "Resources/Shaders/ShaderTypes.h"
+#include "ShaderTypes.h"
 
 #include "IndexBuffer.h"
 #include "VertexBuffer.h"
@@ -81,6 +81,8 @@ class SceneObject
 {
 public:
     std::vector<UniquePtr<Node>> nodes;
+
+    std::vector<LightUniform> lights;
 };
 
 class SceneLoader

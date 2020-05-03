@@ -112,7 +112,7 @@ uint64 App::ExecuteCommandList(ComPtr<ID3D12GraphicsCommandList> commandList)
 
 uint32 App::Present()
 {
-    bool vSync = true;
+    bool vSync = false;
     int32 syncInterval = vSync ? 1 : 0;
     int32 presentFlags = graphics->IsTearingSupported() && !vSync ? DXGI_PRESENT_ALLOW_TEARING : 0;
     ThrowIfFailed(mSwapChain->Present(syncInterval, presentFlags));
