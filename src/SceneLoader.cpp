@@ -27,10 +27,10 @@ UniquePtr<SceneObject> SceneLoader::LoadScene(String path, float32 scale)
     }
     //  else
     {
-        unsigned int preprocessFlags = aiProcess_Triangulate |
+        unsigned int preprocessFlags = //aiProcess_Triangulate |
                                        aiProcess_ConvertToLeftHanded |
-                                       aiProcess_JoinIdenticalVertices |
-                                       aiProcess_GenNormals |
+                                       //aiProcess_JoinIdenticalVertices |
+                                       //aiProcess_GenNormals |
                                        aiProcess_CalcTangentSpace
                                       // aiProcess_OptimizeMeshes |
                                       // aiProcess_OptimizeGraph
@@ -79,11 +79,85 @@ UniquePtr<SceneObject> SceneLoader::LoadScene(String path, float32 scale)
     ParseNode(aScene, aScene->mRootNode, scene.get(), nullptr, context);
 
 
-
     std::vector<LightUniform> lights;
+    lights.reserve(static_cast<Size>(aScene->mNumLights));
+    for (uint32 i = 0; i < aScene->mNumLights; ++i)
+    {
+        aiLight* aLight = aScene->mLights[i];
+
+        LightUniform light = {};
+        light.Enabled = true;
+
+        switch (aLight->mType)
+        {
+            case aiLightSource_DIRECTIONAL:
+                light.LightType = DIRECTIONAL_LIGHT;
+                light.Enabled = false;
+            break;
+            case aiLightSource_POINT:
+                light.LightType = POINT_LIGHT;
+                light.Enabled = false;
+            break;
+            case aiLightSource_SPOT:
+                light.LightType = SPOT_LIGHT;
+                //light.Enabled = false;
+            break;
+        }
+
+        light.PositionWS = *reinterpret_cast<DirectX::XMFLOAT3*>(&aLight->mPosition);
+        light.DirectionWS = *reinterpret_cast<DirectX::XMFLOAT3*>(&aLight->mDirection);
+        
+        for (uint32 j = 0; j < aScene->mRootNode->mNumChildren; ++j)
+        {
+            if (aScene->mRootNode->mChildren[j]->mName == aLight->mName)
+            {
+                auto transformation = &aScene->mRootNode->mChildren[j]->mTransformation;
+                
+                aiVector3D scaling;
+                aiQuaternion rotation;
+                aiVector3D position;
+                transformation->Decompose(scaling, rotation, position);
+
+                auto t = DirectX::XMMatrixTranslation(position.x, position.y, position.z);
+                auto s = DirectX::XMMatrixScaling(scaling.x, scaling.y, scaling.z);
+                DirectX::XMFLOAT4 quaternion = {rotation.x, rotation.y, rotation.z, rotation.w};
+                auto r = DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&quaternion));
+
+                DirectX::XMFLOAT4 dir {0.0f, 0.0f, -1.0f, 0.0f};
+                DirectX::XMStoreFloat3(
+                    &light.DirectionWS, 
+                    DirectX::XMVector3Normalize(
+                        DirectX::XMVector4Transform(
+                            DirectX::XMLoadFloat4(&dir),
+                            t * r * s
+                            )));
+
+                DirectX::XMFLOAT4 pos {0.0f, 0.0f, 0.0f, 1.0f};
+                DirectX::XMStoreFloat3(
+                    &light.PositionWS,
+                    DirectX::XMVector4Transform(
+                        DirectX::XMLoadFloat4(&pos),
+                        t * r * s
+                        ));
+                break;
+            }
+        }
+        
+        light.Color = *reinterpret_cast<DirectX::XMFLOAT3*>(&aLight->mColorDiffuse);
+
+        light.ConstantAttenuation = aLight->mAttenuationConstant;
+        light.LinearAttenuation = aLight->mAttenuationLinear;
+        light.QuadraticAttenuation = aLight->mAttenuationQuadratic;
+
+        light.InnerConeAngle = aLight->mAngleInnerCone;
+        light.OuterConeAngle = aLight->mAngleOuterCone;
+
+        lights.emplace_back(light);
+    }
+
 
     LightUniform directionalLight = {};
-    directionalLight.Color = {10.0f, 10.0f, 10.0f};
+    directionalLight.Color = {20.0f, 20.0f, 20.0f};
     directionalLight.DirectionWS = {0.2f, -1.0f, 0.2f};
     directionalLight.Enabled = false;
     directionalLight.LightType = DIRECTIONAL_LIGHT;
@@ -112,7 +186,7 @@ UniquePtr<SceneObject> SceneLoader::LoadScene(String path, float32 scale)
     pointLight.QuadraticAttenuation = 1.0f;
     pointLight.Enabled = true;
     pointLight.LightType = POINT_LIGHT;
-    lights.emplace_back(pointLight);
+    //lights.emplace_back(pointLight);
 
     LightUniform pointLight2 = {};
     pointLight2.Color = {20.0f, 20.0f, 20.0f};
@@ -122,7 +196,8 @@ UniquePtr<SceneObject> SceneLoader::LoadScene(String path, float32 scale)
     pointLight2.QuadraticAttenuation = 1.0f;
     pointLight2.Enabled = true;
     pointLight2.LightType = POINT_LIGHT;
-    lights.emplace_back(pointLight2);
+   lights.emplace_back(pointLight2);
+    
 
     scene->lights = std::move(lights);
 
@@ -134,7 +209,19 @@ void SceneLoader::ParseNode(const aiScene *aScene, aiNode *aNode, SceneObject *s
     UniquePtr<Node> node = MakeUnique<Node>();
 
     node->mParent = parentNode;
-    node->LocalTransform = reinterpret_cast<DirectX::XMFLOAT4X4 &>(aNode->mTransformation);
+    node->LocalTransform = *reinterpret_cast<DirectX::XMFLOAT4X4 *>(&aNode->mTransformation);
+
+    aiVector3D scaling;
+    aiQuaternion rotation;
+    aiVector3D position;
+    aNode->mTransformation.Decompose(scaling, rotation, position);
+
+    auto t = DirectX::XMMatrixTranslation(position.x, position.y, position.z);
+    auto s = DirectX::XMMatrixScaling(scaling.x, scaling.y, scaling.z);
+    DirectX::XMFLOAT4 quaternion = {rotation.x, rotation.y, rotation.z, rotation.w};
+    auto r = DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&quaternion));
+
+    DirectX::XMStoreFloat4x4(&node->LocalTransform, t * r * s );
 
     for (uint32 i = 0; i < aNode->mNumMeshes; ++i)
     {

@@ -33,6 +33,19 @@ SharedPtr<Image> Image::LoadImageFromFile(String path, bool generateMips)
         throw std::bad_alloc();
     }
 
+    {/*
+        UniquePtr<DirectX::ScratchImage> flippedImage = MakeUnique<DirectX::ScratchImage>();
+        DirectX::FlipRotate(
+            scratch->GetImages(),
+            scratch->GetImageCount(),
+            scratch->GetMetadata(),
+            DirectX::TEX_FR_FLIP_VERTICAL,
+            *flippedImage);
+
+        scratch = std::move(flippedImage);
+        */
+    }
+
     if (generateMips)
     {
         UniquePtr<DirectX::ScratchImage> mipChain = MakeUnique<DirectX::ScratchImage>();

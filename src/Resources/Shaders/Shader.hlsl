@@ -59,7 +59,8 @@ VertexShaderOutput mainVS(VertexPosColor IN)
 
 float4 mainPS(VertexShaderOutput IN) : SV_TARGET
 {
-     float4 baseColor = diffuseTexture.Sample(gsamPointWrap, IN.TextureCoord);
+     //float4 baseColor = diffuseTexture.Sample(gsamPointWrap, IN.TextureCoord);
+     float4 baseColor = MaterialCB.Diffuse;
 
      float3 n = normalTexture.Sample(gsamPointWrap, IN.TextureCoord).rgb;
      n = float3(n.r, 1-n.g, n.b);

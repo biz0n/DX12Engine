@@ -30,12 +30,14 @@ bool Game::Initialize()
     SceneLoader loader;
     //loadedScene = loader.LoadScene("Resources\\Scenes\\sponza2\\sponza.obj", 0.03f);
     loadedScene = loader.LoadScene("Resources\\Scenes\\gltf2\\sponza\\sponza.gltf", 1.0f);
+    //loadedScene = loader.LoadScene("Resources\\Scenes\\gltf2\\axis.gltf", 100.0f);
     //loadedScene = loader.LoadScene("Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\MetalRoughSpheres\\glTF\\MetalRoughSpheres.gltf", 1.0f);
     //loadedScene = loader.LoadScene("Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\MetalRoughSpheres\\glTF-Binary\\MetalRoughSpheres.glb", 1.0f);
     //loadedScene = loader.LoadScene("Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\TextureSettingsTest\\glTF\\TextureSettingsTest.gltf", 1.0f);
     //loadedScene = loader.LoadScene("Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\NormalTangentMirrorTest\\glTF\\NormalTangentMirrorTest.gltf", 1.0f);
     //loadedScene = loader.LoadScene("Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\FlightHelmet\\glTF\\FlightHelmet.gltf", 1.0f);
     //loadedScene = loader.LoadScene("Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\DamagedHelmet\\glTF\\DamagedHelmet.gltf", 1.0f);
+    //loadedScene = loader.LoadScene("Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\OrientationTest\\glTF\\OrientationTest.gltf", 1.0f);
 
     mImGuiManager = MakeUnique<ImGuiManager>(Graphics().GetDevice(), Graphics().SwapChainBufferCount, DXGI_FORMAT_R8G8B8A8_UNORM);
 
@@ -262,8 +264,8 @@ void Game::Update(const Timer &time)
     float aspectRatio = Graphics().GetWidth() / static_cast<float>(Graphics().GetHeight());
     mProjectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_FoV), aspectRatio, 0.1f, 100.0f);
 
-    const float32 speed = 10 * time.DeltaTime();
-    const float32 rotationSpeed = 2.0f * time.DeltaTime();
+    const float32 speed = 5 * time.DeltaTime();
+    const float32 rotationSpeed = 1.0f * time.DeltaTime();
     if (keyState[KeyCode::Key::Up])
     {
         mCamera.Rotate(0.0f, -rotationSpeed);
@@ -333,6 +335,7 @@ void Game::Draw(ComPtr<ID3D12GraphicsCommandList> commandList, Node *node, Uploa
         uniform.MetallicFactor = properties.metallicRaughness.metallicFactor;
         uniform.RoughnessFactor = properties.metallicRaughness.roughnessFactor;
         uniform.NormalScale = properties.normalTextureInfo.scale;
+        uniform.Ambient = {0.9f, 0.9f, 0.9f, 0.0f};
         
 
         auto matAllocation = buffer->Allocate(sizeof(MaterialUniform));

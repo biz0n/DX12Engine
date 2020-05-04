@@ -108,7 +108,7 @@ float3 ApplyPointLight(LightUniform light, float3 positionWS, float3 F0, float3 
 
 float3 ApplySpotLight(LightUniform light, float3 positionWS, float3 F0, float3 N, float3 V, float3 albedo, float metallic, float roughness)
 {
-    float3 L = ( light.PositionWS.xyz - positionWS );
+    float3 L = ( light.PositionWS - positionWS );
     float distance = length(L);
     L = L / distance;
 
