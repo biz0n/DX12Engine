@@ -30,7 +30,7 @@ bool Game::Initialize()
     SceneLoader loader;
     //loadedScene = loader.LoadScene("Resources\\Scenes\\sponza2\\sponza.obj", 0.03f);
     loadedScene = loader.LoadScene("Resources\\Scenes\\gltf2\\sponza\\sponza.gltf", 1.0f);
-    //loadedScene = loader.LoadScene("Resources\\Scenes\\gltf2\\axis.gltf", 100.0f);
+    //loadedScene = loader.LoadScene("Resources\\Scenes\\gltf2\\axis.gltf", 1.0f);
     //loadedScene = loader.LoadScene("Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\MetalRoughSpheres\\glTF\\MetalRoughSpheres.gltf", 1.0f);
     //loadedScene = loader.LoadScene("Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\MetalRoughSpheres\\glTF-Binary\\MetalRoughSpheres.glb", 1.0f);
     //loadedScene = loader.LoadScene("Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\TextureSettingsTest\\glTF\\TextureSettingsTest.gltf", 1.0f);
@@ -403,11 +403,6 @@ void Game::Draw(const Timer &time)
     static bool show_demo_window = true;
     if (show_demo_window)
             ImGui::ShowDemoWindow(&show_demo_window);
-
-     ImGui::Begin("Hello, world!");
-        ImGui::Text("This is some useful text.");
-    
-     ImGui::End();
 
     auto rtv = Graphics().GetCurrentRenderTargetView();
 

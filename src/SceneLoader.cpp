@@ -92,15 +92,12 @@ UniquePtr<SceneObject> SceneLoader::LoadScene(String path, float32 scale)
         {
             case aiLightSource_DIRECTIONAL:
                 light.LightType = DIRECTIONAL_LIGHT;
-                light.Enabled = false;
             break;
             case aiLightSource_POINT:
                 light.LightType = POINT_LIGHT;
-                light.Enabled = false;
             break;
             case aiLightSource_SPOT:
                 light.LightType = SPOT_LIGHT;
-                //light.Enabled = false;
             break;
         }
 
@@ -111,34 +108,34 @@ UniquePtr<SceneObject> SceneLoader::LoadScene(String path, float32 scale)
         {
             if (aScene->mRootNode->mChildren[j]->mName == aLight->mName)
             {
-                auto transformation = &aScene->mRootNode->mChildren[j]->mTransformation;
-                
-                aiVector3D scaling;
-                aiQuaternion rotation;
-                aiVector3D position;
-                transformation->Decompose(scaling, rotation, position);
+                auto aTransformation = aScene->mRootNode->mChildren[j]->mTransformation;
 
-                auto t = DirectX::XMMatrixTranslation(position.x, position.y, position.z);
-                auto s = DirectX::XMMatrixScaling(scaling.x, scaling.y, scaling.z);
-                DirectX::XMFLOAT4 quaternion = {rotation.x, rotation.y, rotation.z, rotation.w};
+                aiVector3D aScaling;
+                aiQuaternion aRotation;
+                aiVector3D aPosition;
+                aTransformation.Decompose(aScaling, aRotation, aPosition);
+
+                auto t = DirectX::XMMatrixTranslation(aPosition.x, aPosition.y, aPosition.z);
+                auto s = DirectX::XMMatrixScaling(aScaling.x, aScaling.y, aScaling.z);
+                DirectX::XMFLOAT4 quaternion = {aRotation.x, aRotation.y, aRotation.z, aRotation.w};
                 auto r = DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&quaternion));
 
-                DirectX::XMFLOAT4 dir {0.0f, 0.0f, -1.0f, 0.0f};
+                auto srt = s * r * t;
+
+                DirectX::XMFLOAT4 direction {light.DirectionWS.x, light.DirectionWS.z, light.DirectionWS.y, 0.0f};
                 DirectX::XMStoreFloat3(
                     &light.DirectionWS, 
                     DirectX::XMVector3Normalize(
                         DirectX::XMVector4Transform(
-                            DirectX::XMLoadFloat4(&dir),
-                            t * r * s
-                            )));
+                            DirectX::XMLoadFloat4(&direction),
+                            srt)));
 
-                DirectX::XMFLOAT4 pos {0.0f, 0.0f, 0.0f, 1.0f};
+                DirectX::XMFLOAT4 position {light.PositionWS.x, light.PositionWS.y, light.PositionWS.z, 1.0f};
                 DirectX::XMStoreFloat3(
                     &light.PositionWS,
                     DirectX::XMVector4Transform(
-                        DirectX::XMLoadFloat4(&pos),
-                        t * r * s
-                        ));
+                        DirectX::XMLoadFloat4(&position),
+                        srt));
                 break;
             }
         }
@@ -163,21 +160,6 @@ UniquePtr<SceneObject> SceneLoader::LoadScene(String path, float32 scale)
     directionalLight.LightType = DIRECTIONAL_LIGHT;
     //lights.emplace_back(directionalLight);
 
-    /*LightUniform spotLight = {};
-    spotLight.Color = {20.0f, 20.0f, 20.0f};
-    auto target = mCamera.GetTarget();
-    spotLight.DirectionWS = target;
-    spotLight.PositionWS = cb.EyePos; 
-    spotLight.InnerConeAngle = DirectX::XMConvertToRadians(10.0f);
-    spotLight.OuterConeAngle = DirectX::XMConvertToRadians(14.0f);
-
-    spotLight.ConstantAttenuation = 0.0f;
-    spotLight.LinearAttenuation = 0.00f;
-    spotLight.QuadraticAttenuation = 1.0f;
-    spotLight.Enabled = false;
-    spotLight.LightType = SPOT_LIGHT;
-    lights.emplace_back(spotLight);*/
-
     LightUniform pointLight = {};
     pointLight.Color = {50.0f, 30.0f, 10.0f};
     pointLight.PositionWS = {4.0f, 5.0f, -2.0f};
@@ -186,7 +168,7 @@ UniquePtr<SceneObject> SceneLoader::LoadScene(String path, float32 scale)
     pointLight.QuadraticAttenuation = 1.0f;
     pointLight.Enabled = true;
     pointLight.LightType = POINT_LIGHT;
-    //lights.emplace_back(pointLight);
+    lights.emplace_back(pointLight);
 
     LightUniform pointLight2 = {};
     pointLight2.Color = {20.0f, 20.0f, 20.0f};
@@ -196,7 +178,7 @@ UniquePtr<SceneObject> SceneLoader::LoadScene(String path, float32 scale)
     pointLight2.QuadraticAttenuation = 1.0f;
     pointLight2.Enabled = true;
     pointLight2.LightType = POINT_LIGHT;
-   lights.emplace_back(pointLight2);
+    lights.emplace_back(pointLight2);
     
 
     scene->lights = std::move(lights);
@@ -209,7 +191,6 @@ void SceneLoader::ParseNode(const aiScene *aScene, aiNode *aNode, SceneObject *s
     UniquePtr<Node> node = MakeUnique<Node>();
 
     node->mParent = parentNode;
-    node->LocalTransform = *reinterpret_cast<DirectX::XMFLOAT4X4 *>(&aNode->mTransformation);
 
     aiVector3D scaling;
     aiQuaternion rotation;
@@ -221,7 +202,7 @@ void SceneLoader::ParseNode(const aiScene *aScene, aiNode *aNode, SceneObject *s
     DirectX::XMFLOAT4 quaternion = {rotation.x, rotation.y, rotation.z, rotation.w};
     auto r = DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&quaternion));
 
-    DirectX::XMStoreFloat4x4(&node->LocalTransform, t * r * s );
+    DirectX::XMStoreFloat4x4(&node->LocalTransform, s * r * t );
 
     for (uint32 i = 0; i < aNode->mNumMeshes; ++i)
     {
