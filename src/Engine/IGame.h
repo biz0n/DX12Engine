@@ -5,27 +5,32 @@
 
 #include <memory>
 
-class IGame : public std::enable_shared_from_this<IGame>
+namespace Engine
 {
-public:
-    IGame(App *app);
-    virtual ~IGame();
 
-    virtual bool Initialize() = 0;
+    class IGame : public std::enable_shared_from_this<IGame>
+    {
+    public:
+        IGame(App *app);
+        virtual ~IGame();
 
-    virtual void Update(const Timer &time) = 0;
+        virtual bool Initialize() = 0;
 
-    virtual void Draw(const Timer &time) = 0;
+        virtual void Update(const Timer &time) = 0;
 
-    virtual void Deinitialize() = 0;
+        virtual void Draw(const Timer &time) = 0;
 
-    virtual void Resize(int32 width, int32 height) {}
+        virtual void Deinitialize() = 0;
 
-    virtual void KeyPressed(KeyEvent keyEvent) {}
+        virtual void Resize(int32 width, int32 height) {}
 
-protected:
-    App &Graphics() { return *mApp; }
+        virtual void KeyPressed(KeyEvent keyEvent) {}
 
-private:
-    App *mApp;
-};
+    protected:
+        App &Graphics() { return *mApp; }
+
+    private:
+        App *mApp;
+    };
+
+} // namespace Engine

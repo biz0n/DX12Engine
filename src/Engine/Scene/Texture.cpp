@@ -1,10 +1,15 @@
 #include "Texture.h"
 
-Texture::Texture(const std::wstring &name)
-    : Resource(name)
+namespace Engine
 {
-}
 
-Texture::~Texture()
-{
-}
+    Texture::Texture(const std::wstring &name)
+        : Resource(name)
+    {
+    }
+
+    Texture::~Texture()
+    {
+    }
+
+} // namespace Engine

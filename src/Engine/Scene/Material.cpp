@@ -1,11 +1,14 @@
 #include "Material.h"
 
-Material::Material()
+namespace Engine
 {
 
-}
+    Material::Material()
+    {
+    }
 
-Material::~Material()
-{
-    
-}
+    Material::~Material()
+    {
+    }
+
+} // namespace Engine

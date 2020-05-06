@@ -11,10 +11,10 @@ template <typename TFunc>
 class Event;
 
 template <class RetType, class... Args>
-class Event<RetType(Args ...)> final
+class Event<RetType(Args...)> final
 {
 private:
-    typedef typename std::function<RetType(Args ...)> Closure;
+    typedef typename std::function<RetType(Args...)> Closure;
 
     struct ComparableClosure
     {
@@ -25,9 +25,9 @@ private:
 
         ComparableClosure(const ComparableClosure &) = delete;
 
-        ComparableClosure() : Object(nullptr), Functor(nullptr), FunctorSize(0) { }
+        ComparableClosure() : Object(nullptr), Functor(nullptr), FunctorSize(0) {}
 
-        ComparableClosure(Closure &&closure) : Callable(std::move(closure)), Object(nullptr), Functor(nullptr), FunctorSize(0) { }
+        ComparableClosure(Closure &&closure) : Callable(std::move(closure)), Object(nullptr), Functor(nullptr), FunctorSize(0) {}
 
         ~ComparableClosure()
         {
@@ -35,7 +35,7 @@ private:
                 delete[] Functor;
         }
 
-        ComparableClosure & operator=(const ComparableClosure &closure)
+        ComparableClosure &operator=(const ComparableClosure &closure)
         {
             Callable = closure.Callable;
             Object = closure.Object;
@@ -61,8 +61,7 @@ private:
             }
             else
             {
-                return Object == closure.Object && FunctorSize == closure.FunctorSize
-                    && std::memcmp(Functor, closure.Functor, FunctorSize) == 0;
+                return Object == closure.Object && FunctorSize == closure.FunctorSize && std::memcmp(Functor, closure.Functor, FunctorSize) == 0;
             }
         }
     };
@@ -183,7 +182,7 @@ public:
         (*this) = nullptr;
     }
 
-    void operator =(const Event &event)
+    void operator=(const Event &event)
     {
         std::atomic_store(&m_events, std::atomic_load(&event.m_events));
     }
@@ -212,7 +211,7 @@ public:
         return events != nullptr;
     }
 
-    void operator +=(Closure f)
+    void operator+=(Closure f)
     {
         ComparableClosure closure(std::move(f));
         while (true)
@@ -222,7 +221,7 @@ public:
         }
     }
 
-    void operator -=(Closure f)
+    void operator-=(Closure f)
     {
         ComparableClosure closure(std::move(f));
         while (true)
@@ -233,16 +232,15 @@ public:
     }
 
     template <typename TObject>
-    void Bind(RetType(TObject::*function)(Args...), TObject *object)
+    void Bind(RetType (TObject::*function)(Args...), TObject *object)
     {
         ComparableClosure closure;
-        closure.Callable = [object, function](Args&&...args)
-        {
+        closure.Callable = [object, function](Args &&... args) {
             return (object->*function)(std::forward<Args>(args)...);
         };
         closure.FunctorSize = sizeof(function);
         closure.Functor = new uint8_t[closure.FunctorSize];
-        std::memcpy(closure.Functor, (void*)&function, sizeof(function));
+        std::memcpy(closure.Functor, (void *)&function, sizeof(function));
         closure.Object = object;
 
         while (true)
@@ -253,12 +251,12 @@ public:
     }
 
     template <typename TObject>
-    void Unbind(RetType(TObject::*function)(Args...), TObject *object)
+    void Unbind(RetType (TObject::*function)(Args...), TObject *object)
     {
         ComparableClosure closure;
         closure.FunctorSize = sizeof(function);
         closure.Functor = new uint8_t[closure.FunctorSize];
-        std::memcpy(closure.Functor, (void*)&function, sizeof(function));
+        std::memcpy(closure.Functor, (void *)&function, sizeof(function));
         closure.Object = object;
 
         while (true)
@@ -280,7 +278,7 @@ public:
             closures[i].Callable();
     }
 
-    template <typename TArg0, typename ...Args2>
+    template <typename TArg0, typename... Args2>
     void operator()(TArg0 a1, Args2... tail)
     {
         auto events = std::atomic_load(&m_events);

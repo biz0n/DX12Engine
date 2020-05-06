@@ -1,6 +1,6 @@
 #pragma once
 
-namespace KeyCode
+namespace Engine::KeyCode
 {
     enum Key
     {

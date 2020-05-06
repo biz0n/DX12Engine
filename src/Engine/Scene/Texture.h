@@ -3,30 +3,36 @@
 #include <Resource.h>
 #include <DescriptorAllocator.h>
 
-
 #include <vector>
 
-class Image;
-
-class Texture : public Resource
+namespace Engine
 {
-public:
-    Texture(const std::wstring& name);
-    virtual ~Texture();
-
-    void SetImage(SharedPtr<Image> buffer)
+    namespace Scene
     {
-        mImage = buffer;
+        class Image;
     }
 
-    const SharedPtr<Image>& GetImage() const {return mImage;}
+    class Texture : public Resource
+    {
+    public:
+        Texture(const std::wstring &name);
+        virtual ~Texture();
 
-    inline bool IsSRGB() const { return isSRGB; }
-    inline void SetSRGB(bool srgb) { isSRGB = srgb; }
+        void SetImage(SharedPtr<Scene::Image> buffer)
+        {
+            mImage = buffer;
+        }
 
-    DescriptorAllocation allocaion;
+        const SharedPtr<Scene::Image> &GetImage() const { return mImage; }
 
-private:
-    bool isSRGB = false;
-    SharedPtr<Image> mImage;
-};
+        inline bool IsSRGB() const { return isSRGB; }
+        inline void SetSRGB(bool srgb) { isSRGB = srgb; }
+
+        DescriptorAllocation allocaion;
+
+    private:
+        bool isSRGB = false;
+        SharedPtr<Scene::Image> mImage;
+    };
+
+} // namespace Engine

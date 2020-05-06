@@ -1,25 +1,30 @@
 #include "VertexBuffer.h"
 
-VertexBuffer::VertexBuffer(const std::wstring &name)
-    : Buffer(name)
+namespace Engine
 {
-}
 
-VertexBuffer::~VertexBuffer()
-{
-}
+    VertexBuffer::VertexBuffer(const std::wstring &name)
+        : Buffer(name)
+    {
+    }
 
-void VertexBuffer::CreateViews()
-{
-    mNumVertices = mElementsCount;
-    mVertexStride = mElementSize;
+    VertexBuffer::~VertexBuffer()
+    {
+    }
 
-    auto size = mNumVertices * mVertexStride;
+    void VertexBuffer::CreateViews()
+    {
+        mNumVertices = mElementsCount;
+        mVertexStride = mElementSize;
 
-    D3D12_VERTEX_BUFFER_VIEW vertexBufferView = {};
-    vertexBufferView.BufferLocation = mResource->GetGPUVirtualAddress();
-    vertexBufferView.SizeInBytes = static_cast<uint32>(size);
-    vertexBufferView.StrideInBytes = static_cast<uint32>(mVertexStride);
+        auto size = mNumVertices * mVertexStride;
 
-    mVertexBufferView = vertexBufferView;
-}
+        D3D12_VERTEX_BUFFER_VIEW vertexBufferView = {};
+        vertexBufferView.BufferLocation = mResource->GetGPUVirtualAddress();
+        vertexBufferView.SizeInBytes = static_cast<uint32>(size);
+        vertexBufferView.StrideInBytes = static_cast<uint32>(mVertexStride);
+
+        mVertexBufferView = vertexBufferView;
+    }
+
+} // namespace Engine

@@ -3,19 +3,24 @@
 #include <Types.h>
 #include <Buffer.h>
 
-class IndexBuffer : public Buffer
+namespace Engine
 {
-public:
-    IndexBuffer(const std::wstring& name = L"");
-    virtual ~IndexBuffer();
 
-    void CreateViews() override;
+    class IndexBuffer : public Buffer
+    {
+    public:
+        IndexBuffer(const std::wstring &name = L"");
+        virtual ~IndexBuffer();
 
-    D3D12_INDEX_BUFFER_VIEW GetIndexBufferView() const {return mIndexBufferView; }
+        void CreateViews() override;
 
-private:
-    Size mIndecesCount;
-    DXGI_FORMAT mIndexFormat;
+        D3D12_INDEX_BUFFER_VIEW GetIndexBufferView() const { return mIndexBufferView; }
 
-    D3D12_INDEX_BUFFER_VIEW mIndexBufferView;
-};
+    private:
+        Size mIndecesCount;
+        DXGI_FORMAT mIndexFormat;
+
+        D3D12_INDEX_BUFFER_VIEW mIndexBufferView;
+    };
+
+} // namespace Engine

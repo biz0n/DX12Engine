@@ -7,105 +7,110 @@
 
 #include <cassert>
 
-ImGuiManager::ImGuiManager(ComPtr<ID3D12Device> device, uint32 numFramesInFlight, DXGI_FORMAT rtvFormat)
-    : mDevice(device), mNumFramesInFlight(numFramesInFlight), mCurrentFrameIndex(0)
+namespace Engine
 {
-    mDescriptorAllocator = MakeUnique<ImGuiDescriptorAllocator>(device, numFramesInFlight, NumDescriptors);
 
-    ImGui_ImplDX12_Init(
-        device.Get(),
-        numFramesInFlight,
-        rtvFormat,
-        mDescriptorAllocator->GetD3D12DescriptorHeap().Get(),
-        mDescriptorAllocator->GetD3D12DescriptorHeap()->GetCPUDescriptorHandleForHeapStart(),
-        mDescriptorAllocator->GetD3D12DescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
-}
+    ImGuiManager::ImGuiManager(ComPtr<ID3D12Device> device, uint32 numFramesInFlight, DXGI_FORMAT rtvFormat)
+        : mDevice(device), mNumFramesInFlight(numFramesInFlight), mCurrentFrameIndex(0)
+    {
+        mDescriptorAllocator = MakeUnique<ImGuiDescriptorAllocator>(device, numFramesInFlight, NumDescriptors);
 
-ImGuiManager::~ImGuiManager()
-{
-    ImGui_ImplDX12_Shutdown();
-    ImGui_ImplWin32_Shutdown();
-    ImGui::DestroyContext();
-}
+        ImGui_ImplDX12_Init(
+            device.Get(),
+            numFramesInFlight,
+            rtvFormat,
+            mDescriptorAllocator->GetD3D12DescriptorHeap().Get(),
+            mDescriptorAllocator->GetD3D12DescriptorHeap()->GetCPUDescriptorHandleForHeapStart(),
+            mDescriptorAllocator->GetD3D12DescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
+    }
 
-void ImGuiManager::BeginFrame()
-{
-    ImGui_ImplDX12_NewFrame();
-    ImGui_ImplWin32_NewFrame();
-    ImGui::NewFrame();
+    ImGuiManager::~ImGuiManager()
+    {
+        ImGui_ImplDX12_Shutdown();
+        ImGui_ImplWin32_Shutdown();
+        ImGui::DestroyContext();
+    }
 
-    mDescriptorAllocator->Reset(mCurrentFrameIndex);
-}
+    void ImGuiManager::BeginFrame()
+    {
+        ImGui_ImplDX12_NewFrame();
+        ImGui_ImplWin32_NewFrame();
+        ImGui::NewFrame();
 
-void ImGuiManager::Draw(ComPtr<ID3D12GraphicsCommandList> commandList)
-{
-    mDescriptorAllocator->CopyStagedDescriptors(mCurrentFrameIndex);
+        mDescriptorAllocator->Reset(mCurrentFrameIndex);
+    }
 
-    commandList->SetDescriptorHeaps(1, mDescriptorAllocator->GetD3D12DescriptorHeap().GetAddressOf());
-    ImGui::Render();
-    ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList.Get());
+    void ImGuiManager::Draw(ComPtr<ID3D12GraphicsCommandList> commandList)
+    {
+        mDescriptorAllocator->CopyStagedDescriptors(mCurrentFrameIndex);
 
-    mCurrentFrameIndex++;
-    mCurrentFrameIndex %= mNumFramesInFlight;
-}
+        commandList->SetDescriptorHeaps(1, mDescriptorAllocator->GetD3D12DescriptorHeap().GetAddressOf());
+        ImGui::Render();
+        ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList.Get());
 
-ImTextureID ImGuiManager::GetTextureId(D3D12_CPU_DESCRIPTOR_HANDLE descriptor)
-{
-    D3D12_GPU_DESCRIPTOR_HANDLE handle = mDescriptorAllocator->StageDescriptor(mCurrentFrameIndex, descriptor);
+        mCurrentFrameIndex++;
+        mCurrentFrameIndex %= mNumFramesInFlight;
+    }
 
-    ImTextureID textureId = (ImTextureID)handle.ptr;
+    ImTextureID ImGuiManager::GetTextureId(D3D12_CPU_DESCRIPTOR_HANDLE descriptor)
+    {
+        D3D12_GPU_DESCRIPTOR_HANDLE handle = mDescriptorAllocator->StageDescriptor(mCurrentFrameIndex, descriptor);
 
-    return textureId;
-}
+        ImTextureID textureId = (ImTextureID)handle.ptr;
 
-ImGuiDescriptorAllocator::ImGuiDescriptorAllocator(ComPtr<ID3D12Device> device, uint32 framesInFlight, uint32 numDescriptorsPerFrame)
-    : mDevice(device), mNumDescriptors(numDescriptorsPerFrame)
-{
-    auto realNumDescriptors = ImguiReservedDescriptors + framesInFlight * numDescriptorsPerFrame;
-    mHandlersCache = MakeUnique<std::vector<D3D12_CPU_DESCRIPTOR_HANDLE>>();
-    mHandlersCache->resize(realNumDescriptors);
+        return textureId;
+    }
 
-    mOffsets.resize(framesInFlight);
+    ImGuiDescriptorAllocator::ImGuiDescriptorAllocator(ComPtr<ID3D12Device> device, uint32 framesInFlight, uint32 numDescriptorsPerFrame)
+        : mDevice(device), mNumDescriptors(numDescriptorsPerFrame)
+    {
+        auto realNumDescriptors = ImguiReservedDescriptors + framesInFlight * numDescriptorsPerFrame;
+        mHandlersCache = MakeUnique<std::vector<D3D12_CPU_DESCRIPTOR_HANDLE>>();
+        mHandlersCache->resize(realNumDescriptors);
 
-    D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-    desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-    desc.NumDescriptors = realNumDescriptors;
-    desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-    ThrowIfFailed(device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&mSRVHeap)));
+        mOffsets.resize(framesInFlight);
 
-    mIncrementalDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-}
+        D3D12_DESCRIPTOR_HEAP_DESC desc = {};
+        desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+        desc.NumDescriptors = realNumDescriptors;
+        desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+        ThrowIfFailed(device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&mSRVHeap)));
 
-D3D12_GPU_DESCRIPTOR_HANDLE ImGuiDescriptorAllocator::StageDescriptor(uint32 frameIndex, D3D12_CPU_DESCRIPTOR_HANDLE descriptor)
-{
-    uint32 frameOffset = mOffsets[frameIndex];
+        mIncrementalDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    }
 
-    assert(frameOffset < mNumDescriptors);
+    D3D12_GPU_DESCRIPTOR_HANDLE ImGuiDescriptorAllocator::StageDescriptor(uint32 frameIndex, D3D12_CPU_DESCRIPTOR_HANDLE descriptor)
+    {
+        uint32 frameOffset = mOffsets[frameIndex];
 
-    auto heapOffset = static_cast<uint32>(ImguiReservedDescriptors + frameOffset + frameIndex * mNumDescriptors);
+        assert(frameOffset < mNumDescriptors);
 
-    D3D12_GPU_DESCRIPTOR_HANDLE handle{
-        mSRVHeap->GetGPUDescriptorHandleForHeapStart().ptr + heapOffset * mIncrementalDescriptorSize};
+        auto heapOffset = static_cast<uint32>(ImguiReservedDescriptors + frameOffset + frameIndex * mNumDescriptors);
 
-    mHandlersCache->at(heapOffset) = descriptor;
-    ++mOffsets[frameIndex];
+        D3D12_GPU_DESCRIPTOR_HANDLE handle{
+            mSRVHeap->GetGPUDescriptorHandleForHeapStart().ptr + heapOffset * mIncrementalDescriptorSize};
 
-    return handle;
-}
+        mHandlersCache->at(heapOffset) = descriptor;
+        ++mOffsets[frameIndex];
 
-void ImGuiDescriptorAllocator::CopyStagedDescriptors(uint32 frameIndex)
-{
-    uint32 numDescriptors = mOffsets[frameIndex];
-    uint32 handleOffset = ImguiReservedDescriptors + frameIndex * mNumDescriptors;
-    D3D12_CPU_DESCRIPTOR_HANDLE mCurrentCpuHandle{
-        mSRVHeap->GetCPUDescriptorHandleForHeapStart().ptr + handleOffset * mIncrementalDescriptorSize};
+        return handle;
+    }
 
-    D3D12_CPU_DESCRIPTOR_HANDLE *srcDescriptor = mHandlersCache->data() + handleOffset;
+    void ImGuiDescriptorAllocator::CopyStagedDescriptors(uint32 frameIndex)
+    {
+        uint32 numDescriptors = mOffsets[frameIndex];
+        uint32 handleOffset = ImguiReservedDescriptors + frameIndex * mNumDescriptors;
+        D3D12_CPU_DESCRIPTOR_HANDLE mCurrentCpuHandle{
+            mSRVHeap->GetCPUDescriptorHandleForHeapStart().ptr + handleOffset * mIncrementalDescriptorSize};
 
-    mDevice->CopyDescriptors(1, &mCurrentCpuHandle, &numDescriptors, numDescriptors, srcDescriptor, nullptr, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-}
+        D3D12_CPU_DESCRIPTOR_HANDLE *srcDescriptor = mHandlersCache->data() + handleOffset;
 
-void ImGuiDescriptorAllocator::Reset(uint32 frameIndex)
-{
-    mOffsets[frameIndex] = 0;
-}
+        mDevice->CopyDescriptors(1, &mCurrentCpuHandle, &numDescriptors, numDescriptors, srcDescriptor, nullptr, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    }
+
+    void ImGuiDescriptorAllocator::Reset(uint32 frameIndex)
+    {
+        mOffsets[frameIndex] = 0;
+    }
+
+} // namespace Engine

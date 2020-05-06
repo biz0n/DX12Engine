@@ -4,22 +4,27 @@
 #include <vector>
 #include <d3d12.h>
 
-
-class CommandListContext
+namespace Engine
 {
-private:
-    std::vector<ComPtr<ID3D12Resource>> mTrackedResources;
-public:
-    CommandListContext(){}
-    ~CommandListContext(){}
 
-    void TrackResource(ComPtr<ID3D12Resource> resource)
+    class CommandListContext
     {
-        mTrackedResources.emplace_back(resource);
-    }
+    private:
+        std::vector<ComPtr<ID3D12Resource>> mTrackedResources;
 
-    void ClearResources()
-    {
-        mTrackedResources.clear();
-    }
-};
+    public:
+        CommandListContext() {}
+        ~CommandListContext() {}
+
+        void TrackResource(ComPtr<ID3D12Resource> resource)
+        {
+            mTrackedResources.emplace_back(resource);
+        }
+
+        void ClearResources()
+        {
+            mTrackedResources.clear();
+        }
+    };
+
+} // namespace Engine

@@ -2,30 +2,35 @@
 
 #include <Types.h>
 
-class Timer
+namespace Engine
 {
-public:
-    Timer();
 
-    float32 TotalTime() const;
-    float32 DeltaTime() const;
+    class Timer
+    {
+    public:
+        Timer();
 
-    void Start();
-    void Stop();
-    void Reset();
-    void Tick();
+        float32 TotalTime() const;
+        float32 DeltaTime() const;
 
-    bool IsPaused() const { return mPaused; }
+        void Start();
+        void Stop();
+        void Reset();
+        void Tick();
 
-private:
-    float64 mSecondsPerCount;
-    float64 mDeltaTime;
+        bool IsPaused() const { return mPaused; }
 
-    int64 mBaseTime;
-    int64 mPausedTime;
-    int64 mStopTime;
-    int64 mPrevTime;
-    int64 mCurrTime;
+    private:
+        float64 mSecondsPerCount;
+        float64 mDeltaTime;
 
-    bool mPaused;
-};
+        int64 mBaseTime;
+        int64 mPausedTime;
+        int64 mStopTime;
+        int64 mPrevTime;
+        int64 mCurrTime;
+
+        bool mPaused;
+    };
+
+} // namespace Engine

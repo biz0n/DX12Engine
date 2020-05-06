@@ -1,19 +1,24 @@
 #include "Buffer.h"
 
-Buffer::Buffer(const std::wstring &name)
-    : Resource(name)
+namespace Engine
 {
-}
 
-Buffer::~Buffer()
-{
-    mBuffer.clear();
-}
+    Buffer::Buffer(const std::wstring &name)
+        : Resource(name)
+    {
+    }
 
-void Buffer::SetData(Size elementsCount, Size elementSize, const std::vector<Byte> &data)
-{
-    mElementsCount = elementsCount;
-    mElementSize = elementSize;
+    Buffer::~Buffer()
+    {
+        mBuffer.clear();
+    }
 
-    mBuffer = std::move(data);
-}
+    void Buffer::SetData(Size elementsCount, Size elementSize, const std::vector<Byte> &data)
+    {
+        mElementsCount = elementsCount;
+        mElementSize = elementSize;
+
+        mBuffer = std::move(data);
+    }
+
+} // namespace Engine

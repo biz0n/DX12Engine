@@ -1,9 +1,14 @@
 #include "IGame.h"
 
-IGame::IGame(App *app) : mApp(app)
+namespace Engine
 {
-}
 
-IGame::~IGame()
-{
-}
+    IGame::IGame(App *app) : mApp(app)
+    {
+    }
+
+    IGame::~IGame()
+    {
+    }
+
+} // namespace Engine

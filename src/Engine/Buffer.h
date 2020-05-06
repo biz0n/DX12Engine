@@ -5,36 +5,41 @@
 
 #include <vector>
 
-class Buffer : public Resource
+namespace Engine
 {
-public:
-    Buffer(const std::wstring &name);
-    virtual ~Buffer();
-    virtual void CreateViews() = 0;
 
-    template <typename T>
-    void SetData(const std::vector<T> &data)
+    class Buffer : public Resource
     {
-        mElementsCount = data.size();
-        mElementSize = sizeof(T);
-        Size size = mElementSize * mElementsCount;
-        
-        mBuffer.reserve(size);
+    public:
+        Buffer(const std::wstring &name);
+        virtual ~Buffer();
+        virtual void CreateViews() = 0;
 
-        memcpy(mBuffer.data(), data.data(), size);
-    }
+        template <typename T>
+        void SetData(const std::vector<T> &data)
+        {
+            mElementsCount = data.size();
+            mElementSize = sizeof(T);
+            Size size = mElementSize * mElementsCount;
 
-    void SetData(Size elementsCount, Size elementSize, const std::vector<Byte>& data);
+            mBuffer.reserve(size);
 
-    Size GetElementsCount() const { return mElementsCount; }
-    Size GetElementSize() const { return mElementSize; }
+            memcpy(mBuffer.data(), data.data(), size);
+        }
 
-    const void *GetData() const { return mBuffer.data(); }
+        void SetData(Size elementsCount, Size elementSize, const std::vector<Byte> &data);
 
-protected:
-    Size mElementsCount;
-    Size mElementSize;
+        Size GetElementsCount() const { return mElementsCount; }
+        Size GetElementSize() const { return mElementSize; }
 
-private:
-    std::vector<Byte> mBuffer;
-};
+        const void *GetData() const { return mBuffer.data(); }
+
+    protected:
+        Size mElementsCount;
+        Size mElementSize;
+
+    private:
+        std::vector<Byte> mBuffer;
+    };
+
+} // namespace Engine

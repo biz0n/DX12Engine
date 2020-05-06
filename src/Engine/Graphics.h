@@ -7,25 +7,30 @@
 #include <dxgi1_6.h>
 #include <Types.h>
 
-class Graphics
+namespace Engine
 {
-public:
-    Graphics();
-    ~Graphics();
 
-    Graphics(const Graphics &) = delete;
-    Graphics &operator=(const Graphics &) = delete;
+    class Graphics
+    {
+    public:
+        Graphics();
+        ~Graphics();
 
-    inline ComPtr<ID3D12Device2> GetDevice() const { return device; }
-    inline ComPtr<IDXGIFactory4> GetGIFactory() const { return dxgiFactory; }
-    inline bool IsTearingSupported() const { return isTearingSupported; }
+        Graphics(const Graphics &) = delete;
+        Graphics &operator=(const Graphics &) = delete;
 
-private:
-    bool CheckTearing();
+        inline ComPtr<ID3D12Device2> GetDevice() const { return device; }
+        inline ComPtr<IDXGIFactory4> GetGIFactory() const { return dxgiFactory; }
+        inline bool IsTearingSupported() const { return isTearingSupported; }
 
-private:
-    Microsoft::WRL::ComPtr<ID3D12Device2> device;
-    Microsoft::WRL::ComPtr<IDXGIFactory4> dxgiFactory;
+    private:
+        bool CheckTearing();
 
-    bool isTearingSupported;
-};
+    private:
+        Microsoft::WRL::ComPtr<ID3D12Device2> device;
+        Microsoft::WRL::ComPtr<IDXGIFactory4> dxgiFactory;
+
+        bool isTearingSupported;
+    };
+
+} // namespace Engine
