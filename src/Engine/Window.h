@@ -8,7 +8,6 @@
 
 namespace Engine
 {
-
     class Window
     {
     private:

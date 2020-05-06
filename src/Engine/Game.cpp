@@ -14,7 +14,6 @@
 
 namespace Engine
 {
-
     Game::Game(App *app)
         : IGame(app)
     {
@@ -262,7 +261,7 @@ namespace Engine
 
         float m_FoV = 45;
         float aspectRatio = Graphics().GetWidth() / static_cast<float>(Graphics().GetHeight());
-        mProjectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_FoV), aspectRatio, 0.1f, 100.0f);
+        mProjectionMatrix = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(m_FoV), aspectRatio, 0.1f, 100.0f);
 
         const float32 speed = 5 * time.DeltaTime();
         const float32 rotationSpeed = 1.0f * time.DeltaTime();
@@ -310,9 +309,9 @@ namespace Engine
             return;
         }
 
-        XMMATRIX tWorld = DirectX::XMMatrixTranspose(node->GetWorldTransform());
+        DirectX::XMMATRIX tWorld = DirectX::XMMatrixTranspose(node->GetWorldTransform());
         auto d = DirectX::XMMatrixDeterminant(tWorld);
-        XMMATRIX tWorldInverseTranspose = DirectX::XMMatrixInverse(&d, tWorld);
+        DirectX::XMMATRIX tWorldInverseTranspose = DirectX::XMMatrixInverse(&d, tWorld);
         tWorldInverseTranspose = DirectX::XMMatrixTranspose(tWorldInverseTranspose);
         MeshUniform cb;
         DirectX::XMStoreFloat4x4(&cb.World, tWorld);
@@ -425,7 +424,7 @@ namespace Engine
 
         mDynamicDescriptorHeaps[Graphics().GetCurrentBackBufferIndex()]->ParseRootSignature(mRootSignature.get());
 
-        XMMATRIX mvpMatrix = DirectX::XMMatrixMultiply(mViewMatrix, mProjectionMatrix);
+        DirectX::XMMATRIX mvpMatrix = DirectX::XMMatrixMultiply(mViewMatrix, mProjectionMatrix);
         mvpMatrix = DirectX::XMMatrixTranspose(mvpMatrix);
 
         FrameUniform cb = {};

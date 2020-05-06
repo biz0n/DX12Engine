@@ -4,7 +4,6 @@
 
 namespace Engine
 {
-
     IndexBuffer::IndexBuffer(const std::wstring &name)
         : Buffer(name)
     {

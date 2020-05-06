@@ -5,7 +5,6 @@
 
 namespace Engine
 {
-
     class DxException
     {
     public:

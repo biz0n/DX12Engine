@@ -7,7 +7,6 @@
 
 namespace Engine
 {
-
     class Buffer : public Resource
     {
     public:

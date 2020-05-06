@@ -2,7 +2,6 @@
 
 namespace Engine
 {
-
     VertexBuffer::VertexBuffer(const std::wstring &name)
         : Buffer(name)
     {

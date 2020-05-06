@@ -10,7 +10,6 @@
 
 namespace Engine::Scene
 {
-
     class Image
     {
     public:

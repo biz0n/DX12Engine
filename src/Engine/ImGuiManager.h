@@ -10,7 +10,6 @@
 
 namespace Engine
 {
-
     class Texture;
     class ImGuiDescriptorAllocator;
 

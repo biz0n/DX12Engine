@@ -6,7 +6,6 @@
 
 namespace Engine
 {
-
     class VertexBuffer : public Buffer
     {
     public:

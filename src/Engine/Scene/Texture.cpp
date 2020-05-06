@@ -2,7 +2,6 @@
 
 namespace Engine
 {
-
     Texture::Texture(const std::wstring &name)
         : Resource(name)
     {

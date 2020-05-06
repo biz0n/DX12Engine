@@ -2,7 +2,6 @@
 
 namespace Engine
 {
-
     Buffer::Buffer(const std::wstring &name)
         : Resource(name)
     {

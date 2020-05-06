@@ -6,7 +6,6 @@
 
 namespace Engine
 {
-
     DynamicDescriptHeap::DynamicDescriptHeap(D3D12_DESCRIPTOR_HEAP_TYPE heapType, uint32 descriptorHandleIncrementSize, uint32 descriptorsPerHeap)
         : mDescriptorHeapType(heapType), mDescriptorHandleIncrementSize(descriptorHandleIncrementSize), mDescriptorsPerHeap(descriptorsPerHeap)
     {

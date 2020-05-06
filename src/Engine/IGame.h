@@ -7,7 +7,6 @@
 
 namespace Engine
 {
-
     class IGame : public std::enable_shared_from_this<IGame>
     {
     public:

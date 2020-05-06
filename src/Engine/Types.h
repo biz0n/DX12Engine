@@ -8,6 +8,10 @@
 #include <tchar.h>
 #include <wrl.h>
 
+namespace DirectX{}
+
+namespace dx = DirectX;
+
 using int8 = int8_t;
 using int16 = int16_t;
 using int32 = int32_t;

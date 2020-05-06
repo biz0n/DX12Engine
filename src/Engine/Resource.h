@@ -5,7 +5,6 @@
 
 namespace Engine
 {
-
     class Resource
     {
     public:

@@ -7,7 +7,6 @@
 
 namespace Engine
 {
-
     App::App() : mFenceValue(0)
     {
         window = MakeUnique<Window>(800, 600, TEXT("d3d12"));

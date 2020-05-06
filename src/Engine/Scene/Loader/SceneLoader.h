@@ -26,7 +26,6 @@ struct aiLight;
 
 namespace Engine
 {
-
     struct Vertex
     {
         DirectX::XMFLOAT3 Vertex;

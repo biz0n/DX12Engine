@@ -3,7 +3,6 @@
 
 namespace Engine
 {
-
     DxException::DxException(HRESULT hr, const TString &functionName, const TString &filename, int lineNumber) : ErrorCode(hr),
                                                                                                                  FunctionName(functionName),
                                                                                                                  Filename(filename),

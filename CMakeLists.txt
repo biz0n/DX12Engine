@@ -42,6 +42,8 @@ set_property(TARGET d3d12 PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE
 
 target_include_directories(d3d12 PRIVATE "src/Engine")
 
+target_include_directories(d3d12 PRIVATE "src/Libraries/D3DX12/")
+
 target_include_directories(d3d12 PRIVATE "src/Libraries/imgui/")
 
 target_link_libraries(d3d12 PRIVATE "d3d12.lib" "dxgi.lib" "d3dcompiler.lib" "assimp" "DirectXTex")

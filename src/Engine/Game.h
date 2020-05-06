@@ -15,7 +15,6 @@
 
 namespace Engine
 {
-
     class CommandListContext;
 
     class Game : public IGame
@@ -79,9 +78,9 @@ namespace Engine
         D3D12_VIEWPORT mScreenViewport;
         D3D12_RECT mScissorRect;
 
-        XMMATRIX mModelMatrix;
-        XMMATRIX mViewMatrix;
-        XMMATRIX mProjectionMatrix;
+        DirectX::XMMATRIX mModelMatrix;
+        DirectX::XMMATRIX mViewMatrix;
+        DirectX::XMMATRIX mProjectionMatrix;
 
         UniquePtr<SceneObject> loadedScene;
 

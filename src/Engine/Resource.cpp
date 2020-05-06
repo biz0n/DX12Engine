@@ -2,7 +2,6 @@
 
 namespace Engine
 {
-
     Resource::Resource(const std::wstring &name)
     {
         mResourceName = name;

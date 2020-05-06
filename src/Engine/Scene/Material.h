@@ -6,7 +6,6 @@
 
 namespace Engine
 {
-
     enum AlphaMode
     {
         Opaque,

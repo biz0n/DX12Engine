@@ -5,7 +5,6 @@
 
 namespace Engine
 {
-
     UploadBuffer::UploadBuffer(ID3D12Device *device, Size size)
         : mOffset(0), mSize(size)
     {

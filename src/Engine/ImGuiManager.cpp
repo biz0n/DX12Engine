@@ -9,7 +9,6 @@
 
 namespace Engine
 {
-
     ImGuiManager::ImGuiManager(ComPtr<ID3D12Device> device, uint32 numFramesInFlight, DXGI_FORMAT rtvFormat)
         : mDevice(device), mNumFramesInFlight(numFramesInFlight), mCurrentFrameIndex(0)
     {

@@ -9,7 +9,6 @@
 
 namespace Engine
 {
-
     class DescriptorAllocation
     {
     public:

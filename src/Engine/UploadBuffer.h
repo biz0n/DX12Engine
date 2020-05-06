@@ -5,7 +5,6 @@
 
 namespace Engine
 {
-
     class UploadBuffer
     {
     public:

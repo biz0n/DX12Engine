@@ -2,7 +2,6 @@
 
 namespace Engine
 {
-
     Material::Material()
     {
     }

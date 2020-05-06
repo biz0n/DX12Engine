@@ -8,7 +8,6 @@
 
 namespace Engine
 {
-
     class Camera
     {
     public:
@@ -20,6 +19,8 @@ namespace Engine
 
         DirectX::XMMATRIX GetMatrix() const
         {
+            using namespace DirectX;
+
             const DirectX::XMVECTOR forwardDirection = {0.0f, 0.0f, 1.0f, 0.0f};
             const auto lookVector = DirectX::XMVector4Transform(
                 forwardDirection,
@@ -39,6 +40,8 @@ namespace Engine
 
         DirectX::XMFLOAT3 GetTarget() const
         {
+            using namespace DirectX;
+
             const DirectX::XMVECTOR forwardDirection = {0.0f, 0.0f, 1.0f, 0.0f};
             const auto lookVector = DirectX::XMVector4Transform(
                 forwardDirection,
@@ -69,6 +72,7 @@ namespace Engine
 
         void Translate(DirectX::XMFLOAT3 translate)
         {
+            using namespace DirectX;
             auto newPosition = DirectX::XMVector3Transform(
                 DirectX::XMLoadFloat3(&translate),
                 DirectX::XMMatrixRotationRollPitchYaw(mPitch, mYaw, 0.0f));

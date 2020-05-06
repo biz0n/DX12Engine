@@ -14,7 +14,6 @@
 
 namespace Engine
 {
-
     UniquePtr<SceneObject> SceneLoader::LoadScene(String path, float32 scale)
     {
         std::filesystem::path filePath = path;

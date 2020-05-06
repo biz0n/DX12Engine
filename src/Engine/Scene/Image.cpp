@@ -4,7 +4,6 @@
 
 namespace Engine::Scene
 {
-
     SharedPtr<Image> Image::LoadImageFromFile(String path, bool generateMips)
     {
         std::filesystem::path filename = path;

@@ -9,7 +9,6 @@
 
 namespace Engine
 {
-
     class DynamicDescriptHeap
     {
     public:

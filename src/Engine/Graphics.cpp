@@ -3,7 +3,6 @@
 
 namespace Engine
 {
-
     Graphics::Graphics() : isTearingSupported(false)
     {
 #if defined(DEBUG) || defined(_DEBUG)

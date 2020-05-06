@@ -2,7 +2,6 @@
 
 namespace Engine
 {
-
     IGame::IGame(App *app) : mApp(app)
     {
     }

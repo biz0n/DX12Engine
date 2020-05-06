@@ -7,7 +7,6 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 
 namespace Engine
 {
-
     Window::WindowClass Window::WindowClass::wndClass;
 
     Window::WindowClass::WindowClass() noexcept : hInst(GetModuleHandle(nullptr))
