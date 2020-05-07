@@ -14,5 +14,11 @@ CMakeSettings.json
 imgui.ini
 .vs
 .vscode
-build
+build*/
 out
+bin
+/src/Engine/Resources/Scenes/*
+!/src/Engine/Resources/Scenes/gltf2
+/src/Engine/Resources/Scenes/gltf2/*
+!/src/Engine/Resources/Scenes/gltf2/sponza
+
