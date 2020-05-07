@@ -24,7 +24,7 @@ struct aiTexture;
 struct aiString;
 struct aiLight;
 
-namespace Engine
+namespace Engine::Scene
 {
     struct Vertex
     {
@@ -117,10 +117,7 @@ namespace Engine
         float mOuterConeAngle;
     };
 
-    namespace Scene
-    {
-        class Image;
-    }
+    class Image;
 
     class SceneObject
     {
@@ -129,30 +126,32 @@ namespace Engine
 
         std::vector<UniquePtr<LightNode>> lights;
     };
-
-    class SceneLoader
+    namespace Loader
     {
-    private:
-        struct LoadingContext
+        class SceneLoader
         {
-            String RootPath;
-            std::vector<SharedPtr<Mesh>> meshes;
-            std::vector<SharedPtr<Material>> materials;
-            std::vector<SharedPtr<Texture>> textures;
-            std::unordered_map<String, SharedPtr<Scene::Image>> images;
-            std::unordered_map<String, aiLight *> lightsMap;
-        };
+        private:
+            struct LoadingContext
+            {
+                String RootPath;
+                std::vector<SharedPtr<Mesh>> meshes;
+                std::vector<SharedPtr<Material>> materials;
+                std::vector<SharedPtr<Texture>> textures;
+                std::unordered_map<String, SharedPtr<Scene::Image>> images;
+                std::unordered_map<String, aiLight *> lightsMap;
+            };
 
-    public:
-        UniquePtr<SceneObject> LoadScene(String path, float32 scale);
+        public:
+            UniquePtr<SceneObject> LoadScene(String path, float32 scale);
 
-    private:
-        void ParseNode(const aiScene *aScene, aiNode *aNode, SceneObject *scene, Node *parentNode, const LoadingContext &context);
-        SharedPtr<Texture> GetTexture(const aiString &path, LoadingContext &context);
-        SharedPtr<Texture> GetTexture(const aiTexture *aTexture, const LoadingContext &context);
-        SharedPtr<Material> ParseMaterial(const aiMaterial *aMaterial, LoadingContext &context);
-        SharedPtr<Mesh> ParseMesh(const aiMesh *aMesh, const LoadingContext &context);
-        UniquePtr<LightNode> ParseLight(const aiLight *aLight, const LoadingContext &context);
-    };
+        private:
+            void ParseNode(const aiScene *aScene, aiNode *aNode, SceneObject *scene, Node *parentNode, const LoadingContext &context);
+            SharedPtr<Texture> GetTexture(const aiString &path, LoadingContext &context);
+            SharedPtr<Texture> GetTexture(const aiTexture *aTexture, const LoadingContext &context);
+            SharedPtr<Material> ParseMaterial(const aiMaterial *aMaterial, LoadingContext &context);
+            SharedPtr<Mesh> ParseMesh(const aiMesh *aMesh, const LoadingContext &context);
+            UniquePtr<LightNode> ParseLight(const aiLight *aLight, const LoadingContext &context);
+        }; // namespace LoaderclassSceneLoader
 
-} // namespace Engine
+    } // namespace Loader
+} // namespace Engine::Scene

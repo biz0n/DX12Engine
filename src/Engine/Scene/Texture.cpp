@@ -1,6 +1,6 @@
 #include "Texture.h"
 
-namespace Engine
+namespace Engine::Scene
 {
     Texture::Texture(const std::wstring &name)
         : Resource(name)
@@ -11,4 +11,4 @@ namespace Engine
     {
     }
 
-} // namespace Engine
+} // namespace Engine::Scene

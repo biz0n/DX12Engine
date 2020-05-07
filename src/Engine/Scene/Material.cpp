@@ -1,6 +1,6 @@
 #include "Material.h"
 
-namespace Engine
+namespace Engine::Scene
 {
     Material::Material()
     {
@@ -10,4 +10,4 @@ namespace Engine
     {
     }
 
-} // namespace Engine
+} // namespace Engine::Scene

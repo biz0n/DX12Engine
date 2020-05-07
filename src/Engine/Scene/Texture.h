@@ -5,12 +5,9 @@
 
 #include <vector>
 
-namespace Engine
+namespace Engine::Scene
 {
-    namespace Scene
-    {
-        class Image;
-    }
+    class Image;
 
     class Texture : public Resource
     {
@@ -35,4 +32,4 @@ namespace Engine
         SharedPtr<Scene::Image> mImage;
     };
 
-} // namespace Engine
+} // namespace Engine::Scene

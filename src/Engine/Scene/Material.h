@@ -4,7 +4,7 @@
 #include <Scene/Texture.h>
 #include <DirectXMath.h>
 
-namespace Engine
+namespace Engine::Scene
 {
     enum AlphaMode
     {
@@ -95,4 +95,4 @@ namespace Engine
         SharedPtr<Texture> mEmissiveTexture;
     };
 
-} // namespace Engine
+} // namespace Engine::Scene

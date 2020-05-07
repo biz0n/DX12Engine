@@ -29,7 +29,7 @@ namespace Engine
         isInitializing = true;
         auto commandList = Graphics().GetCommandList();
 
-        SceneLoader loader;
+        Scene::Loader::SceneLoader loader;
         //loadedScene = loader.LoadScene("Resources\\Scenes\\sponza2\\sponza.obj", 0.03f);
         loadedScene = loader.LoadScene("Resources\\Scenes\\gltf2\\sponza\\sponza.gltf", 1.0f);
         //loadedScene = loader.LoadScene("Resources\\Scenes\\gltf2\\axis.gltf", 1.0f);
@@ -112,7 +112,7 @@ namespace Engine
 
         ComPtr<ID3DBlob> vertexShaderBlob = Utils::CompileShader(L"Resources\\Shaders\\Shader.hlsl", nullptr, "mainVS", "vs_5_1");
 
-        auto inputLayout = Vertex::GetInputLayout();
+        auto inputLayout = Scene::Vertex::GetInputLayout();
 
         CD3DX12_DESCRIPTOR_RANGE1 texTable1;
         texTable1.Init(
@@ -221,7 +221,7 @@ namespace Engine
         }
     }
 
-    void Game::UploadMeshes(ComPtr<ID3D12GraphicsCommandList> commandList, Node *node, CommandListContext &commandListContext)
+    void Game::UploadMeshes(ComPtr<ID3D12GraphicsCommandList> commandList, Scene::Node *node, CommandListContext &commandListContext)
     {
         for (auto &mesh : node->mMeshes)
         {
@@ -302,7 +302,7 @@ namespace Engine
         }
     }
 
-    void Game::Draw(ComPtr<ID3D12GraphicsCommandList> commandList, Node *node, UploadBuffer *buffer)
+    void Game::Draw(ComPtr<ID3D12GraphicsCommandList> commandList, Scene::Node *node, UploadBuffer *buffer)
     {
         if (isInitializing)
         {
@@ -327,7 +327,7 @@ namespace Engine
 
         for (auto &mesh : node->mMeshes)
         {
-            MaterialProperties properties = mesh->material->GetProperties();
+            Scene::MaterialProperties properties = mesh->material->GetProperties();
             MaterialUniform uniform = RenderUtils::GetMaterialUniform(mesh->material.get());
 
             auto matAllocation = buffer->Allocate(sizeof(MaterialUniform));
@@ -436,7 +436,7 @@ namespace Engine
         lights.reserve(loadedScene->lights.size());
         for (uint32 i = 0; i < loadedScene->lights.size(); ++i)
         {
-            LightNode *lightNode = loadedScene->lights[i].get();
+            Scene::LightNode *lightNode = loadedScene->lights[i].get();
             LightUniform light = RenderUtils::GetLightUniform(lightNode);
 
             lights.emplace_back(light);

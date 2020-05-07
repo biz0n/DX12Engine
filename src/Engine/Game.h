@@ -46,8 +46,8 @@ namespace Engine
 
         void ResizeDepthBuffer(int32 width, int32 height);
 
-        void Draw(ComPtr<ID3D12GraphicsCommandList> commandList, Node *node, UploadBuffer *buffer);
-        void UploadMeshes(ComPtr<ID3D12GraphicsCommandList> commandList, Node *node, CommandListContext &commandListContext);
+        void Draw(ComPtr<ID3D12GraphicsCommandList> commandList, Scene::Node *node, UploadBuffer *buffer);
+        void UploadMeshes(ComPtr<ID3D12GraphicsCommandList> commandList, Scene::Node *node, CommandListContext &commandListContext);
 
         DescriptorAllocation AllocateDescriptor(D3D12_DESCRIPTOR_HEAP_TYPE heapType, uint32 count = 1)
         {
@@ -82,7 +82,7 @@ namespace Engine
         DirectX::XMMATRIX mViewMatrix;
         DirectX::XMMATRIX mProjectionMatrix;
 
-        UniquePtr<SceneObject> loadedScene;
+        UniquePtr<Scene::SceneObject> loadedScene;
 
         Camera mCamera{{0.0f, 2.0f, 0.0f}, 0.0f, Math::PI / 2};
 

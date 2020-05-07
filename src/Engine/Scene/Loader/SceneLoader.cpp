@@ -12,7 +12,7 @@
 
 #include <DirectXTex.h>
 
-namespace Engine
+namespace Engine::Scene::Loader
 {
     UniquePtr<SceneObject> SceneLoader::LoadScene(String path, float32 scale)
     {
@@ -430,4 +430,4 @@ namespace Engine
         return light;
     }
 
-} // namespace Engine
+} // namespace Engine::Scene::Loader

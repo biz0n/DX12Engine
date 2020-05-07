@@ -63,7 +63,7 @@ namespace Engine::RenderUtils
         commandListContext.TrackResource(intermediateResource);
     }
 
-    void UploadTexture(ComPtr<ID3D12Device> device, ComPtr<ID3D12GraphicsCommandList> commandList, Texture &texture, CommandListContext &commandListContext)
+    void UploadTexture(ComPtr<ID3D12Device> device, ComPtr<ID3D12GraphicsCommandList> commandList, Scene::Texture &texture, CommandListContext &commandListContext)
     {
         std::filesystem::path filename = texture.GetName();
 
@@ -137,7 +137,7 @@ namespace Engine::RenderUtils
         commandList->IASetIndexBuffer(&indexBuffer.GetIndexBufferView());
     }
 
-    LightUniform GetLightUniform(const LightNode *lightNode)
+    LightUniform GetLightUniform(const Scene::LightNode *lightNode)
     {
         LightUniform light = {};
 
@@ -167,9 +167,9 @@ namespace Engine::RenderUtils
         return light;
     }
 
-    MaterialUniform GetMaterialUniform(const Material *material)
+    MaterialUniform GetMaterialUniform(const Scene::Material *material)
     {
-        MaterialProperties properties = material->GetProperties();
+        Scene::MaterialProperties properties = material->GetProperties();
         MaterialUniform uniform = {};
         uniform.Diffuse = properties.albedo.baseColor;
         uniform.Emissive = {properties.emissive.factor.x, properties.emissive.factor.y, properties.emissive.factor.z, 1.0f};
