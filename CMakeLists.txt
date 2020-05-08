@@ -30,13 +30,16 @@ set(GUI_TYPE WIN32)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /UMBCS /D_UNICODE /DUNICODE")
 set(CMAKE_CXX_STANDARD 17)
 
-file(GLOB IMGUI "src/Libraries/imgui/imgui/*.cpp")
+file(GLOB IMGUI "src/Libraries/imgui/imgui/*.cpp" "src/Libraries/imgui/imgui/*.h")
 
-aux_source_directory("src/Engine/" SOURCES)
-aux_source_directory("src/Engine/Scene" SOURCES)
-aux_source_directory("src/Engine/Scene/Loader" SOURCES)
+file(GLOB_RECURSE HEADERS "src/Engine/*.h")
+file(GLOB_RECURSE SOURCES "src/Engine/*.cpp")
 
-add_executable(d3d12 WIN32 ${SOURCES} ${IMGUI})
+#aux_source_directory("src/Engine/" SOURCES)
+#aux_source_directory("src/Engine/Scene" SOURCES)
+#aux_source_directory("src/Engine/Scene/Loader" SOURCES)
+
+add_executable(d3d12 WIN32 ${SOURCES} ${HEADERS} ${IMGUI})
 
 set_property(TARGET d3d12 PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}\\src\\Engine")
 
@@ -59,3 +62,19 @@ set_source_files_properties( src/Engine/Resources/Shaders/PixelShader.hlsl PROPE
     VS_SHADER_MODEL 5.1
     VS_SHADER_ENTRYPOINT main
 )
+
+function(assign_source_group)
+    foreach(_source IN ITEMS ${ARGN})
+        if (IS_ABSOLUTE "${_source}")
+            file(RELATIVE_PATH _source_rel ${ARGV0} "${_source}")
+        else()
+            set(_source_rel "${_source}")
+        endif()
+        get_filename_component(_source_path "${_source_rel}" PATH)
+        string(REPLACE "/" "\\" _source_path_msvc "${_source_path}")
+        source_group("${_source_path_msvc}" FILES "${_source}")
+    endforeach()
+endfunction(assign_source_group)
+
+assign_source_group("${CMAKE_CURRENT_SOURCE_DIR}/src/Engine" ${SOURCES} ${HEADERS})
+assign_source_group("${CMAKE_CURRENT_SOURCE_DIR}/src/Libraries/imgui" ${IMGUI})

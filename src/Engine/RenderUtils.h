@@ -6,7 +6,7 @@
 #include <IndexBuffer.h>
 #include <ShaderTypes.h>
 
-#include <Scene/Loader/SceneLoader.h>
+#include <Scene/SceneForwards.h>
 #include <CommandListContext.h>
 
 #include <d3d12.h>

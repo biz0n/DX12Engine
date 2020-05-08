@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Types.h>
-#include <Scene/Texture.h>
+#include <Scene/SceneForwards.h>
 #include <DirectXMath.h>
 
 namespace Engine::Scene

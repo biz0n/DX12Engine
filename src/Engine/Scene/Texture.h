@@ -2,13 +2,12 @@
 
 #include <Resource.h>
 #include <DescriptorAllocator.h>
+#include <Scene/SceneForwards.h>
 
 #include <vector>
 
 namespace Engine::Scene
 {
-    class Image;
-
     class Texture : public Resource
     {
     public:

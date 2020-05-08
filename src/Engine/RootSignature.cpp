@@ -1,6 +1,6 @@
 #include "RootSignature.h"
 
-#include "Exceptions.h"
+#include <Exceptions.h>
 
 namespace Engine
 {

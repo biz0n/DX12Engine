@@ -2,7 +2,7 @@
 
 #include <IGame.h>
 #include <UploadBuffer.h>
-#include <Scene/Loader/SceneLoader.h>
+#include <Scene/SceneForwards.h>
 #include <Camera.h>
 #include <Types.h>
 #include <RootSignature.h>
@@ -46,8 +46,8 @@ namespace Engine
 
         void ResizeDepthBuffer(int32 width, int32 height);
 
-        void Draw(ComPtr<ID3D12GraphicsCommandList> commandList, Scene::Node *node, UploadBuffer *buffer);
-        void UploadMeshes(ComPtr<ID3D12GraphicsCommandList> commandList, Scene::Node *node, CommandListContext &commandListContext);
+        void Draw(ComPtr<ID3D12GraphicsCommandList> commandList, const SharedPtr<Scene::MeshNode>& node, UploadBuffer *buffer);
+        void UploadMeshes(ComPtr<ID3D12GraphicsCommandList> commandList, const SharedPtr<Scene::MeshNode>& node, CommandListContext &commandListContext);
 
         DescriptorAllocation AllocateDescriptor(D3D12_DESCRIPTOR_HEAP_TYPE heapType, uint32 count = 1)
         {

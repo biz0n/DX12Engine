@@ -2,6 +2,7 @@
 
 #include <Types.h>
 #include <Exceptions.h>
+#include <Scene/SceneForwards.h>
 
 #include <imgui/imgui.h>
 
@@ -10,7 +11,6 @@
 
 namespace Engine
 {
-    class Texture;
     class ImGuiDescriptorAllocator;
 
     class ImGuiManager

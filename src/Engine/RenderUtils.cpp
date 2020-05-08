@@ -1,11 +1,14 @@
 #include "RenderUtils.h"
 
-#include "Utils.h"
-#include "Exceptions.h"
+#include <Utils.h>
+#include <Exceptions.h>
 #include <d3dx12.h>
 
 #include <Scene/Loader/SceneLoader.h>
 #include <Scene/Image.h>
+#include <Scene/Texture.h>
+#include <Scene/LightNode.h>
+#include <Scene/Material.h>
 
 #include <DirectXTex.h>
 #include <DirectXMath.h>

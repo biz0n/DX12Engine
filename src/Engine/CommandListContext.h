@@ -6,7 +6,6 @@
 
 namespace Engine
 {
-
     class CommandListContext
     {
     private:

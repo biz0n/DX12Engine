@@ -1,12 +1,23 @@
 #include "Game.h"
-#include "Utils.h"
+
+#include <Utils.h>
 #include <stdlib.h>
-#include "ShaderTypes.h"
-#include "RenderUtils.h"
+#include <ShaderTypes.h>
+#include <RenderUtils.h>
 
-#include "RootSignature.h"
+#include <Scene/Loader/SceneLoader.h>
+#include <Scene/SceneObject.h>
+#include <Scene/Mesh.h>
+#include <Scene/Node.h>
+#include <Scene/MeshNode.h>
+#include <Scene/LightNode.h>
+#include <Scene/Material.h>
+#include <Scene/Texture.h>
+#include <Scene/Vertex.h>
 
-#include "CommandListContext.h"
+#include <RootSignature.h>
+
+#include <CommandListContext.h>
 
 #include <DirectXTex.h>
 
@@ -31,7 +42,7 @@ namespace Engine
 
         Scene::Loader::SceneLoader loader;
         //loadedScene = loader.LoadScene("Resources\\Scenes\\sponza2\\sponza.obj", 0.03f);
-        loadedScene = loader.LoadScene("Resources\\Scenes\\gltf2\\sponza\\sponza.gltf", 1.0f);
+        loadedScene = loader.LoadScene("Resources\\Scenes\\gltf2\\sponza\\sponza.gltf");
         //loadedScene = loader.LoadScene("Resources\\Scenes\\gltf2\\axis.gltf", 1.0f);
         //loadedScene = loader.LoadScene("Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\MetalRoughSpheres\\glTF\\MetalRoughSpheres.gltf", 1.0f);
         //loadedScene = loader.LoadScene("Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\MetalRoughSpheres\\glTF-Binary\\MetalRoughSpheres.glb", 1.0f);
@@ -54,7 +65,7 @@ namespace Engine
         CommandListContext commandListContext;
         for (auto &node : loadedScene->nodes)
         {
-            UploadMeshes(commandList, node.get(), commandListContext);
+            UploadMeshes(commandList, node, commandListContext);
         }
 
         for (uint32 i = 0; i < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES; ++i)
@@ -75,7 +86,7 @@ namespace Engine
 
         for (auto &node : loadedScene->nodes)
         {
-            for (auto &mesh : node->mMeshes)
+            for (auto &mesh : node->GetMeshes())
             {
                 if (mesh->material->HasAlbedoTexture())
                 {
@@ -221,9 +232,9 @@ namespace Engine
         }
     }
 
-    void Game::UploadMeshes(ComPtr<ID3D12GraphicsCommandList> commandList, Scene::Node *node, CommandListContext &commandListContext)
+    void Game::UploadMeshes(ComPtr<ID3D12GraphicsCommandList> commandList, const SharedPtr<Scene::MeshNode>& node, CommandListContext &commandListContext)
     {
-        for (auto &mesh : node->mMeshes)
+        for (auto &mesh : node->GetMeshes())
         {
             RenderUtils::UploadVertexBuffer(Graphics().GetDevice(), commandList, mesh->mVertexBuffer, commandListContext);
             RenderUtils::UploadIndexBuffer(Graphics().GetDevice(), commandList, mesh->mIndexBuffer, commandListContext);
@@ -302,7 +313,7 @@ namespace Engine
         }
     }
 
-    void Game::Draw(ComPtr<ID3D12GraphicsCommandList> commandList, Scene::Node *node, UploadBuffer *buffer)
+    void Game::Draw(ComPtr<ID3D12GraphicsCommandList> commandList, const SharedPtr<Scene::MeshNode>& node, UploadBuffer *buffer)
     {
         if (isInitializing)
         {
@@ -325,7 +336,7 @@ namespace Engine
         auto dynamicDescriptorHeap = mDynamicDescriptorHeaps[Graphics().GetCurrentBackBufferIndex()];
         auto resourceStateTracker = mResourceStateTrackers[Graphics().GetCurrentBackBufferIndex()];
 
-        for (auto &mesh : node->mMeshes)
+        for (auto &mesh : node->GetMeshes())
         {
             Scene::MaterialProperties properties = mesh->material->GetProperties();
             MaterialUniform uniform = RenderUtils::GetMaterialUniform(mesh->material.get());
@@ -456,7 +467,7 @@ namespace Engine
 
         for (auto &node : loadedScene->nodes)
         {
-            Draw(commandList, node.get(), mUploadBuffer[currentBackBufferIndex].get());
+            Draw(commandList, node, mUploadBuffer[currentBackBufferIndex].get());
         }
 
         mImGuiManager->Draw(commandList);

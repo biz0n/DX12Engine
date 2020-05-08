@@ -1,6 +1,6 @@
 #include "App.h"
-#include "Utils.h"
-#include "IGame.h"
+#include <Utils.h>
+#include <IGame.h>
 #include <iostream>
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_dx12.h>

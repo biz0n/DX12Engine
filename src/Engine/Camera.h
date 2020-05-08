@@ -4,82 +4,25 @@
 #include <MathUtils.h>
 
 #include <DirectXMath.h>
-#include <algorithm>
 
 namespace Engine
 {
     class Camera
     {
     public:
-        Camera(DirectX::XMFLOAT3 position, float32 pitch, float32 yaw)
-            : mHomePosition(position), mHomePitch(pitch), mHomeYaw(yaw)
-        {
-            Reset();
-        }
+        Camera(DirectX::XMFLOAT3 position, float32 pitch, float32 yaw);
 
-        DirectX::XMMATRIX GetMatrix() const
-        {
-            using namespace DirectX;
+        DirectX::XMMATRIX GetMatrix() const;
 
-            const DirectX::XMVECTOR forwardDirection = {0.0f, 0.0f, 1.0f, 0.0f};
-            const auto lookVector = DirectX::XMVector4Transform(
-                forwardDirection,
-                DirectX::XMMatrixRotationRollPitchYaw(mPitch, mYaw, 0.0f));
+        DirectX::XMFLOAT3 GetPosition() const;
 
-            const auto cameraPosition = DirectX::XMLoadFloat3(&mPosition);
+        DirectX::XMFLOAT3 GetTarget() const;
 
-            const auto target = lookVector + cameraPosition;
+        void Reset();
 
-            return DirectX::XMMatrixLookAtLH(cameraPosition, target, DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
-        }
+        void Rotate(float32 dx, float32 dy);
 
-        DirectX::XMFLOAT3 GetPosition() const
-        {
-            return mPosition;
-        }
-
-        DirectX::XMFLOAT3 GetTarget() const
-        {
-            using namespace DirectX;
-
-            const DirectX::XMVECTOR forwardDirection = {0.0f, 0.0f, 1.0f, 0.0f};
-            const auto lookVector = DirectX::XMVector4Transform(
-                forwardDirection,
-                DirectX::XMMatrixRotationRollPitchYaw(mPitch, mYaw, 0.0f));
-
-            const auto cameraPosition = DirectX::XMLoadFloat3(&mPosition);
-
-            const auto target = lookVector + cameraPosition;
-
-            DirectX::XMFLOAT3 t;
-            DirectX::XMStoreFloat3(&t, lookVector);
-            return t;
-        }
-
-        void Reset()
-        {
-            mPosition = mHomePosition;
-            mPitch = mHomePitch;
-            mYaw = mHomeYaw;
-        }
-
-        void Rotate(float32 dx, float32 dy)
-        {
-            mYaw = Math::WrapAngle(mYaw + dx);
-
-            mPitch = std::clamp(mPitch + dy, -0.995f * Math::PI / 2.0f, +0.995f * Math::PI / 2.0f);
-        }
-
-        void Translate(DirectX::XMFLOAT3 translate)
-        {
-            using namespace DirectX;
-            auto newPosition = DirectX::XMVector3Transform(
-                DirectX::XMLoadFloat3(&translate),
-                DirectX::XMMatrixRotationRollPitchYaw(mPitch, mYaw, 0.0f));
-
-            newPosition += DirectX::XMLoadFloat3(&mPosition);
-            DirectX::XMStoreFloat3(&mPosition, newPosition);
-        }
+        void Translate(DirectX::XMFLOAT3 translate);
 
     private:
         DirectX::XMFLOAT3 mPosition;

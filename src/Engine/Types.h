@@ -59,3 +59,6 @@ inline UniquePtr<T> MakeUnique(Args &&... args)
 {
     return std::make_unique<T>(std::forward<Args>(args)...);
 }
+
+template <typename T>
+using WeakPtr = std::weak_ptr<T>;

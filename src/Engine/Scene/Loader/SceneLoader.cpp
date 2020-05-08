@@ -1,6 +1,15 @@
 #include "SceneLoader.h"
 #include <Utils.h>
 #include <Scene/Image.h>
+#include <Scene/Texture.h>
+#include <Scene/Material.h>
+#include <Scene/Vertex.h>
+
+#include <Scene/SceneObject.h>
+#include <Scene/Node.h>
+#include <Scene/MeshNode.h>
+#include <Scene/LightNode.h>
+#include <Scene/Mesh.h>
 
 #include <assimp/Importer.hpp>
 #include <assimp/Exporter.hpp>
@@ -14,7 +23,7 @@
 
 namespace Engine::Scene::Loader
 {
-    UniquePtr<SceneObject> SceneLoader::LoadScene(String path, float32 scale)
+    UniquePtr<SceneObject> SceneLoader::LoadScene(String path, Optional<float32> scale)
     {
         std::filesystem::path filePath = path;
         std::filesystem::path exportPath = filePath;
@@ -37,10 +46,10 @@ namespace Engine::Scene::Loader
                 // aiProcess_OptimizeMeshes |
                 // aiProcess_OptimizeGraph
                 ;
-            if (std::abs(scale - 1.0f) >= 0.0001f)
+            if (scale.has_value())
             {
                 preprocessFlags |= aiProcess_GlobalScale;
-                importer.SetPropertyFloat(AI_CONFIG_GLOBAL_SCALE_FACTOR_KEY, scale);
+                importer.SetPropertyFloat(AI_CONFIG_GLOBAL_SCALE_FACTOR_KEY, scale.value());
             }
 
             aScene = importer.ReadFile(filePath.string(), preprocessFlags);
@@ -89,87 +98,87 @@ namespace Engine::Scene::Loader
             context.lightsMap[aLight->mName.C_Str()] = aLight;
         }
 
+        context.camerasMap.reserve(static_cast<Size>(aScene->mNumCameras));
+		for (uint32 i = 0; i < aScene->mNumCameras; ++i)
+		{
+			aiCamera* aCamera = aScene->mCameras[i];
+			context.camerasMap[aCamera->mName.C_Str()] = aCamera;
+		}
+
         ParseNode(aScene, aScene->mRootNode, scene.get(), nullptr, context);
 
-        UniquePtr<LightNode> pointLight1 = MakeUnique<LightNode>();
+        SharedPtr<LightNode> pointLight1 = MakeShared<LightNode>();
         pointLight1->SetColor({50.0f, 30.0f, 10.0f});
 
         DirectX::XMFLOAT4X4 pointLight1Transform;
         DirectX::XMStoreFloat4x4(&pointLight1Transform, DirectX::XMMatrixTranslation(4.0f, 5.0f, -2.0f));
-        pointLight1->LocalTransform = pointLight1Transform;
-        //pointLight.PositionWS = {4.0f, 5.0f, -2.0f};
+        pointLight1->SetLocalTransform(pointLight1Transform);
 
         pointLight1->SetQuadraticAttenuation(1.0f);
         pointLight1->SetEnabled(true);
-        pointLight1->SetLightType(POINT_LIGHT);
+        pointLight1->SetLightType(LightType::PointLight);
 
-        scene->lights.emplace_back(std::move(pointLight1));
+        scene->lights.push_back(pointLight1);
 
-        UniquePtr<LightNode> pointLight2 = MakeUnique<LightNode>();
+        SharedPtr<LightNode> pointLight2 = MakeShared<LightNode>();
         pointLight2->SetColor({20.0f, 20.0f, 20.0f});
-        //pointLight.PositionWS = {00.0f, 2.0f, 0.0f};
 
         DirectX::XMFLOAT4X4 pointLight2Transform;
         DirectX::XMStoreFloat4x4(&pointLight2Transform, DirectX::XMMatrixTranslation(0.0f, 2.0f, 0.0f));
-        pointLight2->LocalTransform = pointLight2Transform;
+        pointLight2->SetLocalTransform(pointLight2Transform);
 
         pointLight2->SetQuadraticAttenuation(1.0f);
         pointLight2->SetEnabled(true);
-        pointLight2->SetLightType(POINT_LIGHT);
+        pointLight2->SetLightType(LightType::PointLight);
 
-        scene->lights.emplace_back(std::move(pointLight2));
+        scene->lights.push_back(pointLight2);
 
         return scene;
     }
 
-    void SceneLoader::ParseNode(const aiScene *aScene, aiNode *aNode, SceneObject *scene, Node *parentNode, const LoadingContext &context)
+    void SceneLoader::ParseNode(const aiScene *aScene, const aiNode *aNode, SceneObject *scene, SharedPtr<Node> parentNode, const LoadingContext &context)
     {
-        aiVector3D scaling;
-        aiQuaternion rotation;
-        aiVector3D position;
-        aNode->mTransformation.Decompose(scaling, rotation, position);
+        SharedPtr<Node> node;
 
-        auto t = DirectX::XMMatrixTranslation(position.x, position.y, position.z);
-        auto s = DirectX::XMMatrixScaling(scaling.x, scaling.y, scaling.z);
-        DirectX::XMFLOAT4 quaternion = {rotation.x, rotation.y, rotation.z, rotation.w};
-        auto r = DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&quaternion));
-
-        DirectX::XMFLOAT4X4 transform;
-        DirectX::XMStoreFloat4x4(&transform, s * r * t);
-
-        auto iter = context.lightsMap.find(aNode->mName.C_Str());
-        if (iter != context.lightsMap.end())
+		if (IsMeshNode(aNode, context))
+		{
+            auto meshNode = CreateMeshNode(aNode, context);
+			scene->nodes.push_back(meshNode);
+			node = meshNode;
+		}
+        else if (IsLightNode(aNode, context))
         {
-            UniquePtr<LightNode> lightNode = std::move(ParseLight(iter->second, context));
-
-            lightNode->LocalTransform = transform;
-            lightNode->mParent = parentNode;
-
-            scene->lights.push_back(std::move(lightNode));
-            return;
+            auto lightNode = CreateLightNode(aNode, context);
+            scene->lights.push_back(lightNode);
+            node = lightNode;
+        }
+        else
+        {
+            node = MakeShared<Node>();
         }
 
-        UniquePtr<Node> node = MakeUnique<Node>();
+		aiVector3D scaling;
+		aiQuaternion rotation;
+		aiVector3D position;
+		aNode->mTransformation.Decompose(scaling, rotation, position);
 
-        node->LocalTransform = transform;
+		auto t = DirectX::XMMatrixTranslation(position.x, position.y, position.z);
+		auto s = DirectX::XMMatrixScaling(scaling.x, scaling.y, scaling.z);
+		DirectX::XMFLOAT4 quaternion = { rotation.x, rotation.y, rotation.z, rotation.w };
+		auto r = DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&quaternion));
 
-        node->mParent = parentNode;
+		DirectX::XMFLOAT4X4 transform;
+		DirectX::XMStoreFloat4x4(&transform, s * r * t);
 
-        for (uint32 i = 0; i < aNode->mNumMeshes; ++i)
-        {
-            int32 meshIndex = aNode->mMeshes[i];
-            auto mesh = context.meshes[meshIndex];
-            node->mMeshes.push_back(mesh);
-        }
+        node->SetLocalTransform(transform);
 
-        auto nodePtr = node.get();
-        scene->nodes.push_back(std::move(node));
+        node->SetParent(parentNode);
 
         for (uint32 i = 0; i < aNode->mNumChildren; i++)
         {
             auto aChild = aNode->mChildren[i];
 
-            ParseNode(aScene, aChild, scene, nodePtr, context);
+            ParseNode(aScene, aChild, scene, node, context);
         }
     }
 
@@ -396,21 +405,35 @@ namespace Engine::Scene::Loader
         return nullptr;
     }
 
-    UniquePtr<LightNode> SceneLoader::ParseLight(const aiLight *aLight, const LoadingContext &context)
+	bool SceneLoader::IsLightNode(const aiNode* aNode, const LoadingContext& context)
+	{
+		auto iter = context.lightsMap.find(aNode->mName.C_Str());
+        return iter != context.lightsMap.end();
+	}
+
+	bool SceneLoader::IsMeshNode(const aiNode* aNode, const LoadingContext& context)
+	{
+        return aNode->mNumMeshes > 0;
+	}
+
+    SharedPtr<LightNode> SceneLoader::CreateLightNode(const aiNode* aNode, const LoadingContext &context)
     {
-        UniquePtr<LightNode> light = MakeUnique<LightNode>();
+		auto iter = context.lightsMap.find(aNode->mName.C_Str());
+        aiLight* aLight = iter->second;
+
+        SharedPtr<LightNode> light = MakeShared<LightNode>();
         light->SetEnabled(true);
 
         switch (aLight->mType)
         {
         case aiLightSource_DIRECTIONAL:
-            light->SetLightType(DIRECTIONAL_LIGHT);
+            light->SetLightType(LightType::DirectionalLight);
             break;
         case aiLightSource_POINT:
-            light->SetLightType(POINT_LIGHT);
+            light->SetLightType(LightType::PointLight);
             break;
         case aiLightSource_SPOT:
-            light->SetLightType(SPOT_LIGHT);
+            light->SetLightType(LightType::SpotLight);
             break;
         }
 
@@ -428,6 +451,23 @@ namespace Engine::Scene::Loader
         light->SetOuterConeAngle(aLight->mAngleOuterCone);
 
         return light;
+    }
+
+    SharedPtr<MeshNode> SceneLoader::CreateMeshNode(const aiNode* aNode, const LoadingContext& context)
+    {
+        SharedPtr<MeshNode> meshNode = MakeShared<MeshNode>();
+
+        std::vector<SharedPtr<Mesh>> meshes;
+        meshes.reserve(static_cast<Size>(aNode->mNumMeshes));
+		for (uint32 i = 0; i < aNode->mNumMeshes; ++i)
+		{
+			int32 meshIndex = aNode->mMeshes[i];
+			auto mesh = context.meshes[meshIndex];
+			meshes.push_back(mesh);
+		}
+        meshNode->SetMeshes(meshes);
+
+        return meshNode;
     }
 
 } // namespace Engine::Scene::Loader
