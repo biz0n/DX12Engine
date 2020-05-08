@@ -45,7 +45,9 @@ namespace Engine::Scene::Loader
         SharedPtr<Mesh> ParseMesh(const aiMesh* aMesh, const LoadingContext& context);
         bool IsLightNode(const aiNode* aNode, const LoadingContext& context);
         bool IsMeshNode(const aiNode* aNode, const LoadingContext& context);
+        bool IsCameraNode(const aiNode* aNode, const LoadingContext& context);
         SharedPtr<LightNode> CreateLightNode(const aiNode* aNode, const LoadingContext& context);
         SharedPtr<MeshNode> CreateMeshNode(const aiNode* aNode, const LoadingContext& context);
+        SharedPtr<CameraNode> CreateCameraNode(const aiNode* aNode, const LoadingContext& context);
     }; 
 } // namespace Engine::Scene

@@ -10,6 +10,7 @@ namespace Engine::Scene
 	class SceneObject;
 	class Node;
 	class MeshNode;
+	class CameraNode;
 	class LightNode;
 	class Material;
 	class Mesh;

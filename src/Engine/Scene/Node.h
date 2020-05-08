@@ -11,16 +11,18 @@ namespace Engine::Scene
 	{
 	public:
 		Node() : mLocalTransform(
-			1.f, 0.f, 0.f, 0.f,
-			0.f, 1.f, 0.f, 0.f,
-			0.f, 0.f, 1.f, 0.f,
-			0.f, 0.f, 0.f, 1.f)
+					 1.f, 0.f, 0.f, 0.f,
+					 0.f, 1.f, 0.f, 0.f,
+					 0.f, 0.f, 1.f, 0.f,
+					 0.f, 0.f, 0.f, 1.f)
 		{
 		}
 
-		void SetParent(const SharedPtr<Node>& parent) { mParent = parent; }
+		void SetParent(const SharedPtr<Node> &parent) { mParent = parent; }
 
-		void SetLocalTransform(const dx::XMFLOAT4X4& localTransform) { mLocalTransform = localTransform; }
+		void SetLocalTransform(const dx::XMFLOAT4X4 &localTransform) { mLocalTransform = localTransform; }
+
+		void SetName(const String &name) { mName = name; }
 
 		DirectX::XMMATRIX GetWorldTransform() const
 		{
@@ -36,5 +38,6 @@ namespace Engine::Scene
 	private:
 		WeakPtr<Node> mParent;
 		DirectX::XMFLOAT4X4 mLocalTransform;
+		String mName;
 	};
-}
+} // namespace Engine::Scene

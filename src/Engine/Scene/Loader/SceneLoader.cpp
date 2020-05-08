@@ -9,6 +9,7 @@
 #include <Scene/Node.h>
 #include <Scene/MeshNode.h>
 #include <Scene/LightNode.h>
+#include <Scene/CameraNode.h>
 #include <Scene/Mesh.h>
 
 #include <assimp/Importer.hpp>
@@ -152,6 +153,12 @@ namespace Engine::Scene::Loader
             scene->lights.push_back(lightNode);
             node = lightNode;
         }
+        else if (IsCameraNode(aNode, context))
+        {
+            auto cameraNode = CreateCameraNode(aNode, context);
+            scene->cameras.push_back(cameraNode);
+            node = cameraNode;
+        }
         else
         {
             node = MakeShared<Node>();
@@ -171,6 +178,7 @@ namespace Engine::Scene::Loader
 		DirectX::XMStoreFloat4x4(&transform, s * r * t);
 
         node->SetLocalTransform(transform);
+        node->SetName(aNode->mName.C_Str());
 
         node->SetParent(parentNode);
 
@@ -416,6 +424,12 @@ namespace Engine::Scene::Loader
         return aNode->mNumMeshes > 0;
 	}
 
+    bool SceneLoader::IsCameraNode(const aiNode* aNode, const LoadingContext& context)
+	{
+		auto iter = context.camerasMap.find(aNode->mName.C_Str());
+        return iter != context.camerasMap.end();
+	}
+
     SharedPtr<LightNode> SceneLoader::CreateLightNode(const aiNode* aNode, const LoadingContext &context)
     {
 		auto iter = context.lightsMap.find(aNode->mName.C_Str());
@@ -468,6 +482,16 @@ namespace Engine::Scene::Loader
         meshNode->SetMeshes(meshes);
 
         return meshNode;
+    }
+
+    SharedPtr<CameraNode> SceneLoader::CreateCameraNode(const aiNode* aNode, const LoadingContext& context)
+    {
+        SharedPtr<CameraNode> cameraNode = MakeShared<CameraNode>();
+        auto iter = context.camerasMap.find(aNode->mName.C_Str());
+
+        aiCamera* aCamera = iter->second;
+
+        return cameraNode;
     }
 
 } // namespace Engine::Scene::Loader

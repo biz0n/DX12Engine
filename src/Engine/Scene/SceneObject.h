@@ -11,5 +11,7 @@ namespace Engine::Scene
 		std::vector<SharedPtr<MeshNode>> nodes;
 
 		std::vector<SharedPtr<LightNode>> lights;
+
+		std::vector<SharedPtr<CameraNode>> cameras;
 	};
 }
