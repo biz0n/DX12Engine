@@ -3,7 +3,6 @@
 #include <IGame.h>
 #include <UploadBuffer.h>
 #include <Scene/SceneForwards.h>
-#include <Camera.h>
 #include <Types.h>
 #include <RootSignature.h>
 #include <DynamicDescriptorHeap.h>
@@ -54,6 +53,8 @@ namespace Engine
             return mDescriptorAllocators[heapType]->Allocate(Graphics().GetDevice(), count);
         }
 
+        SharedPtr<Scene::CameraNode> Camera() const;
+
     private:
         uint64 mFenceValues[App::SwapChainBufferCount] = {0, 0};
 
@@ -83,8 +84,6 @@ namespace Engine
         DirectX::XMMATRIX mProjectionMatrix;
 
         UniquePtr<Scene::SceneObject> loadedScene;
-
-        Camera mCamera{{0.0f, 2.0f, 0.0f}, 0.0f, Math::PI / 2};
 
         std::bitset<0xFF> keyState;
     };

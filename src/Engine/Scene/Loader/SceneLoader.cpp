@@ -108,6 +108,11 @@ namespace Engine::Scene::Loader
 
         ParseNode(aScene, aScene->mRootNode, scene.get(), nullptr, context);
 
+        if (aScene->mNumCameras == 0)
+        {
+            scene->cameras.push_back(MakeShared<CameraNode>());
+        }
+
         SharedPtr<LightNode> pointLight1 = MakeShared<LightNode>();
         pointLight1->SetColor({50.0f, 30.0f, 10.0f});
 
@@ -490,6 +495,10 @@ namespace Engine::Scene::Loader
         auto iter = context.camerasMap.find(aNode->mName.C_Str());
 
         aiCamera* aCamera = iter->second;
+
+        cameraNode->SetNearPlane(aCamera->mClipPlaneNear);
+        cameraNode->SetFarPlane(aCamera->mClipPlaneFar);
+        cameraNode->SetFoV(aCamera->mHorizontalFOV);
 
         return cameraNode;
     }

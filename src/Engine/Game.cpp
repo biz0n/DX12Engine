@@ -11,6 +11,7 @@
 #include <Scene/Node.h>
 #include <Scene/MeshNode.h>
 #include <Scene/LightNode.h>
+#include <Scene/CameraNode.h>
 #include <Scene/Material.h>
 #include <Scene/Texture.h>
 #include <Scene/Vertex.h>
@@ -41,7 +42,6 @@ namespace Engine
         auto commandList = Graphics().GetCommandList();
 
         Scene::Loader::SceneLoader loader;
-        //loadedScene = loader.LoadScene("Resources\\Scenes\\sponza2\\sponza.obj", 0.03f);
         loadedScene = loader.LoadScene("Resources\\Scenes\\gltf2\\sponza\\sponza.gltf");
         //loadedScene = loader.LoadScene("Resources\\Scenes\\gltf2\\axis.gltf", 1.0f);
         //loadedScene = loader.LoadScene("Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\MetalRoughSpheres\\glTF\\MetalRoughSpheres.gltf", 1.0f);
@@ -268,48 +268,53 @@ namespace Engine
 
     void Game::Update(const Timer &time)
     {
-        mViewMatrix = mCamera.GetMatrix();
-
-        float m_FoV = 45;
         float aspectRatio = Graphics().GetWidth() / static_cast<float>(Graphics().GetHeight());
-        mProjectionMatrix = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(m_FoV), aspectRatio, 0.1f, 100.0f);
 
+        auto camera = Camera();
+        camera->SetAspectRatio(aspectRatio);
+        mProjectionMatrix = camera->GetProjectionMatrix();
+        mViewMatrix = camera->GetViewMatrix();
+
+        //mProjectionMatrix = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(m_FoV), aspectRatio, 0.1f, 100.0f);
+
+
+        
         const float32 speed = 5 * time.DeltaTime();
         const float32 rotationSpeed = 1.0f * time.DeltaTime();
         if (keyState[KeyCode::Key::Up])
         {
-            mCamera.Rotate(0.0f, -rotationSpeed);
+            camera->Rotate(0.0f, -rotationSpeed);
         }
         else if (keyState[KeyCode::Key::Down])
         {
-            mCamera.Rotate(0.0f, +rotationSpeed);
+            camera->Rotate(0.0f, +rotationSpeed);
         }
 
         if (keyState[KeyCode::Key::Left])
         {
-            mCamera.Rotate(-rotationSpeed, 0.0f);
+            camera->Rotate(-rotationSpeed, 0.0f);
         }
         else if (keyState[KeyCode::Key::Right])
         {
-            mCamera.Rotate(+rotationSpeed, 0.0f);
+            camera->Rotate(+rotationSpeed, 0.0f);
         }
 
         if (keyState[KeyCode::Key::W])
         {
-            mCamera.Translate({0.0f, 0.0f, +speed});
+            camera->Translate({0.0f, 0.0f, +speed});
         }
         else if (keyState[KeyCode::Key::S])
         {
-            mCamera.Translate({0.0f, 0.0f, -speed});
+            camera->Translate({0.0f, 0.0f, -speed});
         }
 
         if (keyState[KeyCode::Key::D])
         {
-            mCamera.Translate({+speed, 0.0f, 0.0f});
+            camera->Translate({+speed, 0.0f, 0.0f});
         }
         else if (keyState[KeyCode::Key::A])
         {
-            mCamera.Translate({-speed, 0.0f, 0.0f});
+            camera->Translate({-speed, 0.0f, 0.0f});
         }
     }
 
@@ -441,7 +446,7 @@ namespace Engine
         FrameUniform cb = {};
         DirectX::XMStoreFloat4x4(&cb.ViewProj, mvpMatrix);
 
-        cb.EyePos = mCamera.GetPosition();
+        cb.EyePos = Camera()->GetPosition();
 
         std::vector<LightUniform> lights;
         lights.reserve(loadedScene->lights.size());
@@ -488,6 +493,11 @@ namespace Engine
         currentBackBufferIndex = Graphics().Present();
 
         Graphics().WaitForFenceValue(mFenceValues[currentBackBufferIndex]);
+    }
+
+    SharedPtr<Scene::CameraNode> Game::Camera() const 
+    {
+        return loadedScene->cameras[0]; 
     }
 
     void Game::Resize(int32 width, int32 height)
