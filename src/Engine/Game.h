@@ -45,7 +45,7 @@ namespace Engine
 
         void ResizeDepthBuffer(int32 width, int32 height);
 
-        void Draw(ComPtr<ID3D12GraphicsCommandList> commandList, const SharedPtr<Scene::MeshNode>& node, UploadBuffer *buffer);
+        void Draw(ComPtr<ID3D12GraphicsCommandList> commandList, const SharedPtr<Scene::MeshNode>& node, SharedPtr<UploadBuffer> buffer);
         void UploadMeshes(ComPtr<ID3D12GraphicsCommandList> commandList, const SharedPtr<Scene::MeshNode>& node, CommandListContext &commandListContext);
 
         DescriptorAllocation AllocateDescriptor(D3D12_DESCRIPTOR_HEAP_TYPE heapType, uint32 count = 1)
@@ -58,11 +58,11 @@ namespace Engine
     private:
         uint64 mFenceValues[App::SwapChainBufferCount] = {0, 0};
 
-        SharedPtr<DynamicDescriptHeap> mDynamicDescriptorHeaps[App::SwapChainBufferCount];
+        SharedPtr<DynamicDescriptorHeap> mDynamicDescriptorHeaps[App::SwapChainBufferCount];
         UniquePtr<DescriptorAllocator> mDescriptorAllocators[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES];
 
     private:
-        UniquePtr<UploadBuffer> mUploadBuffer[App::SwapChainBufferCount];
+        SharedPtr<UploadBuffer> mUploadBuffer[App::SwapChainBufferCount];
 
         SharedPtr<GlobalResourceStateTracker> mGlobalResourceStateTracker;
         SharedPtr<ResourceStateTracker> mResourceStateTrackers[App::SwapChainBufferCount];

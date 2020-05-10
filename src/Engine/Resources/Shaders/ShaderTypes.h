@@ -37,6 +37,15 @@ struct MaterialUniform
     float RoughnessFactor;
     float SpecularPower;
     float NormalScale;
+
+    bool HasBaseColorTexture;
+    bool HasNormalTexture;
+    bool HasMetallicRoughnessTexture;
+    bool HasOcclusionTexture;
+
+    bool HasEmissiveTexture;
+
+    float3 Padding;
 };
 
 struct LightUniform

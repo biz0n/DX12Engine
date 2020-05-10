@@ -59,19 +59,36 @@ VertexShaderOutput mainVS(VertexPosColor IN)
 
 float4 mainPS(VertexShaderOutput IN) : SV_TARGET
 {
-     float4 baseColor = diffuseTexture.Sample(gsamPointWrap, IN.TextureCoord);
-     //float4 baseColor = MaterialCB.Diffuse;
+    float4 baseColor = MaterialCB.Diffuse;
+    if (MaterialCB.HasBaseColorTexture)
+    {
+        baseColor = diffuseTexture.Sample(gsamPointWrap, IN.TextureCoord);
+    }
 
-     float3 n = normalTexture.Sample(gsamPointWrap, IN.TextureCoord).rgb;
-     n = float3(n.r, 1-n.g, n.b);
-     float scale = MaterialCB.NormalScale;
-     float3 N = (n * 2.0 - 1.0) * float3(scale, scale, 1.0);
-     N = normalize(mul(N, IN.TBN));
+    float3 N;
+    if (MaterialCB.HasNormalTexture)
+    {
+        float3 n = normalTexture.Sample(gsamPointWrap, IN.TextureCoord).rgb;
+        n = float3(n.r, 1-n.g, n.b);
+        float scale = MaterialCB.NormalScale;
+        N = (n * 2.0 - 1.0) * float3(scale, scale, 1.0);
+        N = normalize(mul(N, IN.TBN));
+    }
+    else
+    {
+        N = normalize(IN.NormalW);
+    }
 
-    float4 metallicRoughness = metallicRoughnessTexture.Sample(gsamPointWrap, IN.TextureCoord);
+    float metallic = MaterialCB.MetallicFactor;
+    float roughness = MaterialCB.RoughnessFactor;
+    if (MaterialCB.HasMetallicRoughnessTexture)
+    {
+        float4 metallicRoughness = metallicRoughnessTexture.Sample(gsamPointWrap, IN.TextureCoord);
 
-    float metallic = MaterialCB.MetallicFactor * metallicRoughness.r;
-    float roughness = MaterialCB.RoughnessFactor * clamp(metallicRoughness.g, 0.04, 1.0);
+        metallic = metallic * metallicRoughness.r;
+        roughness = roughness * clamp(metallicRoughness.g, 0.04, 1.0);
+    }
+    
     float3 V = normalize(FrameCB.EyePos - IN.PositionW);
 
     float3 F0 = 0.04; 

@@ -3,7 +3,7 @@
 #include <Utils.h>
 #include <stdlib.h>
 #include <ShaderTypes.h>
-#include <RenderUtils.h>
+#include <CommandListUtils.h>
 
 #include <Scene/Loader/SceneLoader.h>
 #include <Scene/SceneObject.h>
@@ -59,7 +59,7 @@ namespace Engine
         {
             mResourceStateTrackers[i] = MakeShared<ResourceStateTracker>(mGlobalResourceStateTracker);
 
-            mResourceStateTrackers[i]->TrackResource(Graphics().mBackBuffers[i].Get(), D3D12_RESOURCE_STATE_COMMON);
+            mGlobalResourceStateTracker->TrackResource(Graphics().mBackBuffers[i].Get(), D3D12_RESOURCE_STATE_COMMON);
         }
 
         CommandListContext commandListContext;
@@ -81,7 +81,7 @@ namespace Engine
 
         for (uint32 i = 0; i < Graphics().SwapChainBufferCount; ++i)
         {
-            mDynamicDescriptorHeaps[i] = MakeShared<DynamicDescriptHeap>(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, cbvSrvUavDescriptorSize);
+            mDynamicDescriptorHeaps[i] = MakeShared<DynamicDescriptorHeap>(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, cbvSrvUavDescriptorSize);
         }
 
         for (auto &node : loadedScene->nodes)
@@ -116,7 +116,7 @@ namespace Engine
 
         for (uint32 frameIndex = 0; frameIndex < Graphics().SwapChainBufferCount; ++frameIndex)
         {
-            mUploadBuffer[frameIndex] = MakeUnique<UploadBuffer>(Graphics().GetDevice().Get(), 2 * 1024 * 1024);
+            mUploadBuffer[frameIndex] = MakeShared<UploadBuffer>(Graphics().GetDevice().Get(), 2 * 1024 * 1024);
         }
 
         ComPtr<ID3DBlob> pixelShaderBlob = Utils::CompileShader(L"Resources\\Shaders\\Shader.hlsl", nullptr, "mainPS", "ps_5_1");
@@ -236,29 +236,9 @@ namespace Engine
     {
         for (auto &mesh : node->GetMeshes())
         {
-            RenderUtils::UploadVertexBuffer(Graphics().GetDevice(), commandList, mesh->mVertexBuffer, commandListContext);
-            RenderUtils::UploadIndexBuffer(Graphics().GetDevice(), commandList, mesh->mIndexBuffer, commandListContext);
-
-            if (mesh->material->HasAlbedoTexture())
-            {
-                RenderUtils::UploadTexture(Graphics().GetDevice(), commandList, *mesh->material->GetAlbedoTexture(), commandListContext);
-
-                mGlobalResourceStateTracker->TrackResource(mesh->material->GetAlbedoTexture()->GetD3D12Resource().Get(), D3D12_RESOURCE_STATE_COPY_DEST);
-            }
-
-            if (mesh->material->HasMetallicRoughnessTexture())
-            {
-                RenderUtils::UploadTexture(Graphics().GetDevice(), commandList, *mesh->material->GetMetallicRoughnessTexture(), commandListContext);
-
-                mGlobalResourceStateTracker->TrackResource(mesh->material->GetMetallicRoughnessTexture()->GetD3D12Resource().Get(), D3D12_RESOURCE_STATE_COPY_DEST);
-            }
-
-            if (mesh->material->HasNormalTexture())
-            {
-                RenderUtils::UploadTexture(Graphics().GetDevice(), commandList, *mesh->material->GetNormalTexture(), commandListContext);
-
-                mGlobalResourceStateTracker->TrackResource(mesh->material->GetNormalTexture()->GetD3D12Resource().Get(), D3D12_RESOURCE_STATE_COPY_DEST);
-            }
+            CommandListUtils::UploadVertexBuffer(Graphics().GetDevice(), commandList, mesh->mVertexBuffer, commandListContext);
+            CommandListUtils::UploadIndexBuffer(Graphics().GetDevice(), commandList, mesh->mIndexBuffer, commandListContext);
+            CommandListUtils::UploadMaterialTextures(Graphics().GetDevice(), commandList, mGlobalResourceStateTracker, commandListContext, mesh->material);
         }
     }
 
@@ -274,10 +254,6 @@ namespace Engine
         camera->SetAspectRatio(aspectRatio);
         mProjectionMatrix = camera->GetProjectionMatrix();
         mViewMatrix = camera->GetViewMatrix();
-
-        //mProjectionMatrix = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(m_FoV), aspectRatio, 0.1f, 100.0f);
-
-
         
         const float32 speed = 5 * time.DeltaTime();
         const float32 rotationSpeed = 1.0f * time.DeltaTime();
@@ -318,7 +294,7 @@ namespace Engine
         }
     }
 
-    void Game::Draw(ComPtr<ID3D12GraphicsCommandList> commandList, const SharedPtr<Scene::MeshNode>& node, UploadBuffer *buffer)
+    void Game::Draw(ComPtr<ID3D12GraphicsCommandList> commandList, const SharedPtr<Scene::MeshNode>& node, SharedPtr<UploadBuffer> buffer)
     {
         if (isInitializing)
         {
@@ -343,49 +319,12 @@ namespace Engine
 
         for (auto &mesh : node->GetMeshes())
         {
-            Scene::MaterialProperties properties = mesh->material->GetProperties();
-            MaterialUniform uniform = RenderUtils::GetMaterialUniform(mesh->material.get());
-
-            auto matAllocation = buffer->Allocate(sizeof(MaterialUniform));
-            matAllocation.CopyTo(&uniform);
-            commandList->SetGraphicsRootConstantBufferView(2, matAllocation.GPU);
-
-            if (mesh->material->HasAlbedoTexture())
-            {
-                CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-                    mesh->material->GetAlbedoTexture()->GetD3D12Resource().Get(),
-                    D3D12_RESOURCE_STATE_COMMON,
-                    D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-                resourceStateTracker->ResourceBarrier(barrier);
-
-                dynamicDescriptorHeap->StageDescriptor(4, 0, 1, mesh->material->GetAlbedoTexture()->allocaion.GetDescriptor());
-            }
-
-            if (mesh->material->HasMetallicRoughnessTexture())
-            {
-                CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-                    mesh->material->GetMetallicRoughnessTexture()->GetD3D12Resource().Get(),
-                    D3D12_RESOURCE_STATE_COMMON,
-                    D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-                resourceStateTracker->ResourceBarrier(barrier);
-
-                dynamicDescriptorHeap->StageDescriptor(5, 0, 1, mesh->material->GetMetallicRoughnessTexture()->allocaion.GetDescriptor());
-            }
-
-            if (mesh->material->HasNormalTexture())
-            {
-                CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-                    mesh->material->GetNormalTexture()->GetD3D12Resource().Get(),
-                    D3D12_RESOURCE_STATE_COMMON,
-                    D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-                resourceStateTracker->ResourceBarrier(barrier);
-
-                dynamicDescriptorHeap->StageDescriptor(6, 0, 1, mesh->material->GetNormalTexture()->allocaion.GetDescriptor());
-            }
-
             commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-            RenderUtils::BindVertexBuffer(commandList, mesh->mVertexBuffer);
-            RenderUtils::BindIndexBuffer(commandList, mesh->mIndexBuffer);
+
+
+            CommandListUtils::BindMaterial(commandList, buffer, resourceStateTracker, dynamicDescriptorHeap, mesh->material);
+            CommandListUtils::BindVertexBuffer(commandList, mesh->mVertexBuffer);
+            CommandListUtils::BindIndexBuffer(commandList, mesh->mIndexBuffer);
 
             resourceStateTracker->FlushBarriers(commandList);
 
@@ -453,7 +392,7 @@ namespace Engine
         for (uint32 i = 0; i < loadedScene->lights.size(); ++i)
         {
             Scene::LightNode *lightNode = loadedScene->lights[i].get();
-            LightUniform light = RenderUtils::GetLightUniform(lightNode);
+            LightUniform light = CommandListUtils::GetLightUniform(lightNode);
 
             lights.emplace_back(light);
         }
@@ -472,7 +411,7 @@ namespace Engine
 
         for (auto &node : loadedScene->nodes)
         {
-            Draw(commandList, node, mUploadBuffer[currentBackBufferIndex].get());
+            Draw(commandList, node, mUploadBuffer[currentBackBufferIndex]);
         }
 
         mImGuiManager->Draw(commandList);

@@ -9,10 +9,10 @@
 
 namespace Engine
 {
-    class DynamicDescriptHeap
+    class DynamicDescriptorHeap
     {
     public:
-        DynamicDescriptHeap(D3D12_DESCRIPTOR_HEAP_TYPE heapType, uint32 descriptorHandleIncrementSize, uint32 descriptorsPerHeap = 1024);
+        DynamicDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE heapType, uint32 descriptorHandleIncrementSize, uint32 descriptorsPerHeap = 1024);
 
         void StageDescriptor(uint32 rootParameterIndex, uint32 offset, uint32 numDescriptors, const D3D12_CPU_DESCRIPTOR_HANDLE descriptor);
 

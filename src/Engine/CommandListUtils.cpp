@@ -1,4 +1,4 @@
-#include "RenderUtils.h"
+#include "CommandListUtils.h"
 
 #include <Utils.h>
 #include <Exceptions.h>
@@ -16,7 +16,7 @@
 #include <filesystem>
 #include <map>
 
-namespace Engine::RenderUtils
+namespace Engine::CommandListUtils
 {
     static std::map<std::wstring, ID3D12Resource *> gsTextureCache;
 
@@ -66,7 +66,7 @@ namespace Engine::RenderUtils
         commandListContext.TrackResource(intermediateResource);
     }
 
-    void UploadTexture(ComPtr<ID3D12Device> device, ComPtr<ID3D12GraphicsCommandList> commandList, Scene::Texture &texture, CommandListContext &commandListContext)
+    void UploadTexture(ComPtr<ID3D12Device> device, ComPtr<ID3D12GraphicsCommandList> commandList,  SharedPtr<GlobalResourceStateTracker> resourceTracker, Scene::Texture &texture, CommandListContext &commandListContext)
     {
         std::filesystem::path filename = texture.GetName();
 
@@ -127,7 +127,27 @@ namespace Engine::RenderUtils
 
             commandListContext.TrackResource(textureResource);
             commandListContext.TrackResource(intermadiateResource);
+
+            resourceTracker->TrackResource(textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST);
         }
+    }
+
+    void UploadMaterialTextures(ComPtr<ID3D12Device> device, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<GlobalResourceStateTracker> resourceTracker, CommandListContext &commandListContext, SharedPtr<Scene::Material> material)
+    {
+        if (material->HasAlbedoTexture())
+            {
+                UploadTexture(device, commandList, resourceTracker, *material->GetAlbedoTexture(), commandListContext);
+            }
+
+            if (material->HasMetallicRoughnessTexture())
+            {
+                UploadTexture(device, commandList, resourceTracker, *material->GetMetallicRoughnessTexture(), commandListContext);
+            }
+
+            if (material->HasNormalTexture())
+            {
+                UploadTexture(device, commandList, resourceTracker, *material->GetNormalTexture(), commandListContext);
+            }
     }
 
     void BindVertexBuffer(ComPtr<ID3D12GraphicsCommandList> commandList, const VertexBuffer &vertexBuffer)
@@ -181,7 +201,62 @@ namespace Engine::RenderUtils
         uniform.NormalScale = properties.normalTextureInfo.scale;
         uniform.Ambient = {0.9f, 0.9f, 0.9f, 0.0f};
 
+        uniform.HasBaseColorTexture = material->HasAlbedoTexture();
+        uniform.HasNormalTexture = material->HasNormalTexture();
+        uniform.HasMetallicRoughnessTexture = material->HasMetallicRoughnessTexture();
+        uniform.HasOcclusionTexture = material->HasAmbientOcclusionTexture();
+        uniform.HasEmissiveTexture = material->HasEmissiveTexture();
+
         return uniform;
+    }
+
+    void BindMaterial(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<::Engine::UploadBuffer> buffer, SharedPtr<ResourceStateTracker> stateTracker, SharedPtr<DynamicDescriptorHeap> dynamicDescriptorHeap, SharedPtr<Scene::Material> material)
+    {
+        MaterialUniform uniform = CommandListUtils::GetMaterialUniform(material.get());
+
+        auto matAllocation = buffer->Allocate(sizeof(MaterialUniform));
+        matAllocation.CopyTo(&uniform);
+        commandList->SetGraphicsRootConstantBufferView(2, matAllocation.GPU);
+
+        if (material->HasAlbedoTexture())
+        {
+            CommandListUtils::TransitionBarrier(stateTracker, material->GetAlbedoTexture()->GetD3D12Resource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+            dynamicDescriptorHeap->StageDescriptor(4, 0, 1, material->GetAlbedoTexture()->allocaion.GetDescriptor());
+        }
+
+        if (material->HasMetallicRoughnessTexture())
+        {
+            CommandListUtils::TransitionBarrier(stateTracker, material->GetMetallicRoughnessTexture()->GetD3D12Resource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+            dynamicDescriptorHeap->StageDescriptor(5, 0, 1, material->GetMetallicRoughnessTexture()->allocaion.GetDescriptor());
+        }
+
+        if (material->HasNormalTexture())
+        {
+            CommandListUtils::TransitionBarrier(stateTracker, material->GetNormalTexture()->GetD3D12Resource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+            dynamicDescriptorHeap->StageDescriptor(6, 0, 1, material->GetNormalTexture()->allocaion.GetDescriptor());
+        }
+    }
+
+    void TransitionBarrier(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, ComPtr<ID3D12Resource> resource, D3D12_RESOURCE_STATES targetState, bool forceFlush)
+    {
+        TransitionBarrier(stateTracker, resource, targetState);
+
+        if (forceFlush)
+        {
+            stateTracker->FlushBarriers(commandList);
+        }
+    }
+
+    void TransitionBarrier(SharedPtr<ResourceStateTracker> stateTracker, ComPtr<ID3D12Resource> resource, D3D12_RESOURCE_STATES targetState)
+    {
+        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+                    resource.Get(),
+                    D3D12_RESOURCE_STATE_COMMON,
+                    targetState);
+        stateTracker->ResourceBarrier(barrier);
     }
 
 } // namespace Engine::RenderUtils

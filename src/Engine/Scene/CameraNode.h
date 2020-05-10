@@ -51,6 +51,7 @@ namespace Engine::Scene
 
         dx::XMFLOAT3 GetPosition() const
         {
+            using namespace dx;
             auto matrix = GetWorldTransform();
 
             dx::XMVECTOR s;
@@ -59,14 +60,13 @@ namespace Engine::Scene
             dx::XMMatrixDecompose(&s, &r, &t, matrix);
 
             dx::XMFLOAT3 position;
-            dx::XMStoreFloat3(&position, t);
+            dx::XMStoreFloat3(&position, t + mTranslation);
             return position;
         }
 
         void Rotate(float32 dx, float32 dy)
         {
             mYaw = Math::WrapAngle(mYaw + dx);
-
             mPitch = std::clamp(mPitch + dy, -0.995f * Math::PI / 2.0f, +0.995f * Math::PI / 2.0f);
         }
 
@@ -93,7 +93,6 @@ namespace Engine::Scene
 
             dx::XMVECTOR s;
             dx::XMVECTOR r;
-            dx::XMVECTOR t;
             dx::XMMatrixDecompose(&s, &r, translation, matrix);
 
             auto pitchYawRotation = dx::XMQuaternionRotationRollPitchYaw(mPitch, mYaw, 0.0f);

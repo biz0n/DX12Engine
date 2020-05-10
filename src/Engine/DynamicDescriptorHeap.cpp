@@ -6,13 +6,13 @@
 
 namespace Engine
 {
-    DynamicDescriptHeap::DynamicDescriptHeap(D3D12_DESCRIPTOR_HEAP_TYPE heapType, uint32 descriptorHandleIncrementSize, uint32 descriptorsPerHeap)
+    DynamicDescriptorHeap::DynamicDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE heapType, uint32 descriptorHandleIncrementSize, uint32 descriptorsPerHeap)
         : mDescriptorHeapType(heapType), mDescriptorHandleIncrementSize(descriptorHandleIncrementSize), mDescriptorsPerHeap(descriptorsPerHeap)
     {
         mDescriptorHandlesCache = MakeUnique<D3D12_CPU_DESCRIPTOR_HANDLE[]>(descriptorsPerHeap);
     }
 
-    void DynamicDescriptHeap::StageDescriptor(uint32 rootParameterIndex, uint32 offset, uint32 numDescriptors, const D3D12_CPU_DESCRIPTOR_HANDLE descriptor)
+    void DynamicDescriptorHeap::StageDescriptor(uint32 rootParameterIndex, uint32 offset, uint32 numDescriptors, const D3D12_CPU_DESCRIPTOR_HANDLE descriptor)
     {
         if (numDescriptors > mDescriptorsPerHeap || rootParameterIndex > RootSignature::MaxDescriptorTables)
         {
@@ -36,7 +36,7 @@ namespace Engine
         mStaleDescriptorsTableBitMask |= (1 << rootParameterIndex);
     }
 
-    void DynamicDescriptHeap::ParseRootSignature(const RootSignature *rootSignature)
+    void DynamicDescriptorHeap::ParseRootSignature(const RootSignature *rootSignature)
     {
         mStaleDescriptorsTableBitMask = 0;
 
@@ -59,7 +59,7 @@ namespace Engine
         }
     }
 
-    void DynamicDescriptHeap::CommitStagedDescriptors(ComPtr<ID3D12Device> device, ComPtr<ID3D12GraphicsCommandList> commandList)
+    void DynamicDescriptorHeap::CommitStagedDescriptors(ComPtr<ID3D12Device> device, ComPtr<ID3D12GraphicsCommandList> commandList)
     {
         if (mCurrentDescriptorHeap == nullptr || mNumFreeHandles < ComputeStaleDescriptorCount())
         {
@@ -96,7 +96,7 @@ namespace Engine
         }
     }
 
-    void DynamicDescriptHeap::Reset()
+    void DynamicDescriptorHeap::Reset()
     {
         mFreeDescriptorHeaps = mDescriptorHeapPool;
         mCurrentDescriptorHeap.Reset();
@@ -110,7 +110,7 @@ namespace Engine
         mNumFreeHandles = 0;
     }
 
-    ComPtr<ID3D12DescriptorHeap> DynamicDescriptHeap::GetDescriptorHeap(ComPtr<ID3D12Device> device)
+    ComPtr<ID3D12DescriptorHeap> DynamicDescriptorHeap::GetDescriptorHeap(ComPtr<ID3D12Device> device)
     {
         ComPtr<ID3D12DescriptorHeap> descriptorHeap;
         if (!mFreeDescriptorHeaps.empty())
@@ -127,7 +127,7 @@ namespace Engine
         return descriptorHeap;
     }
 
-    ComPtr<ID3D12DescriptorHeap> DynamicDescriptHeap::CreateDescriptorHeap(ComPtr<ID3D12Device> device)
+    ComPtr<ID3D12DescriptorHeap> DynamicDescriptorHeap::CreateDescriptorHeap(ComPtr<ID3D12Device> device)
     {
         ComPtr<ID3D12DescriptorHeap> descriptorHeap;
         D3D12_DESCRIPTOR_HEAP_DESC heapDesc;
@@ -140,7 +140,7 @@ namespace Engine
         return descriptorHeap;
     }
 
-    uint32 DynamicDescriptHeap::ComputeStaleDescriptorCount() const
+    uint32 DynamicDescriptorHeap::ComputeStaleDescriptorCount() const
     {
         DWORD index;
         DWORD staleDescriptorTableBitMask = mStaleDescriptorsTableBitMask;
