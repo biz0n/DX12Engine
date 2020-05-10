@@ -84,36 +84,6 @@ namespace Engine
             mDynamicDescriptorHeaps[i] = MakeShared<DynamicDescriptorHeap>(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, cbvSrvUavDescriptorSize);
         }
 
-        for (auto &node : loadedScene->nodes)
-        {
-            for (auto &mesh : node->GetMeshes())
-            {
-                if (mesh->material->HasAlbedoTexture())
-                {
-                    auto allocation = AllocateDescriptor(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-                    Graphics().GetDevice()->CreateShaderResourceView(mesh->material->GetAlbedoTexture()->GetD3D12Resource().Get(), nullptr, allocation.GetDescriptor());
-
-                    mesh->material->GetAlbedoTexture()->allocaion = allocation;
-                }
-
-                if (mesh->material->HasMetallicRoughnessTexture())
-                {
-                    auto allocation = AllocateDescriptor(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-                    Graphics().GetDevice()->CreateShaderResourceView(mesh->material->GetMetallicRoughnessTexture()->GetD3D12Resource().Get(), nullptr, allocation.GetDescriptor());
-
-                    mesh->material->GetMetallicRoughnessTexture()->allocaion = allocation;
-                }
-
-                if (mesh->material->HasNormalTexture())
-                {
-                    auto allocation = AllocateDescriptor(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-                    Graphics().GetDevice()->CreateShaderResourceView(mesh->material->GetNormalTexture()->GetD3D12Resource().Get(), nullptr, allocation.GetDescriptor());
-
-                    mesh->material->GetNormalTexture()->allocaion = allocation;
-                }
-            }
-        }
-
         for (uint32 frameIndex = 0; frameIndex < Graphics().SwapChainBufferCount; ++frameIndex)
         {
             mUploadBuffer[frameIndex] = MakeShared<UploadBuffer>(Graphics().GetDevice().Get(), 2 * 1024 * 1024);
@@ -322,7 +292,7 @@ namespace Engine
             commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 
-            CommandListUtils::BindMaterial(commandList, buffer, resourceStateTracker, dynamicDescriptorHeap, mesh->material);
+            CommandListUtils::BindMaterial(Graphics().GetDevice(), commandList, buffer, resourceStateTracker, dynamicDescriptorHeap, mDescriptorAllocators[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV].get(), mesh->material);
             CommandListUtils::BindVertexBuffer(commandList, mesh->mVertexBuffer);
             CommandListUtils::BindIndexBuffer(commandList, mesh->mIndexBuffer);
 
@@ -353,16 +323,7 @@ namespace Engine
 
         auto rtv = Graphics().GetCurrentRenderTargetView();
 
-        {
-            CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-                backBuffer.Get(),
-                D3D12_RESOURCE_STATE_PRESENT,
-                D3D12_RESOURCE_STATE_RENDER_TARGET);
-
-            resourceStateTracker->ResourceBarrier(barrier);
-
-            resourceStateTracker->FlushBarriers(commandList);
-        }
+        CommandListUtils::TransitionBarrier(commandList, resourceStateTracker, backBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, true);
 
         FLOAT clearColor[] = {0.4f, 0.6f, 0.9f, 1.0f};
 
@@ -415,16 +376,7 @@ namespace Engine
         }
 
         mImGuiManager->Draw(commandList);
-
-        {
-            CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-                backBuffer.Get(),
-                D3D12_RESOURCE_STATE_RENDER_TARGET,
-                D3D12_RESOURCE_STATE_PRESENT);
-
-            resourceStateTracker->ResourceBarrier(barrier);
-            //commandList->ResourceBarrier(1, &barrier);
-        }
+        CommandListUtils::TransitionBarrier(resourceStateTracker, backBuffer, D3D12_RESOURCE_STATE_PRESENT);
 
         resourceStateTracker->FlushBarriers(commandList);
         mFenceValues[currentBackBufferIndex] = Graphics().ExecuteCommandList(commandList);

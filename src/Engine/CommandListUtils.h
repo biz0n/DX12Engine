@@ -11,6 +11,7 @@
 #include <ResourceStateTracker.h>
 #include <UploadBuffer.h>
 #include <DynamicDescriptorHeap.h>
+#include <DescriptorAllocator.h>
 
 #include <d3d12.h>
 #include <vector>
@@ -30,7 +31,7 @@ namespace Engine::CommandListUtils
     void BindVertexBuffer(ComPtr<ID3D12GraphicsCommandList> commandList, const VertexBuffer &vertexBuffer);
     void BindIndexBuffer(ComPtr<ID3D12GraphicsCommandList> commandList, const IndexBuffer &indexBuffer);
 
-    void BindMaterial(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<::Engine::UploadBuffer> buffer, SharedPtr<ResourceStateTracker> stateTracker, SharedPtr<DynamicDescriptorHeap> dynamicDescriptorHeap, SharedPtr<Scene::Material> material);
+    void BindMaterial(ComPtr<ID3D12Device> device, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<::Engine::UploadBuffer> buffer, SharedPtr<ResourceStateTracker> stateTracker, SharedPtr<DynamicDescriptorHeap> dynamicDescriptorHeap, DescriptorAllocator* descriptorAllocator, SharedPtr<Scene::Material> material);
 
     LightUniform GetLightUniform(const Scene::LightNode *lightNode);
     MaterialUniform GetMaterialUniform(const Scene::Material *material);
