@@ -206,8 +206,8 @@ namespace Engine
     {
         for (auto &mesh : node->GetMeshes())
         {
-            CommandListUtils::UploadVertexBuffer(Graphics().GetDevice(), commandList, mesh->mVertexBuffer, commandListContext);
-            CommandListUtils::UploadIndexBuffer(Graphics().GetDevice(), commandList, mesh->mIndexBuffer, commandListContext);
+            CommandListUtils::UploadVertexBuffer(Graphics().GetDevice(), commandList, mGlobalResourceStateTracker, mesh->mVertexBuffer, commandListContext);
+            CommandListUtils::UploadIndexBuffer(Graphics().GetDevice(), commandList, mGlobalResourceStateTracker, mesh->mIndexBuffer, commandListContext);
             CommandListUtils::UploadMaterialTextures(Graphics().GetDevice(), commandList, mGlobalResourceStateTracker, commandListContext, mesh->material);
         }
     }
@@ -293,8 +293,8 @@ namespace Engine
 
 
             CommandListUtils::BindMaterial(Graphics().GetDevice(), commandList, buffer, resourceStateTracker, dynamicDescriptorHeap, mDescriptorAllocators[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV].get(), mesh->material);
-            CommandListUtils::BindVertexBuffer(commandList, mesh->mVertexBuffer);
-            CommandListUtils::BindIndexBuffer(commandList, mesh->mIndexBuffer);
+            CommandListUtils::BindVertexBuffer(commandList, resourceStateTracker, mesh->mVertexBuffer);
+            CommandListUtils::BindIndexBuffer(commandList, resourceStateTracker, mesh->mIndexBuffer);
 
             resourceStateTracker->FlushBarriers(commandList);
 

@@ -20,17 +20,17 @@ namespace Engine::CommandListUtils
 {
     static std::map<std::wstring, ID3D12Resource *> gsTextureCache;
 
-    void UploadVertexBuffer(ComPtr<ID3D12Device> device, ComPtr<ID3D12GraphicsCommandList> commandList, VertexBuffer &vertexBuffer, CommandListContext &commandListContext)
+    void UploadVertexBuffer(ComPtr<ID3D12Device> device, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<GlobalResourceStateTracker> resourceTracker, VertexBuffer &vertexBuffer, CommandListContext &commandListContext)
     {
-        UploadBuffer(device, commandList, vertexBuffer, commandListContext);
+        UploadBuffer(device, commandList, resourceTracker, vertexBuffer, commandListContext);
     }
 
-    void UploadIndexBuffer(ComPtr<ID3D12Device> device, ComPtr<ID3D12GraphicsCommandList> commandList, IndexBuffer &indexBuffer, CommandListContext &commandListContext)
+    void UploadIndexBuffer(ComPtr<ID3D12Device> device, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<GlobalResourceStateTracker> resourceTracker, IndexBuffer &indexBuffer, CommandListContext &commandListContext)
     {
-        UploadBuffer(device, commandList, indexBuffer, commandListContext);
+        UploadBuffer(device, commandList, resourceTracker, indexBuffer, commandListContext);
     }
 
-    void UploadBuffer(ComPtr<ID3D12Device> device, ComPtr<ID3D12GraphicsCommandList> commandList, Buffer &buffer, CommandListContext &commandListContext, D3D12_RESOURCE_FLAGS flags)
+    void UploadBuffer(ComPtr<ID3D12Device> device, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<GlobalResourceStateTracker> resourceTracker, Buffer &buffer, CommandListContext &commandListContext, D3D12_RESOURCE_FLAGS flags)
     {
         Size bufferSize = buffer.GetElementsCount() * buffer.GetElementSize();
 
@@ -59,6 +59,7 @@ namespace Engine::CommandListUtils
 
         UpdateSubresources(commandList.Get(), destinationResource.Get(), intermediateResource.Get(), 0, 0, 1, &subresource);
 
+        resourceTracker->TrackResource(destinationResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST);
         buffer.SetD3D12Resource(destinationResource);
         buffer.CreateViews();
 
@@ -150,13 +151,17 @@ namespace Engine::CommandListUtils
         }
     }
 
-    void BindVertexBuffer(ComPtr<ID3D12GraphicsCommandList> commandList, const VertexBuffer &vertexBuffer)
+    void BindVertexBuffer(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, const VertexBuffer &vertexBuffer)
     {
+        TransitionBarrier(stateTracker, vertexBuffer.GetD3D12Resource(), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+
         commandList->IASetVertexBuffers(0, 1, &vertexBuffer.GetVertexBufferView());
     }
 
-    void BindIndexBuffer(ComPtr<ID3D12GraphicsCommandList> commandList, const IndexBuffer &indexBuffer)
+    void BindIndexBuffer(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, const IndexBuffer &indexBuffer)
     {
+        TransitionBarrier(stateTracker, indexBuffer.GetD3D12Resource(), D3D12_RESOURCE_STATE_INDEX_BUFFER);
+
         commandList->IASetIndexBuffer(&indexBuffer.GetIndexBufferView());
     }
 
