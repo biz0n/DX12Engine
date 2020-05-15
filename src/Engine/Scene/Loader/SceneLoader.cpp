@@ -200,6 +200,7 @@ namespace Engine::Scene::Loader
         SharedPtr<Mesh> mesh = MakeShared<Mesh>();
         std::vector<Vertex> vertices;
         vertices.reserve(aMesh->mNumVertices);
+        
         for (uint32 i = 0; i < aMesh->mNumVertices; ++i)
         {
             Vertex vertex = {};
@@ -245,6 +246,20 @@ namespace Engine::Scene::Loader
         mesh->mIndexBuffer.SetData(indices);
 
         mesh->material = context.materials[aMesh->mMaterialIndex];
+
+        switch (aMesh->mPrimitiveTypes)
+        {
+            case aiPrimitiveType_POINT:
+                mesh->mPrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
+                break;
+            case aiPrimitiveType_LINE:
+                mesh->mPrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_LINELIST;
+                break;
+            case aiPrimitiveType_TRIANGLE:
+            default:
+                mesh->mPrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+                break;
+        }
 
         return mesh;
     }

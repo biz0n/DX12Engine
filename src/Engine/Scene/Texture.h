@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Resource.h>
-#include <DescriptorAllocator.h>
+#include <Memory/DescriptorAllocator.h>
 #include <Scene/SceneForwards.h>
 
 #include <vector>
@@ -28,9 +28,9 @@ namespace Engine::Scene
         {
             if (mAllocaion.GetNumDescsriptors() == 0)
             {
-                auto allocation = allocator->Allocate(device, 1);
+                auto allocation = allocator->Allocate();
                 device->CreateShaderResourceView(GetD3D12Resource().Get(), nullptr, allocation.GetDescriptor());
-                mAllocaion = allocation;
+                mAllocaion = std::move(allocation);
             }
 
             return mAllocaion.GetDescriptor();

@@ -72,7 +72,7 @@ namespace Engine
         {
             D3D12_DESCRIPTOR_HEAP_TYPE type = (D3D12_DESCRIPTOR_HEAP_TYPE)i;
             uint32 incrementalSize = Graphics().GetDevice()->GetDescriptorHandleIncrementSize(type);
-            mDescriptorAllocators[i] = MakeUnique<DescriptorAllocator>(type, incrementalSize);
+            mDescriptorAllocators[i] = MakeUnique<DescriptorAllocator>(Graphics().GetDevice(), type);
         }
 
         mDepthBufferDescriptor = AllocateDescriptor(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
@@ -289,7 +289,7 @@ namespace Engine
 
         for (auto &mesh : node->GetMeshes())
         {
-            commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+            commandList->IASetPrimitiveTopology(mesh->mPrimitiveTopology);
 
 
             CommandListUtils::BindMaterial(Graphics().GetDevice(), commandList, buffer, resourceStateTracker, dynamicDescriptorHeap, mDescriptorAllocators[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV].get(), mesh->material);

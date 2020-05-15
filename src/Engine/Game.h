@@ -1,12 +1,12 @@
 #pragma once
 
 #include <IGame.h>
-#include <UploadBuffer.h>
+#include <Memory/UploadBuffer.h>
 #include <Scene/SceneForwards.h>
 #include <Types.h>
 #include <RootSignature.h>
-#include <DynamicDescriptorHeap.h>
-#include <DescriptorAllocator.h>
+#include <Memory/DynamicDescriptorHeap.h>
+#include <Memory/DescriptorAllocator.h>
 #include <ResourceStateTracker.h>
 #include <ImGuiManager.h>
 
@@ -50,7 +50,7 @@ namespace Engine
 
         DescriptorAllocation AllocateDescriptor(D3D12_DESCRIPTOR_HEAP_TYPE heapType, uint32 count = 1)
         {
-            return mDescriptorAllocators[heapType]->Allocate(Graphics().GetDevice(), count);
+            return mDescriptorAllocators[heapType]->Allocate(count);
         }
 
         SharedPtr<Scene::CameraNode> Camera() const;
