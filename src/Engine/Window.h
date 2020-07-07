@@ -8,6 +8,8 @@
 
 namespace Engine
 {
+    class GameV2;
+
     class Window
     {
     private:
@@ -27,11 +29,20 @@ namespace Engine
             HINSTANCE hInst;
         };
 
+        struct WindowPayload
+        {
+            Window* window;
+            GameV2* game;
+        };
+
     public:
         Window(int32 width, int32 height, const TCHAR *name);
         ~Window();
         Window(const Window &) = delete;
         Window &operator=(const Window &) = delete;
+
+        int Run(GameV2* game);
+
         Optional<int> ProcessMessages() noexcept;
         HWND GetHWnd() const { return hWnd; }
 
@@ -57,6 +68,7 @@ namespace Engine
         bool mMinimized;
         bool mMaximized;
 
+        const TCHAR *mName;
         int32 mWidth;
         int32 mHeight;
 

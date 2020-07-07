@@ -3,6 +3,13 @@
 #include <Utils.h>
 #include <stdlib.h>
 #include <ShaderTypes.h>
+
+#include <Canvas.h>
+#include <Memory/UploadBuffer.h>
+#include <Memory/DynamicDescriptorHeap.h>
+#include <ResourceStateTracker.h>
+#include <RenderContext.h>
+
 #include <CommandListUtils.h>
 
 #include <Scene/Loader/SceneLoader.h>
@@ -16,7 +23,10 @@
 #include <Scene/Texture.h>
 #include <Scene/Vertex.h>
 
+
+#include <App.h>
 #include <RootSignature.h>
+
 
 #include <CommandListContext.h>
 
@@ -26,8 +36,8 @@
 
 namespace Engine
 {
-    Game::Game(App *app)
-        : IGame(app)
+    Game::Game(App *app, SharedPtr<RenderContext> renderContext, SharedPtr<Canvas> canvas)
+        : mApp(app), mRenderContext(renderContext), mCanvas(canvas)
     {
     }
 
@@ -52,15 +62,7 @@ namespace Engine
         //loadedScene = loader.LoadScene("Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\DamagedHelmet\\glTF\\DamagedHelmet.gltf", 1.0f);
         //loadedScene = loader.LoadScene("Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\OrientationTest\\glTF\\OrientationTest.gltf", 1.0f);
 
-        mImGuiManager = MakeUnique<ImGuiManager>(Graphics().GetDevice(), Graphics().SwapChainBufferCount, DXGI_FORMAT_R8G8B8A8_UNORM);
-
-        mGlobalResourceStateTracker = Graphics().mGlobalResourceStateTracker;
-        for (uint32 i = 0; i < Graphics().SwapChainBufferCount; ++i)
-        {
-            mResourceStateTrackers[i] = MakeShared<ResourceStateTracker>(mGlobalResourceStateTracker);
-
-            mGlobalResourceStateTracker->TrackResource(Graphics().mBackBuffers[i].Get(), D3D12_RESOURCE_STATE_COMMON);
-        }
+        mImGuiManager = MakeUnique<ImGuiManager>(mRenderContext->Device(), Canvas::SwapChainBufferCount, DXGI_FORMAT_R8G8B8A8_UNORM);
 
         CommandListContext commandListContext;
         for (auto &node : loadedScene->nodes)
@@ -68,25 +70,21 @@ namespace Engine
             UploadMeshes(commandList, node, commandListContext);
         }
 
-        for (uint32 i = 0; i < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES; ++i)
+
+        mDepthBufferDescriptor = mRenderContext->AllocateDescriptor(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+
+        auto cbvSrvUavDescriptorSize = mRenderContext->Device()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+        for (uint32 i = 0; i < Canvas::SwapChainBufferCount; ++i)
         {
-            D3D12_DESCRIPTOR_HEAP_TYPE type = (D3D12_DESCRIPTOR_HEAP_TYPE)i;
-            uint32 incrementalSize = Graphics().GetDevice()->GetDescriptorHandleIncrementSize(type);
-            mDescriptorAllocators[i] = MakeUnique<DescriptorAllocator>(Graphics().GetDevice(), type);
+            
         }
 
-        mDepthBufferDescriptor = AllocateDescriptor(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-
-        auto cbvSrvUavDescriptorSize = Graphics().GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-        for (uint32 i = 0; i < Graphics().SwapChainBufferCount; ++i)
+        for (uint32 frameIndex = 0; frameIndex < Canvas::SwapChainBufferCount; ++frameIndex)
         {
-            mDynamicDescriptorHeaps[i] = MakeShared<DynamicDescriptorHeap>(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, cbvSrvUavDescriptorSize);
-        }
-
-        for (uint32 frameIndex = 0; frameIndex < Graphics().SwapChainBufferCount; ++frameIndex)
-        {
-            mUploadBuffer[frameIndex] = MakeShared<UploadBuffer>(Graphics().GetDevice().Get(), 2 * 1024 * 1024);
+            mResourceStateTrackers[frameIndex] = MakeShared<ResourceStateTracker>(mRenderContext->GetResourceStateTracker());
+            mDynamicDescriptorHeaps[frameIndex] = MakeShared<DynamicDescriptorHeap>(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, cbvSrvUavDescriptorSize);
+            mUploadBuffer[frameIndex] = MakeShared<UploadBuffer>(mRenderContext->Device().Get(), 2 * 1024 * 1024);
         }
 
         ComPtr<ID3DBlob> pixelShaderBlob = Utils::CompileShader(L"Resources\\Shaders\\Shader.hlsl", nullptr, "mainPS", "ps_5_1");
@@ -140,7 +138,7 @@ namespace Engine
         rootSigDesc.Init_1_1(_countof(rootParameters), rootParameters, 1, &sampler,
                              D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
-        mRootSignature = MakeUnique<RootSignature>(Graphics().GetDevice(), &rootSigDesc);
+        mRootSignature = MakeUnique<RootSignature>(mRenderContext->Device(), &rootSigDesc);
         struct PipelineStateStream
         {
             CD3DX12_PIPELINE_STATE_STREAM_ROOT_SIGNATURE pRootSignature;
@@ -172,17 +170,17 @@ namespace Engine
 
         D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc = {
             sizeof(PipelineStateStream), &pipelineStateStream};
-        ThrowIfFailed(Graphics().GetDevice()->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&mPipelineState)));
+        ThrowIfFailed(mRenderContext->Device()->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&mPipelineState)));
 
         uint64 fenceValue = Graphics().ExecuteCommandList(commandList);
 
         Graphics().WaitForFenceValue(fenceValue);
 
-        mScreenViewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(Graphics().GetWidth()), static_cast<float>(Graphics().GetHeight()));
+        mScreenViewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(mCanvas->GetWidth()), static_cast<float>(mCanvas->GetHeight()));
 
-        mScissorRect = CD3DX12_RECT(0, 0, Graphics().GetWidth(), Graphics().GetHeight());
+        mScissorRect = CD3DX12_RECT(0, 0, mCanvas->GetWidth(), mCanvas->GetHeight());
 
-        ResizeDepthBuffer(Graphics().GetWidth(), Graphics().GetHeight());
+        ResizeDepthBuffer(mCanvas->GetWidth(), mCanvas->GetHeight());
 
         commandListContext.ClearResources();
 
@@ -206,9 +204,9 @@ namespace Engine
     {
         for (auto &mesh : node->GetMeshes())
         {
-            CommandListUtils::UploadVertexBuffer(Graphics().GetDevice(), commandList, mGlobalResourceStateTracker, mesh->mVertexBuffer, commandListContext);
-            CommandListUtils::UploadIndexBuffer(Graphics().GetDevice(), commandList, mGlobalResourceStateTracker, mesh->mIndexBuffer, commandListContext);
-            CommandListUtils::UploadMaterialTextures(Graphics().GetDevice(), commandList, mGlobalResourceStateTracker, commandListContext, mesh->material);
+            CommandListUtils::UploadVertexBuffer(mRenderContext->Device(), commandList, mRenderContext->GetResourceStateTracker(), mesh->mVertexBuffer, commandListContext);
+            CommandListUtils::UploadIndexBuffer(mRenderContext->Device(), commandList, mRenderContext->GetResourceStateTracker(), mesh->mIndexBuffer, commandListContext);
+            CommandListUtils::UploadMaterialTextures(mRenderContext->Device(), commandList, mRenderContext->GetResourceStateTracker(), commandListContext, mesh->material);
         }
     }
 
@@ -218,7 +216,7 @@ namespace Engine
 
     void Game::Update(const Timer &time)
     {
-        float aspectRatio = Graphics().GetWidth() / static_cast<float>(Graphics().GetHeight());
+        float aspectRatio = mCanvas->GetWidth() / static_cast<float>(mCanvas->GetHeight());
 
         auto camera = Camera();
         camera->SetAspectRatio(aspectRatio);
@@ -284,21 +282,27 @@ namespace Engine
 
         commandList->SetGraphicsRootConstantBufferView(0, cbAllocation.GPU);
 
-        auto dynamicDescriptorHeap = mDynamicDescriptorHeaps[Graphics().GetCurrentBackBufferIndex()];
-        auto resourceStateTracker = mResourceStateTrackers[Graphics().GetCurrentBackBufferIndex()];
+        auto dynamicDescriptorHeap = mDynamicDescriptorHeaps[mCanvas->GetCurrentBackBufferIndex()];
+        auto resourceStateTracker = mResourceStateTrackers[mCanvas->GetCurrentBackBufferIndex()];
 
         for (auto &mesh : node->GetMeshes())
         {
             commandList->IASetPrimitiveTopology(mesh->mPrimitiveTopology);
 
 
-            CommandListUtils::BindMaterial(Graphics().GetDevice(), commandList, buffer, resourceStateTracker, dynamicDescriptorHeap, mDescriptorAllocators[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV].get(), mesh->material);
+            CommandListUtils::BindMaterial(
+                mRenderContext->Device(), 
+                commandList, buffer, 
+                resourceStateTracker, 
+                dynamicDescriptorHeap, 
+                mRenderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV), 
+                mesh->material);
             CommandListUtils::BindVertexBuffer(commandList, resourceStateTracker, mesh->mVertexBuffer);
             CommandListUtils::BindIndexBuffer(commandList, resourceStateTracker, mesh->mIndexBuffer);
 
             resourceStateTracker->FlushBarriers(commandList);
 
-            dynamicDescriptorHeap->CommitStagedDescriptors(Graphics().GetDevice(), commandList);
+            dynamicDescriptorHeap->CommitStagedDescriptors(mRenderContext->Device(), commandList);
 
             commandList->DrawIndexedInstanced(static_cast<uint32>(mesh->mIndexBuffer.GetElementsCount()), 1, 0, 0, 0);
         }
@@ -307,13 +311,13 @@ namespace Engine
     void Game::Draw(const Timer &time)
     {
         auto commandList = Graphics().GetCommandList();
-        auto currentBackBufferIndex = Graphics().GetCurrentBackBufferIndex();
+        auto currentBackBufferIndex = mCanvas->GetCurrentBackBufferIndex();
 
         mUploadBuffer[currentBackBufferIndex]->Reset();
-        mDynamicDescriptorHeaps[Graphics().GetCurrentBackBufferIndex()]->Reset();
-        auto resourceStateTracker = mResourceStateTrackers[Graphics().GetCurrentBackBufferIndex()];
+        mDynamicDescriptorHeaps[mCanvas->GetCurrentBackBufferIndex()]->Reset();
+        auto resourceStateTracker = mResourceStateTrackers[mCanvas->GetCurrentBackBufferIndex()];
 
-        auto backBuffer = Graphics().GetCurrentBackBuffer();
+        auto backBuffer = mCanvas->GetCurrentBackBuffer();
 
         mImGuiManager->BeginFrame();
 
@@ -321,7 +325,7 @@ namespace Engine
         if (show_demo_window)
             ImGui::ShowDemoWindow(&show_demo_window);
 
-        auto rtv = Graphics().GetCurrentRenderTargetView();
+        auto rtv = mCanvas->GetCurrentRenderTargetView();
 
         CommandListUtils::TransitionBarrier(commandList, resourceStateTracker, backBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, true);
 
@@ -338,7 +342,7 @@ namespace Engine
         commandList->SetPipelineState(mPipelineState.Get());
         commandList->SetGraphicsRootSignature(mRootSignature->GetD3D12RootSignature().Get());
 
-        mDynamicDescriptorHeaps[Graphics().GetCurrentBackBufferIndex()]->ParseRootSignature(mRootSignature.get());
+        mDynamicDescriptorHeaps[mCanvas->GetCurrentBackBufferIndex()]->ParseRootSignature(mRootSignature.get());
 
         DirectX::XMMATRIX mvpMatrix = DirectX::XMMatrixMultiply(mViewMatrix, mProjectionMatrix);
         mvpMatrix = DirectX::XMMatrixTranspose(mvpMatrix);
@@ -381,7 +385,7 @@ namespace Engine
         resourceStateTracker->FlushBarriers(commandList);
         mFenceValues[currentBackBufferIndex] = Graphics().ExecuteCommandList(commandList);
 
-        currentBackBufferIndex = Graphics().Present();
+        currentBackBufferIndex = mCanvas->Present();
 
         Graphics().WaitForFenceValue(mFenceValues[currentBackBufferIndex]);
     }
@@ -407,7 +411,7 @@ namespace Engine
         optimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
         optimizedClearValue.DepthStencil = {1.0f, 0};
 
-        ThrowIfFailed(Graphics().GetDevice()->CreateCommittedResource(
+        ThrowIfFailed(mRenderContext->Device()->CreateCommittedResource(
             &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
             D3D12_HEAP_FLAG_NONE,
             &CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, width, height, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
@@ -421,7 +425,7 @@ namespace Engine
         dsv.Texture2D.MipSlice = 0;
         dsv.Flags = D3D12_DSV_FLAG_NONE;
 
-        Graphics().GetDevice()->CreateDepthStencilView(
+        mRenderContext->Device()->CreateDepthStencilView(
             mDepthBuffer.Get(),
             &dsv,
             mDepthBufferDescriptor.GetDescriptor());

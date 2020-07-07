@@ -20,16 +20,10 @@ namespace Engine
 
         inline ComPtr<ID3D12Device2> GetDevice() const { return device; }
         inline ComPtr<IDXGIFactory4> GetGIFactory() const { return dxgiFactory; }
-        inline bool IsTearingSupported() const { return isTearingSupported; }
-
-    private:
-        bool CheckTearing();
 
     private:
         Microsoft::WRL::ComPtr<ID3D12Device2> device;
         Microsoft::WRL::ComPtr<IDXGIFactory4> dxgiFactory;
-
-        bool isTearingSupported;
     };
 
 } // namespace Engine

@@ -3,7 +3,7 @@
 
 namespace Engine
 {
-    Graphics::Graphics() : isTearingSupported(false)
+    Graphics::Graphics()
     {
 #if defined(DEBUG) || defined(_DEBUG)
         ComPtr<ID3D12Debug3> debugController;
@@ -33,8 +33,6 @@ namespace Engine
                 D3D_FEATURE_LEVEL_11_0,
                 IID_PPV_ARGS(&device)));
         }
-
-        isTearingSupported = CheckTearing();
 
 #if defined(DEBUG) || defined(_DEBUG)
         ComPtr<ID3D12InfoQueue> pInfoQueue;
@@ -76,18 +74,4 @@ namespace Engine
     Graphics::~Graphics()
     {
     }
-
-    bool Graphics::CheckTearing()
-    {
-        BOOL allowTearing = FALSE;
-
-        ComPtr<IDXGIFactory5> factory5;
-        if (SUCCEEDED(dxgiFactory.As(&factory5)))
-        {
-            ThrowIfFailed(factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing)));
-        }
-
-        return allowTearing == TRUE;
-    }
-
 } // namespace Engine

@@ -1,4 +1,7 @@
 #include "Window.h"
+
+#include <GameV2.h>
+
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_win32.h>
 #include <iostream>
@@ -42,43 +45,81 @@ namespace Engine
     }
 
     Window::Window(int32 width, int32 height, const TCHAR *name)
-        : mWidth(width), mHeight(height), mIsFullscreen(false)
+        : mWidth(width), mHeight(height), mName(name), mIsFullscreen(false), hWnd(0)
     {
-        RECT R = {0, 0, width, height};
-        AdjustWindowRect(&R, WS_OVERLAPPEDWINDOW, false);
-
-        hWnd = CreateWindow(
-            WindowClass::GetName(),
-            name,
-            WS_OVERLAPPEDWINDOW,
-            CW_USEDEFAULT,
-            CW_USEDEFAULT,
-            R.right - R.left,
-            R.bottom - R.top,
-            0,
-            0,
-            WindowClass::GetInstance(),
-            this);
-
-        if (hWnd == nullptr)
-        {
-            MessageBox(0, TEXT("RegisterClass Failed."), 0, 0);
-        }
-
-        IMGUI_CHECKVERSION();
-        ImGui::CreateContext();
-        ImGuiIO &io = ImGui::GetIO();
-        (void)io;
-        ImGui::StyleColorsDark();
-        ImGui_ImplWin32_Init(hWnd);
-
-        ShowWindow(hWnd, SW_SHOW);
-        UpdateWindow(hWnd);
     }
 
     Window::~Window()
     {
         DestroyWindow(hWnd);
+    }
+
+    int Window::Run(GameV2* game)
+    {
+        bool isGameInitialized = false;
+        try
+        {
+            WindowPayload payload;
+            payload.window = this;
+            payload.game = game;
+
+            RECT R = {0, 0, mWidth, mHeight};
+            AdjustWindowRect(&R, WS_OVERLAPPEDWINDOW, false);
+
+            hWnd = CreateWindow(
+                WindowClass::GetName(),
+                mName,
+                WS_OVERLAPPEDWINDOW,
+                CW_USEDEFAULT,
+                CW_USEDEFAULT,
+                R.right - R.left,
+                R.bottom - R.top,
+                0,
+                0,
+                WindowClass::GetInstance(),
+                &payload);
+
+            if (hWnd == nullptr)
+            {
+                MessageBox(0, TEXT("RegisterClass Failed."), 0, 0);
+            }
+
+            IMGUI_CHECKVERSION();
+            ImGui::CreateContext();
+            ImGui::StyleColorsDark();
+            ImGui_ImplWin32_Init(hWnd);
+
+            isGameInitialized = true;
+            game->Init(hWnd, mWidth, mHeight);
+
+            ShowWindow(hWnd, SW_SHOW);
+            UpdateWindow(hWnd);
+
+            MSG msg = {};
+            while (msg.message != WM_QUIT)
+            {
+                // Process any messages in the queue.
+                if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+                {
+                    TranslateMessage(&msg);
+                    DispatchMessage(&msg);
+                }
+            }
+
+            game->Destroy();
+
+            return static_cast<int>(msg.wParam);
+        }
+        catch (std::exception &e)
+        {
+            MessageBox(nullptr, e.what(), TEXT("Application hit a problem"), MB_OK);
+
+            if (isGameInitialized)
+            {
+                game->Destroy();
+            }
+            return EXIT_FAILURE;
+        }
     }
 
     LRESULT CALLBACK Window::HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
@@ -103,15 +144,18 @@ namespace Engine
     LRESULT CALLBACK Window::HandleMsgThunk(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
     {
         // retrieve ptr to window instance
-        Window *const pWnd = reinterpret_cast<Window *>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+        WindowPayload *const payload = reinterpret_cast<WindowPayload *>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
         // forward message to window instance handler
-        return pWnd->HandleMsg(hWnd, msg, wParam, lParam);
+        return payload->window->HandleMsg(hWnd, msg, wParam, lParam);
     }
 
     LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
     {
         if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
             return true;
+
+        WindowPayload *const payload = reinterpret_cast<WindowPayload *>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+        GameV2* game = payload->game;
 
         switch (msg)
         {
@@ -121,7 +165,7 @@ namespace Engine
 
         case WM_ACTIVATE:
         {
-            OnActiveChanged(LOWORD(wParam) != WA_INACTIVE);
+            game->OnActiveChanged(LOWORD(wParam) != WA_INACTIVE);
             return 0;
         }
 
@@ -132,28 +176,28 @@ namespace Engine
             {
                 mMinimized = true;
                 mMaximized = false;
-                OnActiveChanged(false);
+                game->OnActiveChanged(false);
             }
             else if (wParam == SIZE_MAXIMIZED)
             {
                 mMinimized = false;
                 mMaximized = true;
-                OnResize(mWidth, mHeight);
-                OnActiveChanged(true);
+                game->OnResize(mWidth, mHeight);
+                game->OnActiveChanged(true);
             }
             else if (wParam == SIZE_RESTORED)
             {
                 if (mMinimized)
                 {
                     mMinimized = false;
-                    OnResize(mWidth, mHeight);
-                    OnActiveChanged(true);
+                    game->OnResize(mWidth, mHeight);
+                    game->OnActiveChanged(true);
                 }
                 else if (mMaximized)
                 {
                     mMaximized = false;
-                    OnResize(mWidth, mHeight);
-                    OnActiveChanged(true);
+                    game->OnResize(mWidth, mHeight);
+                    game->OnActiveChanged(true);
                 }
                 else if (mResizing)
                 {
@@ -161,7 +205,7 @@ namespace Engine
                 }
                 else
                 {
-                    OnResize(mWidth, mHeight);
+                    game->OnResize(mWidth, mHeight);
                 }
             }
 
@@ -169,13 +213,13 @@ namespace Engine
 
         case WM_ENTERSIZEMOVE:
             mResizing = true;
-            OnActiveChanged(false);
+            game->OnActiveChanged(false);
             return 0;
 
         case WM_EXITSIZEMOVE:
             mResizing = false;
-            OnResize(mWidth, mHeight);
-            OnActiveChanged(true);
+            game->OnResize(mWidth, mHeight);
+            game->OnActiveChanged(true);
             return 0;
 
         case WM_GETMINMAXINFO:
@@ -192,7 +236,7 @@ namespace Engine
         {
             KeyCode::Key key = (KeyCode::Key)wParam;
             KeyEvent event(key, KeyEvent::KeyState::Pressed);
-            OnKeyPressed(event);
+            game->OnKeyPressed(event);
             return 0;
         }
         case WM_SYSKEYUP:
@@ -208,13 +252,13 @@ namespace Engine
             }
             KeyCode::Key key = (KeyCode::Key)wParam;
             KeyEvent event(key, KeyEvent::KeyState::Released);
-            OnKeyPressed(event);
+            game->OnKeyPressed(event);
             return 0;
         }
         case WM_CHAR:
             return 0;
         case WM_PAINT:
-            OnPaint();
+            game->Draw();
             return 0;
         }
 

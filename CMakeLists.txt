@@ -49,7 +49,7 @@ target_include_directories(d3d12 PRIVATE "src/Libraries/D3DX12/")
 
 target_include_directories(d3d12 PRIVATE "src/Libraries/imgui/")
 
-target_link_libraries(d3d12 PRIVATE "d3d12.lib" "dxgi.lib" "d3dcompiler.lib" "assimp" "DirectXTex")
+target_link_libraries(d3d12 PRIVATE "d3d12.lib" "dxgi.lib" "d3dcompiler.lib" "dxguid.lib" "assimp" "DirectXTex")
 
 set_source_files_properties( src/Engine/Resources/Shaders/VertexShader.hlsl PROPERTIES 
     VS_SHADER_TYPE Vertex

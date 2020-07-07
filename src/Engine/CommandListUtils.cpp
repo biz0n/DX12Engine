@@ -4,6 +4,11 @@
 #include <Exceptions.h>
 #include <d3dx12.h>
 
+#include <Memory/UploadBuffer.h>
+#include <Memory/DescriptorAllocator.h>
+#include <Memory/DescriptorAllocation.h>
+#include <Memory/DynamicDescriptorHeap.h>
+
 #include <Scene/Loader/SceneLoader.h>
 #include <Scene/Image.h>
 #include <Scene/Texture.h>

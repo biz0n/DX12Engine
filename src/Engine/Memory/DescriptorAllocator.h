@@ -3,8 +3,7 @@
 #include <Types.h>
 #include <Exceptions.h>
 
-#include <Memory/DescriptorAllocatorPage.h>
-#include <Memory/DescriptorAllocation.h>
+
 
 #include <cassert>
 #include <d3d12.h>
@@ -12,10 +11,14 @@
 
 namespace Engine
 {
+    class DescriptorAllocatorPage;
+    struct DescriptorAllocation;
+
     class DescriptorAllocator
     {
     public:
         DescriptorAllocator(ComPtr<ID3D12Device> device, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 numDescriptorsPerPage = 256);
+        ~DescriptorAllocator() = default;
 
         DescriptorAllocation Allocate(uint32 count = 1);
 

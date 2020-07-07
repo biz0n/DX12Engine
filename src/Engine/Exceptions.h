@@ -3,15 +3,22 @@
 #include <Windows.h>
 #include <Types.h>
 
+#include <cassert>
+
 namespace Engine
 {
-    class DxException
+    class DxException : public std::exception
     {
     public:
         DxException() = default;
         DxException(HRESULT hr, const TString &functionName, const TString &filename, int lineNumber);
-
+   
         TString ToString() const;
+
+        virtual const char* what() const throw ()
+        {
+            return ToString().c_str();
+        }
 
         HRESULT ErrorCode = S_OK;
         TString FunctionName;

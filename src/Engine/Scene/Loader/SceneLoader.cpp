@@ -176,8 +176,7 @@ namespace Engine::Scene::Loader
 
 		auto t = DirectX::XMMatrixTranslation(position.x, position.y, position.z);
 		auto s = DirectX::XMMatrixScaling(scaling.x, scaling.y, scaling.z);
-		DirectX::XMFLOAT4 quaternion = { rotation.x, rotation.y, rotation.z, rotation.w };
-		auto r = DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&quaternion));
+		auto r = DirectX::XMMatrixRotationQuaternion(DirectX::XMVectorSet(rotation.x, rotation.y, rotation.z, rotation.w));
 
 		DirectX::XMFLOAT4X4 transform;
 		DirectX::XMStoreFloat4x4(&transform, s * r * t);

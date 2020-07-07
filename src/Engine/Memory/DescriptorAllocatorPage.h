@@ -10,12 +10,13 @@
 
 namespace Engine
 {
-    class DescriptorAllocation;
+    struct DescriptorAllocation;
 
     class DescriptorAllocatorPage : public std::enable_shared_from_this<DescriptorAllocatorPage>
     {
     public:
         DescriptorAllocatorPage(ComPtr<ID3D12Device> device, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 numDescriptorsPerPage = 256);
+        ~DescriptorAllocatorPage() = default;
 
         DescriptorAllocation Allocate(uint32 count = 1);
 

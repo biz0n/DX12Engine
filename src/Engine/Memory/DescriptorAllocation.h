@@ -1,90 +1,37 @@
 #pragma once
 
 #include <Types.h>
+
 #include <d3d12.h>
-#include <cassert>
 
 namespace Engine
 {
     class DescriptorAllocatorPage;
 
-    class DescriptorAllocation
+    struct DescriptorAllocation
     {
     public:
-        DescriptorAllocation()
-            : mDescriptor{0}, mNumDescriptors(0), mIncrementalDescriptorSize(0), mPage(nullptr)
-        {
-        }
+        DescriptorAllocation();
 
-        DescriptorAllocation(D3D12_CPU_DESCRIPTOR_HANDLE descriptor, uint32 numDescriptors, uint32 incrementalDescriptorSize, SharedPtr<DescriptorAllocatorPage> page)
-            : mDescriptor(descriptor)
-            , mNumDescriptors(numDescriptors)
-            , mIncrementalDescriptorSize(incrementalDescriptorSize)
-            , mPage(page)
-        {
-        }
+        DescriptorAllocation(D3D12_CPU_DESCRIPTOR_HANDLE descriptor, uint32 numDescriptors, uint32 incrementalDescriptorSize, SharedPtr<DescriptorAllocatorPage> page);
 
         // Copies are not allowed.
-        DescriptorAllocation( const DescriptorAllocation& ) = delete;
-        DescriptorAllocation& operator=( const DescriptorAllocation& ) = delete;
+        DescriptorAllocation(const DescriptorAllocation &) = delete;
+        DescriptorAllocation &operator=(const DescriptorAllocation &) = delete;
 
-        DescriptorAllocation( DescriptorAllocation&& allocation )
-            : mDescriptor(allocation.mDescriptor)
-            , mNumDescriptors(allocation.mNumDescriptors)
-            , mIncrementalDescriptorSize(allocation.mIncrementalDescriptorSize)
-            , mPage(std::move(allocation.mPage))
-        {
-            allocation.mDescriptor.ptr = 0;
-            allocation.mNumDescriptors = 0;
-            allocation.mIncrementalDescriptorSize = 0;
-        }
+        DescriptorAllocation(DescriptorAllocation &&allocation);
 
-        DescriptorAllocation& operator=( DescriptorAllocation&& other )
-        {
-            Free();
+        DescriptorAllocation &operator=(DescriptorAllocation &&other);
 
-            mDescriptor = other.mDescriptor;
-            mNumDescriptors = other.mNumDescriptors;
-            mIncrementalDescriptorSize = other.mIncrementalDescriptorSize;
-            mPage = std::move(other.mPage);
+        ~DescriptorAllocation();
 
-            other.mDescriptor.ptr = 0;
-            other.mNumDescriptors = 0;
-            other.mIncrementalDescriptorSize = 0;
+        D3D12_CPU_DESCRIPTOR_HANDLE GetDescriptor(uint32 offset = 0) const;
 
-            return *this;
-        }
+        uint32 GetNumDescsriptors() const;
 
-        ~DescriptorAllocation()
-        {
-            Free();
-        }
+        bool IsNull() const;
 
-        D3D12_CPU_DESCRIPTOR_HANDLE GetDescriptor(uint32 offset = 0) const
-        {
-            assert(offset < mNumDescriptors);
-            return {mDescriptor.ptr + (offset * mIncrementalDescriptorSize)};
-        }
-
-        uint32 GetNumDescsriptors() const { return mNumDescriptors; }
-
-        bool IsNull() const
-        {
-            return mDescriptor.ptr == 0;
-        }
-
-        void Free()
-        {
-            if (!IsNull())
-            {
-
-            }
-
-            if (mPage)
-            {
-                mPage.reset();
-            }
-        }
+        void Free();
 
     private:
         D3D12_CPU_DESCRIPTOR_HANDLE mDescriptor;
@@ -92,4 +39,4 @@ namespace Engine
         uint32 mIncrementalDescriptorSize;
         SharedPtr<DescriptorAllocatorPage> mPage;
     };
-}
+} // namespace Engine

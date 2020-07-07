@@ -1,40 +1,49 @@
 #pragma once
 
-#include <IGame.h>
-#include <Memory/UploadBuffer.h>
 #include <Scene/SceneForwards.h>
 #include <Types.h>
 #include <RootSignature.h>
-#include <Memory/DynamicDescriptorHeap.h>
-#include <Memory/DescriptorAllocator.h>
+
+#include <Memory/MemoryForwards.h>
+#include <Memory/DescriptorAllocation.h>
 #include <ResourceStateTracker.h>
 #include <ImGuiManager.h>
 
+#include <Timer.h>
+#include <Events.h>
+
 #include <bitset>
+#include <DirectXMath.h>
 
 namespace Engine
 {
     class CommandListContext;
+    
+    class App;
+    class Canvas;
+    class RenderContext;
 
-    class Game : public IGame
+    class Game
     {
     public:
-        Game(App *app);
-        virtual ~Game();
+        Game(App *app, SharedPtr<RenderContext> renderContext, SharedPtr<Canvas> canvas);
+        ~Game();
 
-        virtual bool Initialize();
+        bool Initialize();
 
-        virtual void Update(const Timer &time);
+        void Update(const Timer &time);
 
-        virtual void Draw(const Timer &time);
+        void Draw(const Timer &time);
 
-        virtual void Deinitialize();
+        void Deinitialize();
 
-        virtual void Resize(int32 width, int32 height);
+        void Resize(int32 width, int32 height);
 
-        virtual void KeyPressed(KeyEvent event);
+        void KeyPressed(KeyEvent event);
 
     private:
+        static const uint32 SwapChainBufferCount = 2;
+
         void UpdateBufferResoure(
             ComPtr<ID3D12GraphicsCommandList>,
             ID3D12Resource **,
@@ -48,24 +57,17 @@ namespace Engine
         void Draw(ComPtr<ID3D12GraphicsCommandList> commandList, const SharedPtr<Scene::MeshNode>& node, SharedPtr<UploadBuffer> buffer);
         void UploadMeshes(ComPtr<ID3D12GraphicsCommandList> commandList, const SharedPtr<Scene::MeshNode>& node, CommandListContext &commandListContext);
 
-        DescriptorAllocation AllocateDescriptor(D3D12_DESCRIPTOR_HEAP_TYPE heapType, uint32 count = 1)
-        {
-            return mDescriptorAllocators[heapType]->Allocate(count);
-        }
-
         SharedPtr<Scene::CameraNode> Camera() const;
 
     private:
-        uint64 mFenceValues[App::SwapChainBufferCount] = {0, 0};
+        uint64 mFenceValues[SwapChainBufferCount] = {0, 0};
 
-        SharedPtr<DynamicDescriptorHeap> mDynamicDescriptorHeaps[App::SwapChainBufferCount];
-        UniquePtr<DescriptorAllocator> mDescriptorAllocators[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES];
+        SharedPtr<DynamicDescriptorHeap> mDynamicDescriptorHeaps[SwapChainBufferCount];
 
     private:
-        SharedPtr<UploadBuffer> mUploadBuffer[App::SwapChainBufferCount];
+        SharedPtr<UploadBuffer> mUploadBuffer[SwapChainBufferCount];
 
-        SharedPtr<GlobalResourceStateTracker> mGlobalResourceStateTracker;
-        SharedPtr<ResourceStateTracker> mResourceStateTrackers[App::SwapChainBufferCount];
+        SharedPtr<ResourceStateTracker> mResourceStateTrackers[SwapChainBufferCount];
 
         UniquePtr<ImGuiManager> mImGuiManager;
 
@@ -85,7 +87,13 @@ namespace Engine
 
         UniquePtr<Scene::SceneObject> loadedScene;
 
+        SharedPtr<Canvas> mCanvas;
+        SharedPtr<RenderContext> mRenderContext;
+
         std::bitset<0xFF> keyState;
+
+        App &Graphics() { return *mApp; }
+        App *mApp;
     };
 
 } // namespace Engine

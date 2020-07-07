@@ -9,9 +9,7 @@
 #include <Scene/SceneForwards.h>
 #include <CommandListContext.h>
 #include <ResourceStateTracker.h>
-#include <Memory/UploadBuffer.h>
-#include <Memory/DynamicDescriptorHeap.h>
-#include <Memory/DescriptorAllocator.h>
+#include <Memory/MemoryForwards.h>
 
 #include <d3d12.h>
 #include <vector>

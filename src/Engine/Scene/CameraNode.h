@@ -3,6 +3,7 @@
 #include <Scene/SceneForwards.h>
 
 #include <MathUtils.h>
+#include <algorithm>
 
 namespace Engine::Scene
 {
