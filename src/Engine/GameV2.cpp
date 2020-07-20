@@ -28,6 +28,7 @@ namespace Engine
 
     void GameV2::Destroy()
     {
+        mApp->Flush();
     }
 
     void GameV2::Draw()

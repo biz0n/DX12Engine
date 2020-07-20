@@ -12,7 +12,13 @@ using float4 = DirectX::XMFLOAT4;
 using float3x3 = DirectX::XMFLOAT3X3;
 using float4x4 = DirectX::XMFLOAT4X4;
 
+#define CB_ALIGN(x) alignas(x) 
+
+#else
+#define CB_ALIGN(x)
 #endif
+
+#define aligned_bool CB_ALIGN(4) bool
 
 #define MAX_LIGHTS 16
 
@@ -38,12 +44,12 @@ struct MaterialUniform
     float SpecularPower;
     float NormalScale;
 
-    bool HasBaseColorTexture;
-    bool HasNormalTexture;
-    bool HasMetallicRoughnessTexture;
-    bool HasOcclusionTexture;
+    aligned_bool HasBaseColorTexture;
+    aligned_bool HasNormalTexture;
+    aligned_bool HasMetallicRoughnessTexture;
+    aligned_bool HasOcclusionTexture;
 
-    bool HasEmissiveTexture;
+    aligned_bool HasEmissiveTexture;
 
     float3 Padding;
 };
@@ -54,7 +60,7 @@ struct LightUniform
     int LightType;
 
     float3 DirectionWS;
-    bool Enabled;
+    aligned_bool Enabled;
 
     float3 Color;
     float ConstantAttenuation;

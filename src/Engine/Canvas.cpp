@@ -53,10 +53,8 @@ namespace Engine
 
         for (uint32 i = 0; i < SwapChainBufferCount; ++i)
         {
-            ComPtr<ID3D12Resource> backBuffer = mBackBuffers[i];
-            
-            mRenderContext->GetResourceStateTracker()->UntrackResource(backBuffer.Get());
-            backBuffer.Reset();
+            mRenderContext->GetResourceStateTracker()->UntrackResource(mBackBuffers[i].Get());
+            mBackBuffers[i].Reset();
         }
 
         DXGI_SWAP_CHAIN_DESC desc = {};

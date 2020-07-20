@@ -59,9 +59,7 @@ namespace Engine
         bool isGameInitialized = false;
         try
         {
-            WindowPayload payload;
-            payload.window = this;
-            payload.game = game;
+            mGame = game;
 
             RECT R = {0, 0, mWidth, mHeight};
             AdjustWindowRect(&R, WS_OVERLAPPEDWINDOW, false);
@@ -77,7 +75,7 @@ namespace Engine
                 0,
                 0,
                 WindowClass::GetInstance(),
-                &payload);
+                this);
 
             if (hWnd == nullptr)
             {
@@ -144,9 +142,9 @@ namespace Engine
     LRESULT CALLBACK Window::HandleMsgThunk(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
     {
         // retrieve ptr to window instance
-        WindowPayload *const payload = reinterpret_cast<WindowPayload *>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+        Window *const payload = reinterpret_cast<Window *>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
         // forward message to window instance handler
-        return payload->window->HandleMsg(hWnd, msg, wParam, lParam);
+        return payload->HandleMsg(hWnd, msg, wParam, lParam);
     }
 
     LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
@@ -154,8 +152,8 @@ namespace Engine
         if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
             return true;
 
-        WindowPayload *const payload = reinterpret_cast<WindowPayload *>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
-        GameV2* game = payload->game;
+        Window *const payload = reinterpret_cast<Window *>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+        GameV2* game = payload->mGame;
 
         switch (msg)
         {

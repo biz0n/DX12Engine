@@ -95,9 +95,9 @@ namespace Engine
 
         // ResizeDepthBuffer(width, height);
 
-        ImGui_ImplDX12_CreateDeviceObjects();
-
         mGame->Resize(width, height);
+
+        ImGui_ImplDX12_CreateDeviceObjects();
     }
 
     void App::OnActiveChanged(bool isActive)

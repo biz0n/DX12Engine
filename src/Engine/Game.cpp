@@ -75,11 +75,6 @@ namespace Engine
 
         auto cbvSrvUavDescriptorSize = mRenderContext->Device()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-        for (uint32 i = 0; i < Canvas::SwapChainBufferCount; ++i)
-        {
-            
-        }
-
         for (uint32 frameIndex = 0; frameIndex < Canvas::SwapChainBufferCount; ++frameIndex)
         {
             mResourceStateTrackers[frameIndex] = MakeShared<ResourceStateTracker>(mRenderContext->GetResourceStateTracker());
@@ -397,6 +392,8 @@ namespace Engine
 
     void Game::Resize(int32 width, int32 height)
     {
+        mCanvas->Resize(width, height);
+
         mScreenViewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float32>(width), static_cast<float32>(height));
         mScissorRect = CD3DX12_RECT(0, 0, width, height);
 
@@ -405,8 +402,6 @@ namespace Engine
 
     void Game::ResizeDepthBuffer(int32 width, int32 height)
     {
-        Graphics().Flush();
-
         D3D12_CLEAR_VALUE optimizedClearValue = {};
         optimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
         optimizedClearValue.DepthStencil = {1.0f, 0};

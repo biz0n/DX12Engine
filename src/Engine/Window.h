@@ -29,12 +29,6 @@ namespace Engine
             HINSTANCE hInst;
         };
 
-        struct WindowPayload
-        {
-            Window* window;
-            GameV2* game;
-        };
-
     public:
         Window(int32 width, int32 height, const TCHAR *name);
         ~Window();
@@ -74,6 +68,8 @@ namespace Engine
 
         bool mIsFullscreen;
         RECT mWindowRect;
+
+        GameV2* mGame;
     };
 
 } // namespace Engine
