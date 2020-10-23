@@ -51,7 +51,9 @@ struct MaterialUniform
 
     aligned_bool HasEmissiveTexture;
 
-    float3 Padding;
+    float Cutoff;
+
+    float2 Padding;
 };
 
 struct LightUniform

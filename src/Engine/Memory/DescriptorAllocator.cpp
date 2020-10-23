@@ -18,5 +18,6 @@ namespace Engine
 	void DescriptorAllocator::ReleaseStaleDescriptors(uint64 frameNumber)
 	{
 		mPage->ReleaseStaleDescriptors(frameNumber);
+		mPage->SetCurrentFrame(frameNumber);
 	}
 } // namespace Engine

@@ -3,12 +3,11 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <Types.h>
-#include <Event.h>
 #include <Events.h>
 
 namespace Engine
 {
-    class GameV2;
+    class Application;
 
     class Window
     {
@@ -35,7 +34,7 @@ namespace Engine
         Window(const Window &) = delete;
         Window &operator=(const Window &) = delete;
 
-        int Run(GameV2* game);
+        int Run(Application* application);
 
         Optional<int> ProcessMessages() noexcept;
         HWND GetHWnd() const { return hWnd; }
@@ -44,11 +43,6 @@ namespace Engine
         int32 GetHeight() const { return mHeight; }
 
         void SetFullscreen(bool);
-
-        Event<void(int32, int32)> OnResize;
-        Event<void(bool)> OnActiveChanged;
-        Event<void(KeyEvent)> OnKeyPressed;
-        Event<void()> OnPaint;
 
     private:
         static LRESULT CALLBACK HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept;
@@ -69,7 +63,7 @@ namespace Engine
         bool mIsFullscreen;
         RECT mWindowRect;
 
-        GameV2* mGame;
+        Application* mApplication;
     };
 
 } // namespace Engine

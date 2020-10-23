@@ -231,6 +231,7 @@ namespace Engine::Scene::Loader
         }
 
         mesh->mVertexBuffer.SetData(vertices);
+        mesh->mVertexBuffer.SetName(Utils::ToWide("Vertices: " + (std::string)(aMesh->mName.C_Str())));
 
         std::vector<uint16> indices;
         indices.reserve(aMesh->mNumFaces * 3);
@@ -243,6 +244,7 @@ namespace Engine::Scene::Loader
         }
 
         mesh->mIndexBuffer.SetData(indices);
+        mesh->mIndexBuffer.SetName(Utils::ToWide("Indices: " + (std::string)(aMesh->mName.C_Str())));
 
         mesh->material = context.materials[aMesh->mMaterialIndex];
 

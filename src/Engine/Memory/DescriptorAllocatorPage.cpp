@@ -8,7 +8,7 @@
 namespace Engine
 {
 	DescriptorAllocatorPage::DescriptorAllocatorPage(ComPtr<ID3D12Device> device, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 numDescriptorsPerPage)
-		: mHeapType(type), mNumDescriptorsPerPage(numDescriptorsPerPage)
+		: mHeapType(type), mNumDescriptorsPerPage(numDescriptorsPerPage), mCurrentFrameNumber(0)
 	{
 		D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
 		heapDesc.NumDescriptors = mNumDescriptorsPerPage;
@@ -18,6 +18,8 @@ namespace Engine
 
 		mDescriptorHandleIncrementSize = device->GetDescriptorHandleIncrementSize(mHeapType);
 		mBaseDescriptor = mHeap->GetCPUDescriptorHandleForHeapStart();
+
+		mHeap->SetName((L"DescriptorAllocator heap: " + std::to_wstring(mHeapType)).c_str());
 
 		mFreeSize = numDescriptorsPerPage;
 		AddNewBlock(0, numDescriptorsPerPage);
@@ -56,12 +58,12 @@ namespace Engine
 		return DescriptorAllocation(handle, count, mDescriptorHandleIncrementSize, shared_from_this());
 	}
 
-	void DescriptorAllocatorPage::Free(DescriptorAllocation &&descriptorHandle, uint64_t frameNumber)
+	void DescriptorAllocatorPage::Free(DescriptorAllocation &&descriptorHandle)
 	{
 		auto offset = CalculateOffset(descriptorHandle.GetDescriptor());
 		auto count = descriptorHandle.GetNumDescsriptors();
 
-		mStaleDescriptors.emplace(offset, count, frameNumber);
+		mStaleDescriptors.emplace(offset, count, mCurrentFrameNumber);
 	}
 
 	void DescriptorAllocatorPage::ReleaseStaleDescriptors(uint64 frameNumber)

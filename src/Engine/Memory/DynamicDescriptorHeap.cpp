@@ -137,6 +137,8 @@ namespace Engine
         heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
         ThrowIfFailed(device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&descriptorHeap)));
 
+        descriptorHeap->SetName((L"DynamicDescriptor heap: " + std::to_wstring(mDescriptorHeapType)).c_str());
+
         return descriptorHeap;
     }
 

@@ -4,13 +4,16 @@
 #include <stdlib.h>
 #include <ShaderTypes.h>
 
-#include <Canvas.h>
+#include <SwapChain.h>
 #include <Memory/UploadBuffer.h>
 #include <Memory/DynamicDescriptorHeap.h>
+#include <Memory/DescriptorAllocation.h>
+#include <Memory/DescriptorAllocator.h>
 #include <ResourceStateTracker.h>
 #include <RenderContext.h>
 
 #include <CommandListUtils.h>
+#include <CommandQueue.h>
 
 #include <Scene/Loader/SceneLoader.h>
 #include <Scene/SceneObject.h>
@@ -23,8 +26,6 @@
 #include <Scene/Texture.h>
 #include <Scene/Vertex.h>
 
-
-#include <App.h>
 #include <RootSignature.h>
 
 
@@ -32,12 +33,12 @@
 
 #include <DirectXTex.h>
 
-#include <imgui/imgui.h>
+#include <d3d12.h>
 
 namespace Engine
 {
-    Game::Game(App *app, SharedPtr<RenderContext> renderContext, SharedPtr<Canvas> canvas)
-        : mApp(app), mRenderContext(renderContext), mCanvas(canvas)
+    Game::Game(SharedPtr<RenderContext> renderContext)
+        : mRenderContext(renderContext), mCanvas(renderContext->GetSwapChain())
     {
     }
 
@@ -49,7 +50,9 @@ namespace Engine
     bool Game::Initialize()
     {
         isInitializing = true;
-        auto commandList = Graphics().GetCommandList();
+        auto commandList = mRenderContext->CreateCopyCommandList();
+
+        commandList->SetName(L"Uploading resources List");
 
         Scene::Loader::SceneLoader loader;
         loadedScene = loader.LoadScene("Resources\\Scenes\\gltf2\\sponza\\sponza.gltf");
@@ -62,8 +65,6 @@ namespace Engine
         //loadedScene = loader.LoadScene("Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\DamagedHelmet\\glTF\\DamagedHelmet.gltf", 1.0f);
         //loadedScene = loader.LoadScene("Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\OrientationTest\\glTF\\OrientationTest.gltf", 1.0f);
 
-        mImGuiManager = MakeUnique<ImGuiManager>(mRenderContext->Device(), Canvas::SwapChainBufferCount, DXGI_FORMAT_R8G8B8A8_UNORM);
-
         CommandListContext commandListContext;
         for (auto &node : loadedScene->nodes)
         {
@@ -71,13 +72,12 @@ namespace Engine
         }
 
 
-        mDepthBufferDescriptor = mRenderContext->AllocateDescriptor(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+        mDepthBufferDescriptor = mRenderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_DSV)->Allocate();
 
         auto cbvSrvUavDescriptorSize = mRenderContext->Device()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-        for (uint32 frameIndex = 0; frameIndex < Canvas::SwapChainBufferCount; ++frameIndex)
+        for (uint32 frameIndex = 0; frameIndex < SwapChain::SwapChainBufferCount; ++frameIndex)
         {
-            mResourceStateTrackers[frameIndex] = MakeShared<ResourceStateTracker>(mRenderContext->GetResourceStateTracker());
             mDynamicDescriptorHeaps[frameIndex] = MakeShared<DynamicDescriptorHeap>(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, cbvSrvUavDescriptorSize);
             mUploadBuffer[frameIndex] = MakeShared<UploadBuffer>(mRenderContext->Device().Get(), 2 * 1024 * 1024);
         }
@@ -134,6 +134,7 @@ namespace Engine
                              D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
         mRootSignature = MakeUnique<RootSignature>(mRenderContext->Device(), &rootSigDesc);
+
         struct PipelineStateStream
         {
             CD3DX12_PIPELINE_STATE_STREAM_ROOT_SIGNATURE pRootSignature;
@@ -167,9 +168,11 @@ namespace Engine
             sizeof(PipelineStateStream), &pipelineStateStream};
         ThrowIfFailed(mRenderContext->Device()->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&mPipelineState)));
 
-        uint64 fenceValue = Graphics().ExecuteCommandList(commandList);
+        uint64 fenceValue = mRenderContext->GetCopyCommandQueue()->ExecuteCommandList(commandList);
 
-        Graphics().WaitForFenceValue(fenceValue);
+        mRenderContext->GetGraphicsCommandQueue()->InsertWaitForQueue(mRenderContext->GetCopyCommandQueue());
+
+        mRenderContext->GetCopyCommandQueue()->WaitForFenceCPU(fenceValue);
 
         mScreenViewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(mCanvas->GetWidth()), static_cast<float>(mCanvas->GetHeight()));
 
@@ -278,7 +281,7 @@ namespace Engine
         commandList->SetGraphicsRootConstantBufferView(0, cbAllocation.GPU);
 
         auto dynamicDescriptorHeap = mDynamicDescriptorHeaps[mCanvas->GetCurrentBackBufferIndex()];
-        auto resourceStateTracker = mResourceStateTrackers[mCanvas->GetCurrentBackBufferIndex()];
+        auto resourceStateTracker = mRenderContext->GetResourceStateTracker();
 
         for (auto &mesh : node->GetMeshes())
         {
@@ -305,34 +308,32 @@ namespace Engine
 
     void Game::Draw(const Timer &time)
     {
-        auto commandList = Graphics().GetCommandList();
+        auto commandList = mRenderContext->CreateGraphicsCommandList();
+        commandList->SetName(L"Render scene List");
+
         auto currentBackBufferIndex = mCanvas->GetCurrentBackBufferIndex();
 
         mUploadBuffer[currentBackBufferIndex]->Reset();
         mDynamicDescriptorHeaps[mCanvas->GetCurrentBackBufferIndex()]->Reset();
-        auto resourceStateTracker = mResourceStateTrackers[mCanvas->GetCurrentBackBufferIndex()];
+        auto resourceStateTracker = mRenderContext->GetResourceStateTracker();
 
         auto backBuffer = mCanvas->GetCurrentBackBuffer();
 
-        mImGuiManager->BeginFrame();
-
-        static bool show_demo_window = true;
-        if (show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);
-
         auto rtv = mCanvas->GetCurrentRenderTargetView();
 
-        CommandListUtils::TransitionBarrier(commandList, resourceStateTracker, backBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, true);
-
+        resourceStateTracker->FlushBarriers(commandList);
         FLOAT clearColor[] = {0.4f, 0.6f, 0.9f, 1.0f};
 
         commandList->RSSetViewports(1, &mScreenViewport);
         commandList->RSSetScissorRects(1, &mScissorRect);
 
+        
+
         commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
         commandList->ClearDepthStencilView(mDepthBufferDescriptor.GetDescriptor(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
         commandList->OMSetRenderTargets(1, &rtv, false, &mDepthBufferDescriptor.GetDescriptor());
+
 
         commandList->SetPipelineState(mPipelineState.Get());
         commandList->SetGraphicsRootSignature(mRootSignature->GetD3D12RootSignature().Get());
@@ -374,15 +375,7 @@ namespace Engine
             Draw(commandList, node, mUploadBuffer[currentBackBufferIndex]);
         }
 
-        mImGuiManager->Draw(commandList);
-        CommandListUtils::TransitionBarrier(resourceStateTracker, backBuffer, D3D12_RESOURCE_STATE_PRESENT);
-
-        resourceStateTracker->FlushBarriers(commandList);
-        mFenceValues[currentBackBufferIndex] = Graphics().ExecuteCommandList(commandList);
-
-        currentBackBufferIndex = mCanvas->Present();
-
-        Graphics().WaitForFenceValue(mFenceValues[currentBackBufferIndex]);
+        mRenderContext->GetGraphicsCommandQueue()->ExecuteCommandList(commandList);
     }
 
     SharedPtr<Scene::CameraNode> Game::Camera() const 
@@ -392,8 +385,6 @@ namespace Engine
 
     void Game::Resize(int32 width, int32 height)
     {
-        mCanvas->Resize(width, height);
-
         mScreenViewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float32>(width), static_cast<float32>(height));
         mScissorRect = CD3DX12_RECT(0, 0, width, height);
 
@@ -424,6 +415,8 @@ namespace Engine
             mDepthBuffer.Get(),
             &dsv,
             mDepthBufferDescriptor.GetDescriptor());
+
+        mDepthBuffer->SetName(L"Depth buffer");
     }
 
 } // namespace Engine

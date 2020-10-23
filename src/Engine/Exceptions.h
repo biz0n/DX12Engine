@@ -9,6 +9,8 @@ namespace Engine
 {
     class DxException : public std::exception
     {
+    private:
+        TString msg;
     public:
         DxException() = default;
         DxException(HRESULT hr, const TString &functionName, const TString &filename, int lineNumber);
@@ -17,7 +19,7 @@ namespace Engine
 
         virtual const char* what() const throw ()
         {
-            return ToString().c_str();
+            return msg.c_str();;
         }
 
         HRESULT ErrorCode = S_OK;

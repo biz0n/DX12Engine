@@ -6,27 +6,26 @@
 
 #include <Memory/MemoryForwards.h>
 #include <Memory/DescriptorAllocation.h>
-#include <ResourceStateTracker.h>
-#include <ImGuiManager.h>
 
 #include <Timer.h>
 #include <Events.h>
 
 #include <bitset>
 #include <DirectXMath.h>
+#include <SwapChain.h>
 
 namespace Engine
 {
     class CommandListContext;
     
     class App;
-    class Canvas;
+    class SwapChain;
     class RenderContext;
 
     class Game
     {
     public:
-        Game(App *app, SharedPtr<RenderContext> renderContext, SharedPtr<Canvas> canvas);
+        Game(SharedPtr<RenderContext> renderContext);
         ~Game();
 
         bool Initialize();
@@ -42,7 +41,6 @@ namespace Engine
         void KeyPressed(KeyEvent event);
 
     private:
-        static const uint32 SwapChainBufferCount = 2;
 
         void UpdateBufferResoure(
             ComPtr<ID3D12GraphicsCommandList>,
@@ -60,16 +58,11 @@ namespace Engine
         SharedPtr<Scene::CameraNode> Camera() const;
 
     private:
-        uint64 mFenceValues[SwapChainBufferCount] = {0, 0};
 
-        SharedPtr<DynamicDescriptorHeap> mDynamicDescriptorHeaps[SwapChainBufferCount];
+        SharedPtr<DynamicDescriptorHeap> mDynamicDescriptorHeaps[SwapChain::SwapChainBufferCount];
 
     private:
-        SharedPtr<UploadBuffer> mUploadBuffer[SwapChainBufferCount];
-
-        SharedPtr<ResourceStateTracker> mResourceStateTrackers[SwapChainBufferCount];
-
-        UniquePtr<ImGuiManager> mImGuiManager;
+        SharedPtr<UploadBuffer> mUploadBuffer[SwapChain::SwapChainBufferCount];
 
     private:
         UniquePtr<RootSignature> mRootSignature;
@@ -87,13 +80,10 @@ namespace Engine
 
         UniquePtr<Scene::SceneObject> loadedScene;
 
-        SharedPtr<Canvas> mCanvas;
+        SharedPtr<SwapChain> mCanvas;
         SharedPtr<RenderContext> mRenderContext;
 
         std::bitset<0xFF> keyState;
-
-        App &Graphics() { return *mApp; }
-        App *mApp;
     };
 
 } // namespace Engine

@@ -1,6 +1,7 @@
 #include "DescriptorAllocation.h"
 
 #include <Exceptions.h>
+#include <Memory/DescriptorAllocatorPage.h>
 
 namespace Engine
 {
@@ -61,12 +62,13 @@ namespace Engine
 
     void DescriptorAllocation::Free()
     {
-        if (!IsNull())
+        if ( !IsNull() && mPage )
         {
-        }
-
-        if (mPage)
-        {
+            mPage->Free( std::move( *this ) );
+            
+            mDescriptor.ptr = 0;
+            mNumDescriptors = 0;
+            mIncrementalDescriptorSize = 0;
             mPage.reset();
         }
     }

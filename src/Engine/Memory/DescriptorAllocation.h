@@ -8,7 +8,7 @@ namespace Engine
 {
     class DescriptorAllocatorPage;
 
-    struct DescriptorAllocation
+    class DescriptorAllocation
     {
     public:
         DescriptorAllocation();

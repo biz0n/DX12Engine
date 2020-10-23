@@ -25,7 +25,7 @@ namespace Engine::Scene
         inline bool IsSRGB() const { return isSRGB; }
         inline void SetSRGB(bool srgb) { isSRGB = srgb; }
 
-        D3D12_CPU_DESCRIPTOR_HANDLE GetShaderResourceView(ComPtr<ID3D12Device> device, DescriptorAllocator* allocator)
+        D3D12_CPU_DESCRIPTOR_HANDLE GetShaderResourceView(ComPtr<ID3D12Device> device, SharedPtr<DescriptorAllocator> allocator)
         {
             if (mAllocaion.GetNumDescsriptors() == 0)
             {

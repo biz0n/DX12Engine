@@ -28,7 +28,7 @@ project(d3d12)
 
 set(GUI_TYPE WIN32)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /UMBCS /D_UNICODE /DUNICODE")
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 file(GLOB IMGUI "src/Libraries/imgui/imgui/*.cpp" "src/Libraries/imgui/imgui/*.h")
 

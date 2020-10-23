@@ -17,6 +17,7 @@ namespace Engine
             IID_PPV_ARGS(&mBuffer)));
         ThrowIfFailed(mBuffer->Map(0, nullptr, reinterpret_cast<void **>(&mMappedData)));
 
+        mBuffer->SetName(L"Upload Buffer");
         mGpuAddress = mBuffer->GetGPUVirtualAddress();
     }
 

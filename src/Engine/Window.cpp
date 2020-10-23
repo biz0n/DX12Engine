@@ -1,6 +1,7 @@
 #include "Window.h"
 
-#include <GameV2.h>
+#include <View.h>
+#include <Application.h>
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_win32.h>
@@ -54,12 +55,12 @@ namespace Engine
         DestroyWindow(hWnd);
     }
 
-    int Window::Run(GameV2* game)
+    int Window::Run(Application* application)
     {
-        bool isGameInitialized = false;
+        bool isAppInitialized = false;
         try
         {
-            mGame = game;
+            mApplication = application;
 
             RECT R = {0, 0, mWidth, mHeight};
             AdjustWindowRect(&R, WS_OVERLAPPEDWINDOW, false);
@@ -82,13 +83,13 @@ namespace Engine
                 MessageBox(0, TEXT("RegisterClass Failed."), 0, 0);
             }
 
-            IMGUI_CHECKVERSION();
-            ImGui::CreateContext();
-            ImGui::StyleColorsDark();
-            ImGui_ImplWin32_Init(hWnd);
+            isAppInitialized = true;
+            View view = {};
+            view.WindowHandle = hWnd;
+            view.width = mWidth;
+            view.height = mHeight;
 
-            isGameInitialized = true;
-            game->Init(hWnd, mWidth, mHeight);
+            application->Init(view);
 
             ShowWindow(hWnd, SW_SHOW);
             UpdateWindow(hWnd);
@@ -104,7 +105,7 @@ namespace Engine
                 }
             }
 
-            game->Destroy();
+            application->Destroy();
 
             return static_cast<int>(msg.wParam);
         }
@@ -112,9 +113,9 @@ namespace Engine
         {
             MessageBox(nullptr, e.what(), TEXT("Application hit a problem"), MB_OK);
 
-            if (isGameInitialized)
+            if (isAppInitialized)
             {
-                game->Destroy();
+                application->Destroy();
             }
             return EXIT_FAILURE;
         }
@@ -153,7 +154,7 @@ namespace Engine
             return true;
 
         Window *const payload = reinterpret_cast<Window *>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
-        GameV2* game = payload->mGame;
+        Application* application = payload->mApplication;
 
         switch (msg)
         {
@@ -163,7 +164,7 @@ namespace Engine
 
         case WM_ACTIVATE:
         {
-            game->OnActiveChanged(LOWORD(wParam) != WA_INACTIVE);
+            application->OnActiveChanged(LOWORD(wParam) != WA_INACTIVE);
             return 0;
         }
 
@@ -174,28 +175,28 @@ namespace Engine
             {
                 mMinimized = true;
                 mMaximized = false;
-                game->OnActiveChanged(false);
+                application->OnActiveChanged(false);
             }
             else if (wParam == SIZE_MAXIMIZED)
             {
                 mMinimized = false;
                 mMaximized = true;
-                game->OnResize(mWidth, mHeight);
-                game->OnActiveChanged(true);
+                application->OnResize(mWidth, mHeight);
+                application->OnActiveChanged(true);
             }
             else if (wParam == SIZE_RESTORED)
             {
                 if (mMinimized)
                 {
                     mMinimized = false;
-                    game->OnResize(mWidth, mHeight);
-                    game->OnActiveChanged(true);
+                    application->OnResize(mWidth, mHeight);
+                    application->OnActiveChanged(true);
                 }
                 else if (mMaximized)
                 {
                     mMaximized = false;
-                    game->OnResize(mWidth, mHeight);
-                    game->OnActiveChanged(true);
+                    application->OnResize(mWidth, mHeight);
+                    application->OnActiveChanged(true);
                 }
                 else if (mResizing)
                 {
@@ -203,7 +204,7 @@ namespace Engine
                 }
                 else
                 {
-                    game->OnResize(mWidth, mHeight);
+                    application->OnResize(mWidth, mHeight);
                 }
             }
 
@@ -211,13 +212,13 @@ namespace Engine
 
         case WM_ENTERSIZEMOVE:
             mResizing = true;
-            game->OnActiveChanged(false);
+            application->OnActiveChanged(false);
             return 0;
 
         case WM_EXITSIZEMOVE:
             mResizing = false;
-            game->OnResize(mWidth, mHeight);
-            game->OnActiveChanged(true);
+            application->OnResize(mWidth, mHeight);
+            application->OnActiveChanged(true);
             return 0;
 
         case WM_GETMINMAXINFO:
@@ -234,7 +235,7 @@ namespace Engine
         {
             KeyCode::Key key = (KeyCode::Key)wParam;
             KeyEvent event(key, KeyEvent::KeyState::Pressed);
-            game->OnKeyPressed(event);
+            application->OnKeyPressed(event);
             return 0;
         }
         case WM_SYSKEYUP:
@@ -250,13 +251,13 @@ namespace Engine
             }
             KeyCode::Key key = (KeyCode::Key)wParam;
             KeyEvent event(key, KeyEvent::KeyState::Released);
-            game->OnKeyPressed(event);
+            application->OnKeyPressed(event);
             return 0;
         }
         case WM_CHAR:
             return 0;
         case WM_PAINT:
-            game->Draw();
+            application->Draw();
             return 0;
         }
 

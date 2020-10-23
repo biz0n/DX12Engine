@@ -3,10 +3,16 @@
 #include <Exceptions.h>
 #include <Memory/DescriptorAllocator.h>
 #include <Memory/DescriptorAllocation.h>
+#include <SwapChain.h>
+#include <CommandAllocatorPool.h>
+#include <UIRenderContext.h>
+#include <CommandListUtils.h>
+#include <CommandQueue.h>
+#include <Graphics.h>
 
 namespace Engine
 {
-    RenderContext::RenderContext()
+    RenderContext::RenderContext(View view) : mFrameCount(0)
     {
         mGraphics = MakeUnique<Graphics>();
 
@@ -14,15 +20,39 @@ namespace Engine
         {
             D3D12_DESCRIPTOR_HEAP_TYPE type = (D3D12_DESCRIPTOR_HEAP_TYPE)i;
             uint32 incrementalSize = Device()->GetDescriptorHandleIncrementSize(type);
-            mDescriptorAllocators[i] = MakeUnique<DescriptorAllocator>(Device(), type);
+            mDescriptorAllocators[i] = MakeShared<DescriptorAllocator>(Device(), type);
         }
 
-        mDirrectCommandQueue = CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-        mComputeCommandQueue = CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_COMPUTE);
-        mCopyCommandQueue = CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+        mDirrectCommandQueue = MakeShared<CommandQueue>(Device(), D3D12_COMMAND_LIST_TYPE_DIRECT);
+        mComputeCommandQueue = MakeShared<CommandQueue>(Device(), D3D12_COMMAND_LIST_TYPE_COMPUTE);
+        mCopyCommandQueue = MakeShared<CommandQueue>(Device(), D3D12_COMMAND_LIST_TYPE_COPY);
 
-        mGlobalResourceStateTracker = MakeShared<GlobalResourceStateTracker>();
+        mDirrectCommandQueue->D3D12CommandQueue()->SetName(L"Render Queue");
+        mComputeCommandQueue->D3D12CommandQueue()->SetName(L"Compute Queue");
+        mCopyCommandQueue->D3D12CommandQueue()->SetName(L"Copy Queue");
+
+        mGlobalResourceStateTracker = MakeUnique<GlobalResourceStateTracker>();
+
+        mSwapChain = MakeShared<SwapChain>(
+            view,
+            mGraphics.get(),
+            mGlobalResourceStateTracker,
+            GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_RTV), mDirrectCommandQueue->D3D12CommandQueue());
+
+        for (auto frameIndex = 0; frameIndex < SwapChain::SwapChainBufferCount; ++frameIndex)
+        {
+            mCommandAllocators[frameIndex] = MakeUnique<CommandAllocatorPool>(Device(), 3);
+            mResourceStateTrackers[frameIndex] = MakeShared<ResourceStateTracker>(mGlobalResourceStateTracker);
+        }
+
+        mUIRenderContext = MakeShared<UIRenderContext>(
+            view,
+            Device(),
+            SwapChain::SwapChainBufferCount,
+            mSwapChain->GetCurrentBackBuffer()->GetDesc().Format);
     }
+
+    RenderContext::~RenderContext() = default;
 
     ComPtr<ID3D12Device2> RenderContext::Device() const
     {
@@ -34,17 +64,7 @@ namespace Engine
         return mGraphics->GetGIFactory();
     }
 
-    DescriptorAllocation RenderContext::AllocateDescriptor(D3D12_DESCRIPTOR_HEAP_TYPE heapType, uint32 count)
-    {
-        return mDescriptorAllocators[heapType]->Allocate(count);    
-    }
-
-    SharedPtr<GlobalResourceStateTracker> RenderContext::GetResourceStateTracker() const
-    {
-        return mGlobalResourceStateTracker;
-    }
-
-    ComPtr<ID3D12CommandQueue> RenderContext::GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) const
+    SharedPtr<CommandQueue> RenderContext::GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) const
     {
         switch (type)
         {
@@ -58,21 +78,72 @@ namespace Engine
 
         assert(false && "Invalid command queue type.");
         return nullptr;
-        
     }
 
-    ComPtr<ID3D12CommandQueue> RenderContext::CreateCommandQueue(D3D12_COMMAND_LIST_TYPE type)
+    ComPtr<ID3D12GraphicsCommandList> RenderContext::CreateCommandList(D3D12_COMMAND_LIST_TYPE type)
     {
-        ComPtr<ID3D12CommandQueue> commandQueue;
+        auto currentBackBufferIndex = mSwapChain->GetCurrentBackBufferIndex();
 
-        D3D12_COMMAND_QUEUE_DESC desc = {};
-        desc.Type = type;
-        desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
-        desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-        desc.NodeMask = 0;
+        auto allocator = mCommandAllocators[currentBackBufferIndex]->GetNextAllocator(type);
 
-        ThrowIfFailed(Device()->CreateCommandQueue(&desc, IID_PPV_ARGS(&commandQueue)));
+        ComPtr<ID3D12GraphicsCommandList> commandList;
 
-        return commandQueue;
+        ThrowIfFailed(Device()->CreateCommandList(0, type, allocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
+
+        ThrowIfFailed(commandList->Close());
+
+        commandList->Reset(allocator.Get(), nullptr);
+
+        return commandList;
+    }
+
+    void RenderContext::BeginFrame()
+    {
+        ++mFrameCount;
+
+        auto currentBackBufferIndex = mSwapChain->GetCurrentBackBufferIndex();
+
+        mCommandAllocators[currentBackBufferIndex]->Reset();
+
+        auto resourceStateTracker = mResourceStateTrackers[currentBackBufferIndex];
+        CommandListUtils::TransitionBarrier(resourceStateTracker, mSwapChain->GetCurrentBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+        mUIRenderContext->BeginFrame();
+    }
+
+    void RenderContext::EndFrame()
+    {
+        static bool show_demo_window = true;
+        if (show_demo_window)
+            ImGui::ShowDemoWindow(&show_demo_window);
+            
+        auto currentBackBufferIndex = mSwapChain->GetCurrentBackBufferIndex();
+        auto resourceStateTracker = mResourceStateTrackers[currentBackBufferIndex];
+
+        auto uiCommandList = CreateGraphicsCommandList();
+        uiCommandList->SetName(L"UI Render List");
+
+        auto rtv = mSwapChain->GetCurrentRenderTargetView();
+        uiCommandList->OMSetRenderTargets(1, &rtv, false, nullptr);
+
+        resourceStateTracker->FlushBarriers(uiCommandList);
+        mUIRenderContext->Draw(uiCommandList);
+
+        CommandListUtils::TransitionBarrier(resourceStateTracker, mSwapChain->GetCurrentBackBuffer(), D3D12_RESOURCE_STATE_PRESENT);
+
+        resourceStateTracker->FlushBarriers(uiCommandList);
+
+        mFenceValues[currentBackBufferIndex] = GetGraphicsCommandQueue()->ExecuteCommandList(uiCommandList);
+        mFrameValues[currentBackBufferIndex] = GetFrameCount();
+
+        currentBackBufferIndex = mSwapChain->Present();
+
+        GetGraphicsCommandQueue()->WaitForFenceCPU(mFenceValues[currentBackBufferIndex]);
+
+        for (uint32 i = 0; i < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES; ++i)
+        {
+            D3D12_DESCRIPTOR_HEAP_TYPE type = (D3D12_DESCRIPTOR_HEAP_TYPE)i;
+            GetDescriptorAllocator(type)->ReleaseStaleDescriptors(mFrameValues[currentBackBufferIndex]);
+        }
     }
 }

@@ -10,7 +10,7 @@
 
 namespace Engine
 {
-    struct DescriptorAllocation;
+    class DescriptorAllocation;
 
     class DescriptorAllocatorPage : public std::enable_shared_from_this<DescriptorAllocatorPage>
     {
@@ -20,7 +20,8 @@ namespace Engine
 
         DescriptorAllocation Allocate(uint32 count = 1);
 
-        void Free(DescriptorAllocation &&descriptorHandle, uint64 frameNumber);
+        void SetCurrentFrame(uint64 frameNumber) { mCurrentFrameNumber = frameNumber; };
+        void Free(DescriptorAllocation &&descriptorHandle);
 
         void ReleaseStaleDescriptors(uint64 frameNumber);
     private:
@@ -33,6 +34,8 @@ namespace Engine
         ComPtr<ID3D12DescriptorHeap> mHeap;
         uint32 mDescriptorHandleIncrementSize;
         D3D12_CPU_DESCRIPTOR_HANDLE mBaseDescriptor;
+
+        uint64 mCurrentFrameNumber;
 
     private:
         struct StaleDescriptorInfo

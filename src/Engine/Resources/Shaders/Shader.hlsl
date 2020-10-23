@@ -34,6 +34,11 @@ struct VertexShaderOutput
     float4 PositionH : SV_Position;
 };
  
+struct PixelShaderOutput
+{
+    float4 Color : SV_TARGET0;
+};
+
 VertexShaderOutput mainVS(VertexPosColor IN)
 {
     VertexShaderOutput OUT;
@@ -57,13 +62,15 @@ VertexShaderOutput mainVS(VertexPosColor IN)
     return OUT;
 }
 
-float4 mainPS(VertexShaderOutput IN) : SV_TARGET
+PixelShaderOutput mainPS(VertexShaderOutput IN)
 {
     float4 baseColor = MaterialCB.Diffuse;
     if (MaterialCB.HasBaseColorTexture)
     {
         baseColor = diffuseTexture.Sample(gsamPointWrap, IN.TextureCoord);
     }
+
+    clip(baseColor.a - MaterialCB.Cutoff);
 
     float3 N;
     if (MaterialCB.HasNormalTexture)
@@ -134,5 +141,7 @@ float4 mainPS(VertexShaderOutput IN) : SV_TARGET
  
     float4 finalColor = float4(color, baseColor.a);
  
-    return finalColor;
+    PixelShaderOutput output;
+    output.Color = finalColor;
+    return output;
 }

@@ -1,6 +1,6 @@
 #include <Exceptions.h>
 #include <Window.h>
-#include <GameV2.h>
+#include <Application.h>
 
 #include <d3d12.h>
 #include <dxgi1_6.h>
@@ -21,30 +21,12 @@ void ReportLiveObjects()
 
 int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmdShow)
 {
-
 	CoInitialize(nullptr);
-	char buffer[MAX_PATH];
-	GetCurrentDirectoryA(256, buffer);
 
-	int retCode = 0;
-
+	Engine::Application app;
 	Engine::Window window(800, 600, TEXT("Window"));
 
-	Engine::GameV2 game;
-	retCode = window.Run(&game);
-
-	/*Engine::App app;
-
-	SharedPtr<Engine::Game> game = MakeShared<Engine::Game>(&app);
-	try
-	{
-		retCode = app.Run(game);
-	}
-	catch (Engine::DxException e)
-	{
-		MessageBox(nullptr, e.ToString().c_str(), TEXT("HR Failed"), MB_OK);
-		retCode = e.ErrorCode;
-	}*/
+	int retCode = window.Run(&app);
 
 	atexit(&ReportLiveObjects);
 	return retCode;

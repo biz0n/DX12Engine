@@ -8,6 +8,7 @@ namespace Engine
                                                                                                                  Filename(filename),
                                                                                                                  LineNumber(lineNumber)
     {
+        msg = ToString();
     }
 
     TString DxException::ToString() const
@@ -19,7 +20,7 @@ namespace Engine
         _itot_s(LineNumber, buffer, 10);
         TString lineNumberStr = buffer;
 
-        return FunctionName + TEXT(" failed in ") + Filename + TEXT("; line ") + lineNumberStr + TEXT("; error: ") + msg;
+        return FunctionName + TEXT("\nFile: ") + Filename + TEXT("\nLine: ") + lineNumberStr + TEXT("\nError: ") + msg;
     }
 
 } // namespace Engine

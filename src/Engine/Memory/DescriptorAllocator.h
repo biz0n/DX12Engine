@@ -12,7 +12,7 @@
 namespace Engine
 {
     class DescriptorAllocatorPage;
-    struct DescriptorAllocation;
+    class DescriptorAllocation;
 
     class DescriptorAllocator
     {
