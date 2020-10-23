@@ -4,3 +4,6 @@
 [submodule "src/Libraries/DirectXTex"]
 	path = src/Libraries/DirectXTex
 	url = git@github.com:microsoft/DirectXTex.git
+[submodule "src/Libraries/entt"]
+	path = src/Libraries/entt
+	url = git@github.com:skypjack/entt.git

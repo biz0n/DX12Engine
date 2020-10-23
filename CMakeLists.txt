@@ -17,6 +17,8 @@ add_subdirectory( src/Libraries/assimp )
 
 add_subdirectory( src/Libraries/DirectXTex )
 
+add_subdirectory( src/Libraries/entt )
+
 set_target_properties( assimp IrrXML uninstall UpdateAssimpLibsDebugSymbolsAndDLLs zlib zlibstatic 
     PROPERTIES
         FOLDER src/Libraries/assimp 
@@ -49,7 +51,7 @@ target_include_directories(d3d12 PRIVATE "src/Libraries/D3DX12/")
 
 target_include_directories(d3d12 PRIVATE "src/Libraries/imgui/")
 
-target_link_libraries(d3d12 PRIVATE "d3d12.lib" "dxgi.lib" "d3dcompiler.lib" "dxguid.lib" "assimp" "DirectXTex")
+target_link_libraries(d3d12 PRIVATE "d3d12.lib" "dxgi.lib" "d3dcompiler.lib" "dxguid.lib" "assimp" "DirectXTex" "EnTT")
 
 set_source_files_properties( src/Engine/Resources/Shaders/VertexShader.hlsl PROPERTIES 
     VS_SHADER_TYPE Vertex
