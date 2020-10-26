@@ -7,6 +7,23 @@
 #include <Timer.h>
 #include <CommandQueue.h>
 #include <UIRenderContext.h>
+#include <Keyboard.h>
+
+#include <Scene/SceneObject.h>
+#include <Scene/Loader/SceneLoader.h>
+#include <Types.h>
+
+#include <future>
+#include <thread>
+
+
+#include <EnttTests.h>
+#include <Scene/Components/RelationshipComponent.h>
+#include <Scene/Components/LocalTransformComponent.h>
+#include <Scene/Components/NameComponent.h>
+
+#include <Scene/Systems/WorldTransformSystem.h>
+#include <Scene/Systems/UISystem.h>
 
 namespace Engine
 {
@@ -20,12 +37,28 @@ namespace Engine
 
     void Application::Init(View view)
     {
+        EnttTests t;
+        t.Test();
+
         timer.Reset();
 
+        mKeyboard = MakeShared<Keyboard>();
         mRenderContext = MakeShared<RenderContext>(view);
 
-        mGame = MakeShared<Game>(mRenderContext);
+        mGame = MakeShared<Game>(mRenderContext, mKeyboard);
         mGame->Initialize();
+
+
+        std::future<UniquePtr<Scene::SceneObject>> sceneFuture = std::async(std::launch::async, [](){
+
+            Scene::Loader::SceneLoader loader;
+            return loader.LoadScene("Resources\\Scenes\\gltf2\\sponza\\sponza.gltf");
+        });
+
+        mScene = sceneFuture.get();
+
+        mScene->AddSystem(MakeUnique<Scene::Systems::WorldTransformSystem>());
+        mScene->AddSystem(MakeUnique<Scene::Systems::UISystem>(mRenderContext->GetUIContext()));
     }
 
     void Application::Destroy()
@@ -48,6 +81,8 @@ namespace Engine
             mGame->Update(timer);
             mGame->Draw(timer);
 
+            mScene->Process(timer);
+
             mRenderContext->EndFrame();
         }
     }
@@ -66,7 +101,7 @@ namespace Engine
 
     void Application::OnKeyPressed(KeyEvent event)
     {
-        mGame->KeyPressed(event);
+        mKeyboard->KeyPressed(event);
     }
 
     void Application::OnResize(int32 width, int32 height)

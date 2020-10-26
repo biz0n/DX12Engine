@@ -112,11 +112,7 @@ namespace Engine
     }
 
     void RenderContext::EndFrame()
-    {
-        static bool show_demo_window = true;
-        if (show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);
-            
+    {       
         auto currentBackBufferIndex = mSwapChain->GetCurrentBackBufferIndex();
         auto resourceStateTracker = mResourceStateTrackers[currentBackBufferIndex];
 

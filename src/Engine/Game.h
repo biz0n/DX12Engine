@@ -21,11 +21,12 @@ namespace Engine
     class App;
     class SwapChain;
     class RenderContext;
+    class Keyboard;
 
     class Game
     {
     public:
-        Game(SharedPtr<RenderContext> renderContext);
+        Game(SharedPtr<RenderContext> renderContext, SharedPtr<Keyboard> keyboard);
         ~Game();
 
         bool Initialize();
@@ -37,8 +38,6 @@ namespace Engine
         void Deinitialize();
 
         void Resize(int32 width, int32 height);
-
-        void KeyPressed(KeyEvent event);
 
     private:
 
@@ -82,8 +81,7 @@ namespace Engine
 
         SharedPtr<SwapChain> mCanvas;
         SharedPtr<RenderContext> mRenderContext;
-
-        std::bitset<0xFF> keyState;
+        SharedPtr<Keyboard> mKeyboard;
     };
 
 } // namespace Engine

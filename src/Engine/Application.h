@@ -10,7 +10,13 @@ namespace Engine
     class App;
     class SwapChain;
     class Game;
+    class Keyboard;
     struct View;
+
+    namespace Scene
+    {
+        class SceneObject;
+    }
 
     class Application
     {
@@ -30,6 +36,9 @@ namespace Engine
     private:
         SharedPtr<RenderContext> mRenderContext;
         SharedPtr<Game> mGame;
+        SharedPtr<Keyboard> mKeyboard;
+
+        UniquePtr<Scene::SceneObject> mScene;
     private:
         Timer timer;
     };

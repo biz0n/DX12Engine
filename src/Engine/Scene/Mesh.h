@@ -16,5 +16,7 @@ namespace Engine::Scene
 		VertexBuffer mVertexBuffer;
 		SharedPtr<Material> material;
 		D3D_PRIMITIVE_TOPOLOGY mPrimitiveTopology;
+
+		std::string Name;
 	};
 }

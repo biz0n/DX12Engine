@@ -18,9 +18,16 @@
 #include <assimp/postprocess.h>
 #include <assimp/pbrmaterial.h>
 
+#include <Scene/Components/RelationshipComponent.h>
+#include <Scene/Components/LocalTransformComponent.h>
+#include <Scene/Components/LightComponent.h>
+#include <Scene/Components/CameraComponent.h>
+#include <Scene/Components/MeshComponent.h>
+#include <Scene/Components/NameComponent.h>
+
 #include <filesystem>
 
-#include <DirectXTex.h>
+#include <entt/entt.hpp>
 
 namespace Engine::Scene::Loader
 {
@@ -67,6 +74,7 @@ namespace Engine::Scene::Loader
 
         LoadingContext context;
         context.RootPath = filePath.parent_path().string();
+        context.registry = scene->registry.get();
 
         context.textures.reserve(aScene->mNumTextures);
         for (uint32 i = 0; i < aScene->mNumTextures; ++i)
@@ -106,7 +114,12 @@ namespace Engine::Scene::Loader
 			context.camerasMap[aCamera->mName.C_Str()] = aCamera;
 		}
 
-        ParseNode(aScene, aScene->mRootNode, scene.get(), nullptr, context);
+        auto rootEntity = scene->registry->create();
+        Engine::Scene::Components::RelationshipComponent relationship;
+        ParseNode(aScene, aScene->mRootNode, scene.get(), nullptr, context, rootEntity, &relationship);
+
+        scene->registry->emplace<Components::RelationshipComponent>(rootEntity, relationship);
+        scene->registry->emplace<Components::Root>(rootEntity);
 
         if (aScene->mNumCameras == 0)
         {
@@ -142,34 +155,9 @@ namespace Engine::Scene::Loader
         return scene;
     }
 
-    void SceneLoader::ParseNode(const aiScene *aScene, const aiNode *aNode, SceneObject *scene, SharedPtr<Node> parentNode, const LoadingContext &context)
+    void SceneLoader::ParseNode(const aiScene *aScene, const aiNode *aNode, SceneObject *scene, SharedPtr<Node> parentNode, const LoadingContext &context, entt::entity entity, Engine::Scene::Components::RelationshipComponent* relationship)
     {
-        SharedPtr<Node> node;
-
-		if (IsMeshNode(aNode, context))
-		{
-            auto meshNode = CreateMeshNode(aNode, context);
-			scene->nodes.push_back(meshNode);
-			node = meshNode;
-		}
-        else if (IsLightNode(aNode, context))
-        {
-            auto lightNode = CreateLightNode(aNode, context);
-            scene->lights.push_back(lightNode);
-            node = lightNode;
-        }
-        else if (IsCameraNode(aNode, context))
-        {
-            auto cameraNode = CreateCameraNode(aNode, context);
-            scene->cameras.push_back(cameraNode);
-            node = cameraNode;
-        }
-        else
-        {
-            node = MakeShared<Node>();
-        }
-
-		aiVector3D scaling;
+        aiVector3D scaling;
 		aiQuaternion rotation;
 		aiVector3D position;
 		aNode->mTransformation.Decompose(scaling, rotation, position);
@@ -179,19 +167,78 @@ namespace Engine::Scene::Loader
 		auto r = DirectX::XMMatrixRotationQuaternion(DirectX::XMVectorSet(rotation.x, rotation.y, rotation.z, rotation.w));
 
 		DirectX::XMFLOAT4X4 transform;
+        DirectX::XMMATRIX srt = s * r * t;
 		DirectX::XMStoreFloat4x4(&transform, s * r * t);
+
+        SharedPtr<Node> node;
+
+		if (IsMeshNode(aNode, context))
+		{
+            scene->registry->emplace<Components::NameComponent>(entity, aNode->mName.C_Str());
+            scene->registry->emplace<Scene::Components::LocalTransformComponent>(entity, srt);
+
+            auto meshNode = CreateMeshNode(aNode, context, entity, relationship);
+			scene->nodes.push_back(meshNode);
+			node = meshNode;
+            
+		}
+        else if (IsLightNode(aNode, context))
+        {
+            auto lightNode = CreateLightNode(aNode, context, entity);
+            scene->lights.push_back(lightNode);
+            node = lightNode;
+
+            scene->registry->emplace<Components::NameComponent>(entity, "Light_" + std::string(aNode->mName.C_Str()));
+            scene->registry->emplace<Scene::Components::LocalTransformComponent>(entity, srt);
+        }
+        else if (IsCameraNode(aNode, context))
+        {
+            auto cameraNode = CreateCameraNode(aNode, context, entity);
+            scene->cameras.push_back(cameraNode);
+            node = cameraNode;
+
+            scene->registry->emplace<Components::NameComponent>(entity, "Camera_" + std::string(aNode->mName.C_Str()));
+            scene->registry->emplace<Scene::Components::LocalTransformComponent>(entity, srt);
+        }
+        else
+        {
+            node = MakeShared<Node>();
+
+            scene->registry->emplace<Components::NameComponent>(entity, aNode->mName.C_Str());
+            scene->registry->emplace<Scene::Components::LocalTransformComponent>(entity, srt);
+
+            entt::entity nextEntity = aNode->mNumChildren > 0 ? scene->registry->create() : entt::null;
+            relationship->First = nextEntity;
+
+            for (uint32 i = 0; i < aNode->mNumChildren; i++)
+            {
+                auto aChild = aNode->mChildren[i];
+
+                auto childEntity = nextEntity;
+
+                if (i < (aNode->mNumChildren - 1))
+                {
+                    nextEntity = scene->registry->create();
+                }
+                else
+                {
+                    nextEntity = entt::null;
+                }
+
+                Components::RelationshipComponent childRelationship;
+                childRelationship.Parent = entity;
+                childRelationship.Next = nextEntity;
+
+                ParseNode(aScene, aChild, scene, node, context, childEntity, &childRelationship);
+
+                scene->registry->emplace<Components::RelationshipComponent>(childEntity, childRelationship);
+            }
+        }
 
         node->SetLocalTransform(transform);
         node->SetName(aNode->mName.C_Str());
 
         node->SetParent(parentNode);
-
-        for (uint32 i = 0; i < aNode->mNumChildren; i++)
-        {
-            auto aChild = aNode->mChildren[i];
-
-            ParseNode(aScene, aChild, scene, node, context);
-        }
     }
 
     SharedPtr<Mesh> SceneLoader::ParseMesh(const aiMesh *aMesh, const LoadingContext &context)
@@ -199,7 +246,8 @@ namespace Engine::Scene::Loader
         SharedPtr<Mesh> mesh = MakeShared<Mesh>();
         std::vector<Vertex> vertices;
         vertices.reserve(aMesh->mNumVertices);
-        
+        mesh->Name = aMesh->mName.C_Str(); 
+
         for (uint32 i = 0; i < aMesh->mNumVertices; ++i)
         {
             Vertex vertex = {};
@@ -451,7 +499,7 @@ namespace Engine::Scene::Loader
         return iter != context.camerasMap.end();
 	}
 
-    SharedPtr<LightNode> SceneLoader::CreateLightNode(const aiNode* aNode, const LoadingContext &context)
+    SharedPtr<LightNode> SceneLoader::CreateLightNode(const aiNode* aNode, const LoadingContext &context, entt::entity entity)
     {
 		auto iter = context.lightsMap.find(aNode->mName.C_Str());
         aiLight* aLight = iter->second;
@@ -485,27 +533,72 @@ namespace Engine::Scene::Loader
         light->SetInnerConeAngle(aLight->mAngleInnerCone);
         light->SetOuterConeAngle(aLight->mAngleOuterCone);
 
+        Components::LightComponent lightComponent;
+        lightComponent.Enabled = true;
+        lightComponent.LightType = light->GetLightType();
+        lightComponent.Direction = direction;
+        lightComponent.Color = color;
+        lightComponent.ConstantAttenuation = aLight->mAttenuationConstant;
+        lightComponent.LinearAttenuation = aLight->mAttenuationLinear;
+        lightComponent.QuadraticAttenuation = aLight->mAttenuationQuadratic;
+
+        lightComponent.InnerConeAngle = aLight->mAngleInnerCone;
+        lightComponent.OuterConeAngle = aLight->mAngleOuterCone;
+
+        context.registry->emplace<Components::LightComponent>(entity, lightComponent);
+
         return light;
     }
 
-    SharedPtr<MeshNode> SceneLoader::CreateMeshNode(const aiNode* aNode, const LoadingContext& context)
+    SharedPtr<MeshNode> SceneLoader::CreateMeshNode(const aiNode* aNode, const LoadingContext& context, entt::entity entity, Engine::Scene::Components::RelationshipComponent* relationship)
     {
         SharedPtr<MeshNode> meshNode = MakeShared<MeshNode>();
 
         std::vector<SharedPtr<Mesh>> meshes;
         meshes.reserve(static_cast<Size>(aNode->mNumMeshes));
+
+        entt::entity nextEntity = context.registry->create();;
+        relationship->First = nextEntity;
+
 		for (uint32 i = 0; i < aNode->mNumMeshes; ++i)
 		{
 			int32 meshIndex = aNode->mMeshes[i];
 			auto mesh = context.meshes[meshIndex];
 			meshes.push_back(mesh);
+
+            auto meshEntity = nextEntity;
+            if (i < (aNode->mNumMeshes - 1))
+            {
+                nextEntity = context.registry->create();
+            }
+            else
+            {
+                nextEntity = entt::null;
+            }
+
+            context.registry->emplace<Components::LocalTransformComponent>(meshEntity, DirectX::XMMatrixIdentity());
+
+            context.registry->emplace<Components::NameComponent>(meshEntity, mesh->Name);
+
+            Components::RelationshipComponent meshRelationship;
+            meshRelationship.Next = nextEntity;
+            meshRelationship.Parent = entity;
+            context.registry->emplace<Components::RelationshipComponent>(meshEntity, meshRelationship);
+
+            Components::MeshComponent meshComponent;
+            meshComponent.IndexBuffer = mesh->mIndexBuffer;
+            meshComponent.VertexBuffer = mesh->mVertexBuffer;
+            meshComponent.Material = mesh->material;
+            meshComponent.PrimitiveTopology = mesh->mPrimitiveTopology;
+
+            context.registry->emplace<Components::MeshComponent>(meshEntity, meshComponent);
 		}
         meshNode->SetMeshes(meshes);
 
         return meshNode;
     }
 
-    SharedPtr<CameraNode> SceneLoader::CreateCameraNode(const aiNode* aNode, const LoadingContext& context)
+    SharedPtr<CameraNode> SceneLoader::CreateCameraNode(const aiNode* aNode, const LoadingContext& context, entt::entity entity)
     {
         SharedPtr<CameraNode> cameraNode = MakeShared<CameraNode>();
         auto iter = context.camerasMap.find(aNode->mName.C_Str());
@@ -515,6 +608,18 @@ namespace Engine::Scene::Loader
         cameraNode->SetNearPlane(aCamera->mClipPlaneNear);
         cameraNode->SetFarPlane(aCamera->mClipPlaneFar);
         cameraNode->SetFoV(aCamera->mHorizontalFOV);
+
+        Components::CameraComponent cameraComponent;
+        cameraComponent.NearPlane = aCamera->mClipPlaneNear;
+        cameraComponent.FarPlane = aCamera->mClipPlaneFar;
+        cameraComponent.FoV = aCamera->mHorizontalFOV;
+
+        cameraComponent.AspectRatio = 1;
+        cameraComponent.Pitch = 0;
+        cameraComponent.Yaw = 0;
+        cameraComponent.Translation = {0};
+
+        context.registry->emplace<Components::CameraComponent>(entity, cameraComponent);
 
         return cameraNode;
     }

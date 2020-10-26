@@ -11,6 +11,7 @@
 #include <Memory/DescriptorAllocator.h>
 #include <ResourceStateTracker.h>
 #include <RenderContext.h>
+#include <Keyboard.h>
 
 #include <CommandListUtils.h>
 #include <CommandQueue.h>
@@ -37,8 +38,8 @@
 
 namespace Engine
 {
-    Game::Game(SharedPtr<RenderContext> renderContext)
-        : mRenderContext(renderContext), mCanvas(renderContext->GetSwapChain())
+    Game::Game(SharedPtr<RenderContext> renderContext, SharedPtr<Keyboard> keyboard)
+        : mRenderContext(renderContext), mCanvas(renderContext->GetSwapChain()), mKeyboard(keyboard)
     {
     }
 
@@ -106,7 +107,7 @@ namespace Engine
             1,  // number of descriptors
             2); // register t2
 
-        CD3DX12_ROOT_PARAMETER1 rootParameters[7];
+        CD3DX12_ROOT_PARAMETER1 rootParameters[7] = {};
 
         rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_VERTEX);
 
@@ -186,18 +187,6 @@ namespace Engine
         return true;
     }
 
-    void Game::KeyPressed(KeyEvent event)
-    {
-        if (event.State == KeyEvent::KeyState::Pressed)
-        {
-            keyState[event.Key] = true;
-        }
-        else if (event.State == KeyEvent::KeyState::Released)
-        {
-            keyState[event.Key] = false;
-        }
-    }
-
     void Game::UploadMeshes(ComPtr<ID3D12GraphicsCommandList> commandList, const SharedPtr<Scene::MeshNode>& node, CommandListContext &commandListContext)
     {
         for (auto &mesh : node->GetMeshes())
@@ -223,38 +212,38 @@ namespace Engine
         
         const float32 speed = 5 * time.DeltaTime();
         const float32 rotationSpeed = 1.0f * time.DeltaTime();
-        if (keyState[KeyCode::Key::Up])
+        if (mKeyboard->IsKeyPressed(KeyCode::Key::Up))
         {
             camera->Rotate(0.0f, -rotationSpeed);
         }
-        else if (keyState[KeyCode::Key::Down])
+        else if (mKeyboard->IsKeyPressed(KeyCode::Key::Down))
         {
             camera->Rotate(0.0f, +rotationSpeed);
         }
 
-        if (keyState[KeyCode::Key::Left])
+        if (mKeyboard->IsKeyPressed(KeyCode::Key::Left))
         {
             camera->Rotate(-rotationSpeed, 0.0f);
         }
-        else if (keyState[KeyCode::Key::Right])
+        else if (mKeyboard->IsKeyPressed(KeyCode::Key::Right))
         {
             camera->Rotate(+rotationSpeed, 0.0f);
         }
 
-        if (keyState[KeyCode::Key::W])
+        if (mKeyboard->IsKeyPressed(KeyCode::Key::W))
         {
             camera->Translate({0.0f, 0.0f, +speed});
         }
-        else if (keyState[KeyCode::Key::S])
+        else if (mKeyboard->IsKeyPressed(KeyCode::Key::S))
         {
             camera->Translate({0.0f, 0.0f, -speed});
         }
 
-        if (keyState[KeyCode::Key::D])
+        if (mKeyboard->IsKeyPressed(KeyCode::Key::D))
         {
             camera->Translate({+speed, 0.0f, 0.0f});
         }
-        else if (keyState[KeyCode::Key::A])
+        else if (mKeyboard->IsKeyPressed(KeyCode::Key::A))
         {
             camera->Translate({-speed, 0.0f, 0.0f});
         }

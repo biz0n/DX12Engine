@@ -9,6 +9,9 @@
 #include <vector>
 #include <unordered_map>
 
+#include <entt/fwd.hpp>
+#include <Scene/Components/RelationshipComponent.h>
+
 struct aiScene;
 struct aiNode;
 struct aiMesh;
@@ -32,13 +35,15 @@ namespace Engine::Scene::Loader
             std::unordered_map<String, SharedPtr<Scene::Image>> images;
             std::unordered_map<String, aiLight*> lightsMap;
             std::unordered_map<String, aiCamera*> camerasMap;
+
+            entt::registry* registry;
         };
 
     public:
         UniquePtr<SceneObject> LoadScene(String path, Optional<float32> scale = {});
 
     private:
-        void ParseNode(const aiScene* aScene, const aiNode* aNode, SceneObject* scene, SharedPtr<Node> parentNode, const LoadingContext& context);
+        void ParseNode(const aiScene* aScene, const aiNode* aNode, SceneObject* scene, SharedPtr<Node> parentNode, const LoadingContext& context, entt::entity entity, Engine::Scene::Components::RelationshipComponent* relationship);
         SharedPtr<Texture> GetTexture(const aiString& path, LoadingContext& context);
         SharedPtr<Texture> GetTexture(const aiTexture* aTexture, const LoadingContext& context);
         SharedPtr<Material> ParseMaterial(const aiMaterial* aMaterial, LoadingContext& context);
@@ -46,8 +51,8 @@ namespace Engine::Scene::Loader
         bool IsLightNode(const aiNode* aNode, const LoadingContext& context);
         bool IsMeshNode(const aiNode* aNode, const LoadingContext& context);
         bool IsCameraNode(const aiNode* aNode, const LoadingContext& context);
-        SharedPtr<LightNode> CreateLightNode(const aiNode* aNode, const LoadingContext& context);
-        SharedPtr<MeshNode> CreateMeshNode(const aiNode* aNode, const LoadingContext& context);
-        SharedPtr<CameraNode> CreateCameraNode(const aiNode* aNode, const LoadingContext& context);
+        SharedPtr<LightNode> CreateLightNode(const aiNode* aNode, const LoadingContext& context, entt::entity entity);
+        SharedPtr<MeshNode> CreateMeshNode(const aiNode* aNode, const LoadingContext& context, entt::entity entity, Engine::Scene::Components::RelationshipComponent* relationship);
+        SharedPtr<CameraNode> CreateCameraNode(const aiNode* aNode, const LoadingContext& context, entt::entity entity);
     }; 
 } // namespace Engine::Scene
