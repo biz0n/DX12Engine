@@ -16,8 +16,6 @@
 #include <future>
 #include <thread>
 
-
-#include <EnttTests.h>
 #include <Scene/Components/RelationshipComponent.h>
 #include <Scene/Components/LocalTransformComponent.h>
 #include <Scene/Components/NameComponent.h>
@@ -37,9 +35,6 @@ namespace Engine
 
     void Application::Init(View view)
     {
-        EnttTests t;
-        t.Test();
-
         timer.Reset();
 
         mKeyboard = MakeShared<Keyboard>();

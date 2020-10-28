@@ -29,36 +29,38 @@ namespace Engine::Scene::Systems
         static entt::entity selectedEntity = entt::null;
         showChilds = [&registry, &showChilds](entt::entity e, Scene::Components::RelationshipComponent r)
         {
-            auto name = registry->get<Scene::Components::NameComponent>(e);
-
-            bool isSelected = selectedEntity != entt::null;
+            const auto &name = registry->get<Scene::Components::NameComponent>(e);
 
             const auto node_flags = ImGuiTreeNodeFlags_OpenOnArrow
-			| ((selectedEntity == e) ? ImGuiTreeNodeFlags_Selected : 0)
-			| (r.First != entt::null ? 0 : (ImGuiTreeNodeFlags_Leaf  | ImGuiTreeNodeFlags_NoTreePushOnOpen));
+            | ((selectedEntity == e) ? ImGuiTreeNodeFlags_Selected : 0)
+            | (r.First != entt::null ? 0 : (ImGuiTreeNodeFlags_Leaf  | ImGuiTreeNodeFlags_NoTreePushOnOpen));
 
             if (r.First == entt::null)
             {
                 ImGui::TreeNodeEx((void*)(intptr_t)e, node_flags, name.Name.c_str());
+                if (ImGui::IsItemClicked())
+                {
+                    selectedEntity = e;
+                }
             }
             else
             {
-                if (ImGui::TreeNodeEx((void*)(intptr_t)e, node_flags, name.Name.c_str()))
+                bool isOpened = ImGui::TreeNodeEx((void*)(intptr_t)e, node_flags, name.Name.c_str());
+                if (ImGui::IsItemClicked())
+                {
+                    selectedEntity = e;
+                }
+                if (isOpened)
                 {
                     auto child = r.First;
                     while (child != entt::null)
                     {
-                        auto relationship = registry->get<Scene::Components::RelationshipComponent>(child);
+                        const auto& relationship = registry->get<Scene::Components::RelationshipComponent>(child);
                         showChilds(child, relationship);
                         child = relationship.Next;
-                    }
+                    }    
                     ImGui::TreePop();
                 }
-            }
-
-            if (ImGui::IsItemClicked())
-            {
-                selectedEntity = e;
             }
         };
 
@@ -71,8 +73,8 @@ namespace Engine::Scene::Systems
                 {
                     ImGui::BeginChild("Scene items area");
                     {
-                        auto rootEntity = registry->view<Scene::Components::Root>()[0];
-                        auto relationship = registry->get<Scene::Components::RelationshipComponent>(rootEntity);
+                        const auto& rootEntity = registry->view<Scene::Components::Root>()[0];
+                        const auto& relationship = registry->get<Scene::Components::RelationshipComponent>(rootEntity);
 
                         showChilds(rootEntity, relationship);
                     }
@@ -127,6 +129,7 @@ namespace Engine::Scene::Systems
                                 ImGui::Image(textureId, {256, 256});
                             }
                         }
+                        ImGui::EndChild();
                     }
                 }
 
