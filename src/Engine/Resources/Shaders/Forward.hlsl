@@ -9,7 +9,7 @@ ConstantBuffer<MaterialUniform> MaterialCB : register(b2);
 
 StructuredBuffer<LightUniform> Lights : register(t0, space1);
 
-Texture2D diffuseTexture : register(t0);
+Texture2D baseColorTexture : register(t0);
 
 Texture2D metallicRoughnessTexture : register(t1);
 
@@ -64,10 +64,10 @@ VertexShaderOutput mainVS(VertexPosColor IN)
 
 PixelShaderOutput mainPS(VertexShaderOutput IN)
 {
-    float4 baseColor = MaterialCB.Diffuse;
+    float4 baseColor = MaterialCB.BaseColor;
     if (MaterialCB.HasBaseColorTexture)
     {
-        baseColor = diffuseTexture.Sample(gsamPointWrap, IN.TextureCoord);
+        baseColor = baseColorTexture.Sample(gsamPointWrap, IN.TextureCoord);
     }
 
     clip(baseColor.a - MaterialCB.Cutoff);

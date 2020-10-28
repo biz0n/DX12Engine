@@ -36,12 +36,11 @@ namespace Engine
 
         int Run(Application* application);
 
-        Optional<int> ProcessMessages() noexcept;
-        HWND GetHWnd() const { return hWnd; }
+        
+        void Quit();
+        void ToggleFullsreen();
 
-        int32 GetWidth() const { return mWidth; }
-        int32 GetHeight() const { return mHeight; }
-
+    private:
         void SetFullscreen(bool);
 
     private:

@@ -324,7 +324,7 @@ namespace Engine::Scene::Loader
         aiColor4D baseColor;
         if (aMaterial->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_FACTOR, baseColor) == aiReturn_SUCCESS)
         {
-            properties.albedo.baseColor = *reinterpret_cast<DirectX::XMFLOAT4 *>(&baseColor);
+            properties.baseColor.baseColor = *reinterpret_cast<DirectX::XMFLOAT4 *>(&baseColor);
         }
 
         float32 metallicFactor = 0;
@@ -386,7 +386,7 @@ namespace Engine::Scene::Loader
         {
             auto albedoTexture = GetTexture(albedoTexturePath, context);
             albedoTexture->SetSRGB(true);
-            material->SetAlbedoTexture(albedoTexture);
+            material->SetBaseColorTexture(albedoTexture);
         }
 
         aiString normalTexturePath;

@@ -28,7 +28,7 @@ namespace Engine::Scene
         float32 strength = 1;
     };
 
-    struct Albedo
+    struct BaseColor
     {
         TextureInfo info;
         DirectX::XMFLOAT4 baseColor = {1, 1, 1, 1};
@@ -49,7 +49,7 @@ namespace Engine::Scene
 
     struct MaterialProperties
     {
-        Albedo albedo;
+        BaseColor baseColor;
         MetallicRaughness metallicRaughness;
         NormalTextureInfo normalTextureInfo;
         Emissive emissive;
@@ -68,19 +68,19 @@ namespace Engine::Scene
         void SetProperties(const MaterialProperties &properties) { mMaterialProperties = properties; }
         const MaterialProperties &GetProperties() const { return mMaterialProperties; }
 
-        void SetAlbedoTexture(const SharedPtr<Texture> &texture) { mAlbedoTexture = texture; }
+        void SetBaseColorTexture(const SharedPtr<Texture> &texture) { mBaseColorTexture = texture; }
         void SetNormalTexture(const SharedPtr<Texture> &texture) { mNormalTexture = texture; }
         void SetMetallicRoughnessTexture(const SharedPtr<Texture> &texture) { mMetallicRoughnessTexture = texture; }
         void SetAmbientOcclusionTexture(const SharedPtr<Texture> &texture) { mAmbientOcclusionTexture = texture; }
         void SetEmissiveTexture(const SharedPtr<Texture> &texture) { mEmissiveTexture = texture; }
 
-        const SharedPtr<Texture> &GetAlbedoTexture() const { return mAlbedoTexture; }
-        const SharedPtr<Texture> &GetNormalTexture() const { return mNormalTexture; }
-        const SharedPtr<Texture> &GetMetallicRoughnessTexture() const { return mMetallicRoughnessTexture; }
-        const SharedPtr<Texture> &GetAmbientOcclusionTexture() const { return mAmbientOcclusionTexture; }
-        const SharedPtr<Texture> &GetEmissiveTexture() const { return mEmissiveTexture; }
+        const SharedPtr<Texture> GetBaseColorTexture() const { return mBaseColorTexture; }
+        const SharedPtr<Texture> GetNormalTexture() const { return mNormalTexture; }
+        const SharedPtr<Texture> GetMetallicRoughnessTexture() const { return mMetallicRoughnessTexture; }
+        const SharedPtr<Texture> GetAmbientOcclusionTexture() const { return mAmbientOcclusionTexture; }
+        const SharedPtr<Texture> GetEmissiveTexture() const { return mEmissiveTexture; }
 
-        bool HasAlbedoTexture() const { return mAlbedoTexture != nullptr; }
+        bool HasBaseColorTexture() const { return mBaseColorTexture != nullptr; }
         bool HasNormalTexture() const { return mNormalTexture != nullptr; }
         bool HasMetallicRoughnessTexture() const { return mMetallicRoughnessTexture != nullptr; }
         bool HasAmbientOcclusionTexture() const { return mAmbientOcclusionTexture != nullptr; }
@@ -88,7 +88,7 @@ namespace Engine::Scene
 
     private:
         MaterialProperties mMaterialProperties;
-        SharedPtr<Texture> mAlbedoTexture;
+        SharedPtr<Texture> mBaseColorTexture;
         SharedPtr<Texture> mNormalTexture;
         SharedPtr<Texture> mMetallicRoughnessTexture;
         SharedPtr<Texture> mAmbientOcclusionTexture;

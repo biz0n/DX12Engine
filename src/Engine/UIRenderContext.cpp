@@ -7,11 +7,12 @@
 #include <imgui/imgui_impl_win32.h>
 
 #include <cassert>
+#include <d3dx12.h>
 
 namespace Engine
 {
     UIRenderContext::UIRenderContext(View view, ComPtr<ID3D12Device> device, uint32 numFramesInFlight, DXGI_FORMAT rtvFormat)
-        : mDevice(device), mNumFramesInFlight(numFramesInFlight), mCurrentFrameIndex(0)
+        : mDevice(device), mNumFramesInFlight(numFramesInFlight), mCurrentFrameIndex(0), mWidth(view.width), mHeight(view.height)
     {
         mDescriptorAllocator = MakeUnique<ImGuiDescriptorAllocator>(device, numFramesInFlight, NumDescriptors);
 
@@ -49,6 +50,12 @@ namespace Engine
     {
         mDescriptorAllocator->CopyStagedDescriptors(mCurrentFrameIndex);
 
+        auto mScreenViewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float32>(mWidth), static_cast<float32>(mHeight));
+        auto mScissorRect = CD3DX12_RECT(0, 0, mWidth, mHeight);
+
+        commandList->RSSetViewports(1, &mScreenViewport);
+        commandList->RSSetScissorRects(1, &mScissorRect);
+
         commandList->SetDescriptorHeaps(1, mDescriptorAllocator->GetD3D12DescriptorHeap().GetAddressOf());
         ImGui::Render();
         ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList.Get());
@@ -59,6 +66,9 @@ namespace Engine
 
     void UIRenderContext::Resize(uint32 width, uint32 height)
     {
+        mWidth = width;
+        mHeight = height;
+
         ImGui_ImplDX12_InvalidateDeviceObjects();
 
         ImGui_ImplDX12_CreateDeviceObjects();

@@ -10,8 +10,10 @@ namespace Engine
     public:
         struct Allocation
         {
-            BYTE *CPU;
+            Byte *CPU;
             D3D12_GPU_VIRTUAL_ADDRESS GPU;
+            Size BufferSize;
+            Size Offset;
 
             template <typename T>
             void CopyTo(T *data)
@@ -24,16 +26,18 @@ namespace Engine
         UploadBuffer(ID3D12Device *device, Size size);
         ~UploadBuffer();
 
-        Allocation Allocate(Size sizeInBytes, Size alignment = 256);
+        Allocation Allocate(Size sizeInBytes, Size alignment = D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
 
         void Reset()
         {
             mOffset = 0;
         }
 
+        ID3D12Resource* GetD3D12Resource() const { return mBuffer.Get(); }
+
     private:
         ComPtr<ID3D12Resource> mBuffer;
-        BYTE *mMappedData;
+        Byte *mMappedData;
         D3D12_GPU_VIRTUAL_ADDRESS mGpuAddress;
         Size mSize;
         Size mOffset;

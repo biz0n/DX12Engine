@@ -21,7 +21,7 @@ namespace Engine::Scene
 	struct TextureInfo;
 	struct NormalTextureInfo;
 	struct EmmissiveTextureInfo;
-	struct Albedo;
+	struct BaseColor;
 	struct MetallicRaughness;
 	struct Emissive;
 	struct MaterialProperties;

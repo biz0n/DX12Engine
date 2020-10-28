@@ -56,7 +56,7 @@ namespace Engine
             ComPtr<ID3D12GraphicsCommandList> CreateCopyCommandList() { return CreateCommandList(D3D12_COMMAND_LIST_TYPE_COPY); }
             ComPtr<ID3D12GraphicsCommandList> CreateComputeCommandList() { return CreateCommandList(D3D12_COMMAND_LIST_TYPE_COMPUTE); }
 
-            uint32 GetCurrentBackBufferIndex() const { mSwapChain->GetCurrentBackBufferIndex(); }
+            uint32 GetCurrentBackBufferIndex() const { return mSwapChain->GetCurrentBackBufferIndex(); }
 
         private:
 

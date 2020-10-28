@@ -5,9 +5,10 @@
 #include <VertexBuffer.h>
 #include <IndexBuffer.h>
 #include <ShaderTypes.h>
+#include <RenderContext.h>
 
+#include <Memory/UploadBuffer.h>
 #include <Scene/SceneForwards.h>
-#include <CommandListContext.h>
 #include <ResourceStateTracker.h>
 #include <Memory/MemoryForwards.h>
 
@@ -16,20 +17,20 @@
 
 namespace Engine::CommandListUtils
 {
-    void UploadVertexBuffer(ComPtr<ID3D12Device> device, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> resourceTracker, VertexBuffer &vertexBuffer, CommandListContext &commandListContext);
+    void UploadVertexBuffer(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, VertexBuffer &vertexBuffer, SharedPtr<Engine::UploadBuffer> uploadBuffer);
 
-    void UploadIndexBuffer(ComPtr<ID3D12Device> device, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> resourceTracker, IndexBuffer &indexBuffer, CommandListContext &commandListContext);
+    void UploadIndexBuffer(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, IndexBuffer &indexBuffer, SharedPtr<Engine::UploadBuffer> uploadBuffer);
 
-    void UploadBuffer(ComPtr<ID3D12Device> device, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> resourceTracker, Buffer &buffer, CommandListContext &commandListContext, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE);
+    void UploadBuffer(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, Buffer &buffer, SharedPtr<Engine::UploadBuffer> uploadBuffer, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE);
 
-    void UploadTexture(ComPtr<ID3D12Device> device, ComPtr<ID3D12GraphicsCommandList> commandList,  SharedPtr<ResourceStateTracker> resourceTracker, Scene::Texture &texture, CommandListContext &commandListContext);
+    void UploadTexture(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, Scene::Texture *texture, SharedPtr<Engine::UploadBuffer> uploadBuffer);
 
-    void UploadMaterialTextures(ComPtr<ID3D12Device> device, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> resourceTracker, CommandListContext &commandListContext, SharedPtr<Scene::Material> material);
+    void UploadMaterialTextures(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<Scene::Material> material, SharedPtr<Engine::UploadBuffer> uploadBuffer);
 
     void BindVertexBuffer(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, const VertexBuffer &vertexBuffer);
     void BindIndexBuffer(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, const IndexBuffer &indexBuffer);
 
-    void BindMaterial(ComPtr<ID3D12Device> device, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<::Engine::UploadBuffer> buffer, SharedPtr<ResourceStateTracker> stateTracker, SharedPtr<DynamicDescriptorHeap> dynamicDescriptorHeap, SharedPtr<DescriptorAllocator> descriptorAllocator, SharedPtr<Scene::Material> material);
+    void BindMaterial(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<::Engine::UploadBuffer> buffer, SharedPtr<DynamicDescriptorHeap> dynamicDescriptorHeap, SharedPtr<Scene::Material> material);
 
     LightUniform GetLightUniform(const Scene::LightNode *lightNode);
     MaterialUniform GetMaterialUniform(const Scene::Material *material);

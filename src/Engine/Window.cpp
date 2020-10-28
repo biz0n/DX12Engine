@@ -233,6 +233,10 @@ namespace Engine
         case WM_SYSKEYDOWN:
         case WM_KEYDOWN:
         {
+            if (ImGui::GetIO().WantCaptureKeyboard)
+            {
+                break;
+            }
             KeyCode::Key key = (KeyCode::Key)wParam;
             KeyEvent event(key, KeyEvent::KeyState::Pressed);
             application->OnKeyPressed(event);
@@ -241,13 +245,9 @@ namespace Engine
         case WM_SYSKEYUP:
         case WM_KEYUP:
         {
-            if (wParam == VK_ESCAPE)
+            if (ImGui::GetIO().WantCaptureKeyboard)
             {
-                PostQuitMessage(0);
-            }
-            else if (wParam == VK_F11)
-            {
-                SetFullscreen(!mIsFullscreen);
+                break;
             }
             KeyCode::Key key = (KeyCode::Key)wParam;
             KeyEvent event(key, KeyEvent::KeyState::Released);
@@ -255,6 +255,10 @@ namespace Engine
             return 0;
         }
         case WM_CHAR:
+            if (ImGui::GetIO().WantCaptureKeyboard)
+            {
+                break;
+            }
             return 0;
         case WM_PAINT:
             application->Draw();
@@ -262,6 +266,16 @@ namespace Engine
         }
 
         return DefWindowProc(hWnd, msg, wParam, lParam);
+    }
+
+    void Window::Quit()
+    {
+        PostQuitMessage(0);
+    }
+
+    void Window::ToggleFullsreen()
+    {
+        SetFullscreen(!mIsFullscreen);
     }
 
     void Window::SetFullscreen(bool fullscreen)
@@ -306,24 +320,6 @@ namespace Engine
                 ::ShowWindow(hWnd, SW_NORMAL);
             }
         }
-    }
-
-    Optional<int> Window::ProcessMessages() noexcept
-    {
-        MSG msg = {0};
-
-        while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
-        {
-            if (msg.message == WM_QUIT)
-            {
-                return (int)msg.wParam;
-            }
-
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
-
-        return {};
     }
 
 } // namespace Engine

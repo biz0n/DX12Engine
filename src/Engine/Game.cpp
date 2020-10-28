@@ -29,9 +29,6 @@
 
 #include <RootSignature.h>
 
-
-#include <CommandListContext.h>
-
 #include <DirectXTex.h>
 
 #include <d3d12.h>
@@ -66,11 +63,7 @@ namespace Engine
         //loadedScene = loader.LoadScene("Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\DamagedHelmet\\glTF\\DamagedHelmet.gltf", 1.0f);
         //loadedScene = loader.LoadScene("Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\OrientationTest\\glTF\\OrientationTest.gltf", 1.0f);
 
-        CommandListContext commandListContext;
-        for (auto &node : loadedScene->nodes)
-        {
-            UploadMeshes(commandList, node, commandListContext);
-        }
+        
 
 
         mDepthBufferDescriptor = mRenderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_DSV)->Allocate();
@@ -80,12 +73,12 @@ namespace Engine
         for (uint32 frameIndex = 0; frameIndex < SwapChain::SwapChainBufferCount; ++frameIndex)
         {
             mDynamicDescriptorHeaps[frameIndex] = MakeShared<DynamicDescriptorHeap>(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, cbvSrvUavDescriptorSize);
-            mUploadBuffer[frameIndex] = MakeShared<UploadBuffer>(mRenderContext->Device().Get(), 2 * 1024 * 1024);
+            mUploadBuffer[frameIndex] = MakeShared<UploadBuffer>(mRenderContext->Device().Get(), 512 * 1024 * 1024);
         }
 
-        ComPtr<ID3DBlob> pixelShaderBlob = Utils::CompileShader(L"Resources\\Shaders\\Shader.hlsl", nullptr, "mainPS", "ps_5_1");
+        ComPtr<ID3DBlob> pixelShaderBlob = Utils::CompileShader(L"Resources\\Shaders\\Forward.hlsl", nullptr, "mainPS", "ps_5_1");
 
-        ComPtr<ID3DBlob> vertexShaderBlob = Utils::CompileShader(L"Resources\\Shaders\\Shader.hlsl", nullptr, "mainVS", "vs_5_1");
+        ComPtr<ID3DBlob> vertexShaderBlob = Utils::CompileShader(L"Resources\\Shaders\\Forward.hlsl", nullptr, "mainVS", "vs_5_1");
 
         auto inputLayout = Scene::Vertex::GetInputLayout();
 
@@ -169,6 +162,11 @@ namespace Engine
             sizeof(PipelineStateStream), &pipelineStateStream};
         ThrowIfFailed(mRenderContext->Device()->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&mPipelineState)));
 
+        for (auto &node : loadedScene->nodes)
+        {
+            UploadMeshes(commandList, node, mUploadBuffer[mRenderContext->GetCurrentBackBufferIndex()]);
+        }
+
         uint64 fenceValue = mRenderContext->GetCopyCommandQueue()->ExecuteCommandList(commandList);
 
         mRenderContext->GetGraphicsCommandQueue()->InsertWaitForQueue(mRenderContext->GetCopyCommandQueue());
@@ -181,19 +179,17 @@ namespace Engine
 
         ResizeDepthBuffer(mCanvas->GetWidth(), mCanvas->GetHeight());
 
-        commandListContext.ClearResources();
-
         isInitializing = false;
         return true;
     }
 
-    void Game::UploadMeshes(ComPtr<ID3D12GraphicsCommandList> commandList, const SharedPtr<Scene::MeshNode>& node, CommandListContext &commandListContext)
+    void Game::UploadMeshes(ComPtr<ID3D12GraphicsCommandList> commandList, const SharedPtr<Scene::MeshNode>& node, SharedPtr<Engine::UploadBuffer> uploadBuffer)
     {
         for (auto &mesh : node->GetMeshes())
         {
-            CommandListUtils::UploadVertexBuffer(mRenderContext->Device(), commandList, mRenderContext->GetResourceStateTracker(), mesh->mVertexBuffer, commandListContext);
-            CommandListUtils::UploadIndexBuffer(mRenderContext->Device(), commandList, mRenderContext->GetResourceStateTracker(), mesh->mIndexBuffer, commandListContext);
-            CommandListUtils::UploadMaterialTextures(mRenderContext->Device(), commandList, mRenderContext->GetResourceStateTracker(), commandListContext, mesh->material);
+            CommandListUtils::UploadVertexBuffer(mRenderContext, commandList, mesh->mVertexBuffer, uploadBuffer);
+            CommandListUtils::UploadIndexBuffer(mRenderContext, commandList, mesh->mIndexBuffer, uploadBuffer);
+            CommandListUtils::UploadMaterialTextures(mRenderContext, commandList, mesh->material, uploadBuffer);
         }
     }
 
@@ -278,11 +274,9 @@ namespace Engine
 
 
             CommandListUtils::BindMaterial(
-                mRenderContext->Device(), 
+                mRenderContext, 
                 commandList, buffer, 
-                resourceStateTracker, 
                 dynamicDescriptorHeap, 
-                mRenderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV), 
                 mesh->material);
             CommandListUtils::BindVertexBuffer(commandList, resourceStateTracker, mesh->mVertexBuffer);
             CommandListUtils::BindIndexBuffer(commandList, resourceStateTracker, mesh->mIndexBuffer);

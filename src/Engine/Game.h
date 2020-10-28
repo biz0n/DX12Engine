@@ -52,7 +52,7 @@ namespace Engine
         void ResizeDepthBuffer(int32 width, int32 height);
 
         void Draw(ComPtr<ID3D12GraphicsCommandList> commandList, const SharedPtr<Scene::MeshNode>& node, SharedPtr<UploadBuffer> buffer);
-        void UploadMeshes(ComPtr<ID3D12GraphicsCommandList> commandList, const SharedPtr<Scene::MeshNode>& node, CommandListContext &commandListContext);
+        void UploadMeshes(ComPtr<ID3D12GraphicsCommandList> commandList, const SharedPtr<Scene::MeshNode>& node, SharedPtr<Engine::UploadBuffer> uploadBuffer);
 
         SharedPtr<Scene::CameraNode> Camera() const;
 
@@ -77,11 +77,13 @@ namespace Engine
         DirectX::XMMATRIX mViewMatrix;
         DirectX::XMMATRIX mProjectionMatrix;
 
-        UniquePtr<Scene::SceneObject> loadedScene;
+        
 
         SharedPtr<SwapChain> mCanvas;
         SharedPtr<RenderContext> mRenderContext;
         SharedPtr<Keyboard> mKeyboard;
+    public:
+        UniquePtr<Scene::SceneObject> loadedScene;
     };
 
 } // namespace Engine

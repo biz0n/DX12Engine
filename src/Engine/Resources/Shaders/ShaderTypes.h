@@ -37,7 +37,7 @@ struct MaterialUniform
 {
     float4 Emissive;
     float4 Ambient;
-    float4 Diffuse;
+    float4 BaseColor;
     float4 Specular;
     float MetallicFactor;
     float RoughnessFactor;

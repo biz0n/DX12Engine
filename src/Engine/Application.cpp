@@ -48,7 +48,7 @@ namespace Engine
         mGame = MakeShared<Game>(mRenderContext, mKeyboard);
         mGame->Initialize();
 
-
+/*
         std::future<UniquePtr<Scene::SceneObject>> sceneFuture = std::async(std::launch::async, [](){
 
             Scene::Loader::SceneLoader loader;
@@ -56,9 +56,10 @@ namespace Engine
         });
 
         mScene = sceneFuture.get();
-
-        mScene->AddSystem(MakeUnique<Scene::Systems::WorldTransformSystem>());
-        mScene->AddSystem(MakeUnique<Scene::Systems::UISystem>(mRenderContext->GetUIContext()));
+*/
+        auto s = mGame->loadedScene.get();
+        s->AddSystem(MakeUnique<Scene::Systems::WorldTransformSystem>());
+        s->AddSystem(MakeUnique<Scene::Systems::UISystem>(mRenderContext, mRenderContext->GetUIContext()));
     }
 
     void Application::Destroy()
@@ -81,7 +82,9 @@ namespace Engine
             mGame->Update(timer);
             mGame->Draw(timer);
 
-            mScene->Process(timer);
+
+            mGame->loadedScene.get()->Process(timer);
+            //mScene->Process(timer);
 
             mRenderContext->EndFrame();
         }

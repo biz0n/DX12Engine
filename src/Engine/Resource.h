@@ -8,8 +8,8 @@ namespace Engine
     class Resource
     {
     public:
-        explicit Resource(const std::wstring &name);
-        explicit Resource(ComPtr<ID3D12Resource> resource, const std::wstring &name);
+        Resource(const std::wstring &name);
+        Resource(ComPtr<ID3D12Resource> resource, const std::wstring &name);
         virtual ~Resource();
 
         virtual void Reset();
