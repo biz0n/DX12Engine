@@ -26,6 +26,9 @@
 #include <Scene/Material.h>
 #include <Scene/Texture.h>
 #include <Scene/Vertex.h>
+#include <Scene/Camera.h>
+
+#include <Render/ShaderCreationInfo.h>
 
 #include <RootSignature.h>
 
@@ -54,6 +57,7 @@ namespace Engine
 
         Scene::Loader::SceneLoader loader;
         loadedScene = loader.LoadScene("Resources\\Scenes\\gltf2\\sponza\\sponza.gltf");
+        //loadedScene = loader.LoadScene("Resources\\Scenes\\San_Miguel\\san-miguel-low-poly.obj");
         //loadedScene = loader.LoadScene("Resources\\Scenes\\gltf2\\axis.gltf", 1.0f);
         //loadedScene = loader.LoadScene("Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\MetalRoughSpheres\\glTF\\MetalRoughSpheres.gltf", 1.0f);
         //loadedScene = loader.LoadScene("Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\MetalRoughSpheres\\glTF-Binary\\MetalRoughSpheres.glb", 1.0f);
@@ -76,11 +80,12 @@ namespace Engine
             mUploadBuffer[frameIndex] = MakeShared<UploadBuffer>(mRenderContext->Device().Get(), 512 * 1024 * 1024);
         }
 
-        ComPtr<ID3DBlob> pixelShaderBlob = Utils::CompileShader(L"Resources\\Shaders\\Forward.hlsl", nullptr, "mainPS", "ps_5_1");
+        mShaderProvider = MakeUnique<Render::ShaderProvider>();
 
-        ComPtr<ID3DBlob> vertexShaderBlob = Utils::CompileShader(L"Resources\\Shaders\\Forward.hlsl", nullptr, "mainVS", "vs_5_1");
 
-        auto inputLayout = Scene::Vertex::GetInputLayout();
+
+
+        
 
         CD3DX12_DESCRIPTOR_RANGE1 texTable1;
         texTable1.Init(
@@ -100,7 +105,19 @@ namespace Engine
             1,  // number of descriptors
             2); // register t2
 
-        CD3DX12_ROOT_PARAMETER1 rootParameters[7] = {};
+        CD3DX12_DESCRIPTOR_RANGE1 texTable4;
+        texTable4.Init(
+            D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+            1,  // number of descriptors
+            3); // register t2
+
+        CD3DX12_DESCRIPTOR_RANGE1 texTable5;
+        texTable5.Init(
+            D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+            1,  // number of descriptors
+            4); // register t2
+
+        CD3DX12_ROOT_PARAMETER1 rootParameters[9] = {};
 
         rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_VERTEX);
 
@@ -116,6 +133,10 @@ namespace Engine
 
         rootParameters[6].InitAsDescriptorTable(1, &texTable3, D3D12_SHADER_VISIBILITY_PIXEL);
 
+        rootParameters[7].InitAsDescriptorTable(1, &texTable4, D3D12_SHADER_VISIBILITY_PIXEL);
+
+        rootParameters[8].InitAsDescriptorTable(1, &texTable5, D3D12_SHADER_VISIBILITY_PIXEL);
+
         D3D12_STATIC_SAMPLER_DESC sampler = CD3DX12_STATIC_SAMPLER_DESC(
             0,                               // shaderRegister
             D3D12_FILTER_ANISOTROPIC,        // filter
@@ -129,38 +150,7 @@ namespace Engine
 
         mRootSignature = MakeUnique<RootSignature>(mRenderContext->Device(), &rootSigDesc);
 
-        struct PipelineStateStream
-        {
-            CD3DX12_PIPELINE_STATE_STREAM_ROOT_SIGNATURE pRootSignature;
-            CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT InputLayout;
-            CD3DX12_PIPELINE_STATE_STREAM_PRIMITIVE_TOPOLOGY PrimitiveTopologyType;
-            CD3DX12_PIPELINE_STATE_STREAM_VS VS;
-            CD3DX12_PIPELINE_STATE_STREAM_PS PS;
-            CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL_FORMAT DSVFormat;
-            CD3DX12_PIPELINE_STATE_STREAM_RENDER_TARGET_FORMATS RTVFormats;
-            CD3DX12_PIPELINE_STATE_STREAM_RASTERIZER Rasterizer;
-        } pipelineStateStream;
-
-        D3D12_RT_FORMAT_ARRAY rtvFormats = {};
-        rtvFormats.NumRenderTargets = 1;
-        rtvFormats.RTFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-
-        CD3DX12_RASTERIZER_DESC rasterizer = {};
-        rasterizer.FillMode = D3D12_FILL_MODE_SOLID;
-        rasterizer.CullMode = D3D12_CULL_MODE_BACK;
-
-        pipelineStateStream.pRootSignature = mRootSignature->GetD3D12RootSignature().Get();
-        pipelineStateStream.InputLayout = {inputLayout.data(), static_cast<uint32>(inputLayout.size())};
-        pipelineStateStream.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-        pipelineStateStream.VS = CD3DX12_SHADER_BYTECODE(vertexShaderBlob.Get());
-        pipelineStateStream.PS = CD3DX12_SHADER_BYTECODE(pixelShaderBlob.Get());
-        pipelineStateStream.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-        pipelineStateStream.RTVFormats = rtvFormats;
-        pipelineStateStream.Rasterizer = CD3DX12_RASTERIZER_DESC(rasterizer); //CD3DX12_RASTERIZER_DESC(CD3DX12_DEFAULT{});
-
-        D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc = {
-            sizeof(PipelineStateStream), &pipelineStateStream};
-        ThrowIfFailed(mRenderContext->Device()->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&mPipelineState)));
+        mPipelineStateProvider = MakeUnique<Render::PipelineStateProvider>(mRenderContext->Device());
 
         for (auto &node : loadedScene->nodes)
         {
@@ -187,8 +177,8 @@ namespace Engine
     {
         for (auto &mesh : node->GetMeshes())
         {
-            CommandListUtils::UploadVertexBuffer(mRenderContext, commandList, mesh->mVertexBuffer, uploadBuffer);
-            CommandListUtils::UploadIndexBuffer(mRenderContext, commandList, mesh->mIndexBuffer, uploadBuffer);
+            CommandListUtils::UploadVertexBuffer(mRenderContext, commandList, *mesh->vertexBuffer, uploadBuffer);
+            CommandListUtils::UploadIndexBuffer(mRenderContext, commandList, *mesh->indexBuffer, uploadBuffer);
             CommandListUtils::UploadMaterialTextures(mRenderContext, commandList, mesh->material, uploadBuffer);
         }
     }
@@ -202,8 +192,7 @@ namespace Engine
         float aspectRatio = mCanvas->GetWidth() / static_cast<float>(mCanvas->GetHeight());
 
         auto camera = Camera();
-        camera->SetAspectRatio(aspectRatio);
-        mProjectionMatrix = camera->GetProjectionMatrix();
+        mProjectionMatrix = camera->GetProjectionMatrix(aspectRatio);
         mViewMatrix = camera->GetViewMatrix();
         
         const float32 speed = 5 * time.DeltaTime();
@@ -245,6 +234,45 @@ namespace Engine
         }
     }
 
+    ComPtr<ID3D12PipelineState> Game::CreatePipelineState(const SharedPtr<Scene::Mesh>& mesh)
+    {
+        auto inputLayout = Scene::Vertex::GetInputLayout();
+
+        ComPtr<ID3DBlob> pixelShaderBlob = mShaderProvider->GetShader(Render::ShaderCreationInfo("Resources\\Shaders\\Forward.hlsl", "mainPS", "ps_5_1"));
+
+        ComPtr<ID3DBlob> vertexShaderBlob = mShaderProvider->GetShader(Render::ShaderCreationInfo("Resources\\Shaders\\Forward.hlsl", "mainVS", "vs_5_1"));
+
+
+        Render::PipelineStateStream pipelineStateStream;
+
+        D3D12_RT_FORMAT_ARRAY rtvFormats = {};
+        rtvFormats.NumRenderTargets = 1;
+        rtvFormats.RTFormats[0] = mRenderContext->GetSwapChain()->GetCurrentBackBuffer()->GetDesc().Format;
+
+        CD3DX12_RASTERIZER_DESC rasterizer = {};
+        rasterizer.FillMode = D3D12_FILL_MODE_SOLID;
+
+        if (mesh->material->GetProperties().doubleSided)
+        {
+            rasterizer.CullMode = D3D12_CULL_MODE_NONE;
+        }
+        else
+        {
+            rasterizer.CullMode = D3D12_CULL_MODE_BACK;
+        }
+
+        pipelineStateStream.rootSignature = mRootSignature->GetD3D12RootSignature().Get();
+        pipelineStateStream.inputLayout = {inputLayout.data(), static_cast<uint32>(inputLayout.size())};
+        pipelineStateStream.primitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+        pipelineStateStream.VS = CD3DX12_SHADER_BYTECODE(vertexShaderBlob.Get());
+        pipelineStateStream.PS = CD3DX12_SHADER_BYTECODE(pixelShaderBlob.Get());
+        pipelineStateStream.dsvFormat = mDepthBuffer->GetDesc().Format;
+        pipelineStateStream.rtvFormats = rtvFormats;
+        pipelineStateStream.rasterizer = CD3DX12_RASTERIZER_DESC(rasterizer);
+
+        return mPipelineStateProvider->CreatePipelineState(pipelineStateStream);
+    }
+
     void Game::Draw(ComPtr<ID3D12GraphicsCommandList> commandList, const SharedPtr<Scene::MeshNode>& node, SharedPtr<UploadBuffer> buffer)
     {
         if (isInitializing)
@@ -270,7 +298,9 @@ namespace Engine
 
         for (auto &mesh : node->GetMeshes())
         {
-            commandList->IASetPrimitiveTopology(mesh->mPrimitiveTopology);
+            commandList->SetPipelineState(CreatePipelineState(mesh).Get());
+
+            commandList->IASetPrimitiveTopology(mesh->primitiveTopology);
 
 
             CommandListUtils::BindMaterial(
@@ -278,14 +308,14 @@ namespace Engine
                 commandList, buffer, 
                 dynamicDescriptorHeap, 
                 mesh->material);
-            CommandListUtils::BindVertexBuffer(commandList, resourceStateTracker, mesh->mVertexBuffer);
-            CommandListUtils::BindIndexBuffer(commandList, resourceStateTracker, mesh->mIndexBuffer);
+            CommandListUtils::BindVertexBuffer(commandList, resourceStateTracker, *mesh->vertexBuffer);
+            CommandListUtils::BindIndexBuffer(commandList, resourceStateTracker, *mesh->indexBuffer);
 
             resourceStateTracker->FlushBarriers(commandList);
 
             dynamicDescriptorHeap->CommitStagedDescriptors(mRenderContext->Device(), commandList);
 
-            commandList->DrawIndexedInstanced(static_cast<uint32>(mesh->mIndexBuffer.GetElementsCount()), 1, 0, 0, 0);
+            commandList->DrawIndexedInstanced(static_cast<uint32>(mesh->indexBuffer->GetElementsCount()), 1, 0, 0, 0);
         }
     }
 
@@ -318,7 +348,7 @@ namespace Engine
         commandList->OMSetRenderTargets(1, &rtv, false, &mDepthBufferDescriptor.GetDescriptor());
 
 
-        commandList->SetPipelineState(mPipelineState.Get());
+        
         commandList->SetGraphicsRootSignature(mRootSignature->GetD3D12RootSignature().Get());
 
         mDynamicDescriptorHeaps[mCanvas->GetCurrentBackBufferIndex()]->ParseRootSignature(mRootSignature.get());

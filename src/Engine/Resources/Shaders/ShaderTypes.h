@@ -35,7 +35,7 @@ struct MeshUniform
 
 struct MaterialUniform
 {
-    float4 Emissive;
+    float4 EmissiveFactor;
     float4 Ambient;
     float4 BaseColor;
     float4 Specular;

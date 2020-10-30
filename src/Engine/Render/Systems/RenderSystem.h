@@ -6,22 +6,20 @@
 
 namespace Engine
 {
-    class UIRenderContext;
     class RenderContext;
 }
 
 namespace Engine::Scene::Systems
 {
-    class UISystem : public System
+    class RenderSystem : public System
     {
         public:
-            UISystem(SharedPtr<RenderContext> renderContext, SharedPtr<UIRenderContext> uiRenderContext);
-            ~UISystem() override;
+            RenderSystem(SharedPtr<RenderContext> renderContext);
+            ~RenderSystem() override;
         public:
             void Process(entt::registry *registry, const Timer& timer) override;
 
         private:
-            SharedPtr<UIRenderContext> mUIRenderContext;
             SharedPtr<RenderContext> mRenderContext;
     };
 }

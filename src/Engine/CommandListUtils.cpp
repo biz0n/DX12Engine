@@ -16,6 +16,8 @@
 #include <Scene/LightNode.h>
 #include <Scene/Material.h>
 #include <Memory/UploadBuffer.h>
+#include <Scene/PunctualLight.h>
+#include <Scene/Camera.h>
 
 #include <DirectXTex.h>
 #include <DirectXMath.h>
@@ -168,6 +170,16 @@ namespace Engine::CommandListUtils
         {
             UploadTexture(renderContext, commandList, material->GetNormalTexture().get(), uploadBuffer);
         }
+
+        if (material->HasEmissiveTexture())
+        {
+            UploadTexture(renderContext, commandList, material->GetEmissiveTexture().get(), uploadBuffer);
+        }
+
+        if (material->HasAmbientOcclusionTexture())
+        {
+            UploadTexture(renderContext, commandList, material->GetAmbientOcclusionTexture().get(), uploadBuffer);
+        }
     }
 
     void BindVertexBuffer(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, const VertexBuffer &vertexBuffer)
@@ -188,9 +200,9 @@ namespace Engine::CommandListUtils
     {
         LightUniform light = {};
 
-        light.LightType = lightNode->GetLightType();
-        light.Enabled = lightNode->IsEnabled();
-        light.Color = lightNode->GetColor();
+        light.LightType = lightNode->GetPunctualLight().GetLightType();
+        light.Enabled = lightNode->GetPunctualLight().IsEnabled();
+        light.Color = lightNode->GetPunctualLight().GetColor();
 
         auto world = lightNode->GetWorldTransform();
 
@@ -199,17 +211,17 @@ namespace Engine::CommandListUtils
                                    DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f),
                                    world));
 
-        DirectX::XMFLOAT3 direction = lightNode->GetDirection();
+        DirectX::XMFLOAT3 direction = lightNode->GetPunctualLight().GetDirection();
         DirectX::XMStoreFloat3(&light.DirectionWS,
                                DirectX::XMVector4Transform(
                                    DirectX::XMVectorSet(direction.x, direction.y, direction.z, 0.0f),
                                    world));
 
-        light.ConstantAttenuation = lightNode->GetConstantAttenuation();
-        light.LinearAttenuation = lightNode->GetLinearAttenuation();
-        light.QuadraticAttenuation = lightNode->GetQuadraticAttenuation();
-        light.InnerConeAngle = lightNode->GetInnerConeAngle();
-        light.OuterConeAngle = lightNode->GetOuterConeAngle();
+        light.ConstantAttenuation = lightNode->GetPunctualLight().GetConstantAttenuation();
+        light.LinearAttenuation = lightNode->GetPunctualLight().GetLinearAttenuation();
+        light.QuadraticAttenuation = lightNode->GetPunctualLight().GetQuadraticAttenuation();
+        light.InnerConeAngle = lightNode->GetPunctualLight().GetInnerConeAngle();
+        light.OuterConeAngle = lightNode->GetPunctualLight().GetOuterConeAngle();
 
         return light;
     }
@@ -219,7 +231,7 @@ namespace Engine::CommandListUtils
         Scene::MaterialProperties properties = material->GetProperties();
         MaterialUniform uniform = {};
         uniform.BaseColor = properties.baseColor.baseColor;
-        uniform.Emissive = {properties.emissive.factor.x, properties.emissive.factor.y, properties.emissive.factor.z, 1.0f};
+        uniform.EmissiveFactor = {properties.emissive.factor.x, properties.emissive.factor.y, properties.emissive.factor.z, 1.0f};
         uniform.MetallicFactor = properties.metallicRaughness.metallicFactor;
         uniform.RoughnessFactor = properties.metallicRaughness.roughnessFactor;
         uniform.NormalScale = properties.normalTextureInfo.scale;
@@ -266,6 +278,21 @@ namespace Engine::CommandListUtils
             CommandListUtils::TransitionBarrier(stateTracker, material->GetNormalTexture()->GetD3D12Resource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
             dynamicDescriptorHeap->StageDescriptor(6, 0, 1, material->GetNormalTexture()->GetShaderResourceView(device, descriptorAllocator));
+        }
+
+        
+        if (material->HasEmissiveTexture())
+        {
+            CommandListUtils::TransitionBarrier(stateTracker, material->GetEmissiveTexture()->GetD3D12Resource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+            dynamicDescriptorHeap->StageDescriptor(7, 0, 1, material->GetEmissiveTexture()->GetShaderResourceView(device, descriptorAllocator));
+        }
+
+        if (material->HasAmbientOcclusionTexture())
+        {
+            CommandListUtils::TransitionBarrier(stateTracker, material->GetAmbientOcclusionTexture()->GetD3D12Resource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+            dynamicDescriptorHeap->StageDescriptor(8, 0, 1, material->GetAmbientOcclusionTexture()->GetShaderResourceView(device, descriptorAllocator));
         }
     }
 

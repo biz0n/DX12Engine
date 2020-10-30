@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Scene/SceneForwards.h>
+#include <Scene/Camera.h>
 
 #include <MathUtils.h>
 #include <algorithm>
@@ -10,20 +11,12 @@ namespace Engine::Scene
     class CameraNode : public Node
     {
     public:
-        CameraNode() : Node(), mNearPlane(0.001f), mFarPlane(100.0f), mFoV(45 * Math::PI / 180.0f), mAspectRatio(1), mTranslation{0}, mPitch(0), mYaw(0)
+        CameraNode() : Node(), mTranslation{0}, mPitch(0), mYaw(0)
         {
         }
 
-        void SetNearPlane(float32 nearPlane) { mNearPlane = nearPlane; }
-        float32 GetNearPlane() const { return mNearPlane; }
-
-        void SetFarPlane(float32 farPlane) { mFarPlane = farPlane; }
-        float32 GetFarPlane() const { return mFarPlane; }
-
-        void SetFoV(float32 fov) { mFoV = fov; }
-        float32 GetFoV() const { return mFoV; }
-
-        void SetAspectRatio(float32 aspectRatio) { mAspectRatio = aspectRatio; }
+        void SetCamera(const Camera& camera) { mCamera = camera; }
+        inline const Camera& GetCamera() const { return mCamera; }
 
         dx::XMMATRIX GetViewMatrix() const
         {
@@ -45,9 +38,9 @@ namespace Engine::Scene
             return dx::XMMatrixLookAtLH(eyePosition, eyePosition + lookAtDirection, up);
         }
 
-        dx::XMMATRIX GetProjectionMatrix() const
+        dx::XMMATRIX GetProjectionMatrix(float32 aspectRation) const
         {
-            return dx::XMMatrixPerspectiveFovLH(mFoV, mAspectRatio, mNearPlane, mFarPlane);
+            return dx::XMMatrixPerspectiveFovLH( mCamera.GetFoV(), aspectRation, mCamera.GetNearPlane(), mCamera.GetFarPlane());
         }
 
         dx::XMFLOAT3 GetPosition() const
@@ -101,10 +94,7 @@ namespace Engine::Scene
         }
 
     private:
-        float32 mNearPlane;
-        float32 mFarPlane;
-        float32 mFoV;
-        float32 mAspectRatio;
+        Camera mCamera;
 
         dx::XMVECTOR mTranslation;
         float32 mPitch;

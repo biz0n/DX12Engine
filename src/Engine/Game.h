@@ -6,6 +6,8 @@
 
 #include <Memory/MemoryForwards.h>
 #include <Memory/DescriptorAllocation.h>
+#include <Render/PipelineStateProvider.h>
+#include <Render/ShaderProvider.h>
 
 #include <Timer.h>
 #include <Events.h>
@@ -56,6 +58,8 @@ namespace Engine
 
         SharedPtr<Scene::CameraNode> Camera() const;
 
+        ComPtr<ID3D12PipelineState> CreatePipelineState(const SharedPtr<Scene::Mesh>& mesh);
+
     private:
 
         SharedPtr<DynamicDescriptorHeap> mDynamicDescriptorHeaps[SwapChain::SwapChainBufferCount];
@@ -82,6 +86,9 @@ namespace Engine
         SharedPtr<SwapChain> mCanvas;
         SharedPtr<RenderContext> mRenderContext;
         SharedPtr<Keyboard> mKeyboard;
+        UniquePtr<Render::PipelineStateProvider> mPipelineStateProvider;
+        UniquePtr<Render::ShaderProvider> mShaderProvider;
+
     public:
         UniquePtr<Scene::SceneObject> loadedScene;
     };

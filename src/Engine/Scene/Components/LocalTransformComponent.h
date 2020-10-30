@@ -6,6 +6,6 @@ namespace Engine::Scene::Components
 {
     struct LocalTransformComponent
     {
-        DirectX::XMMATRIX Transform;
+        DirectX::XMMATRIX transform;
     };
 }

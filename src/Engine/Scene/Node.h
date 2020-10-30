@@ -24,6 +24,8 @@ namespace Engine::Scene
 
 		void SetName(const String &name) { mName = name; }
 
+		const String& GetName() const { return mName; }
+
 		DirectX::XMMATRIX GetWorldTransform() const
 		{
 			DirectX::XMMATRIX local = DirectX::XMLoadFloat4x4(&mLocalTransform);

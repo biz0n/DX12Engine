@@ -99,11 +99,19 @@ namespace Engine
 
     void RenderContext::BeginFrame()
     {
-        ++mFrameCount;
-
         auto currentBackBufferIndex = mSwapChain->GetCurrentBackBufferIndex();
 
+        GetGraphicsCommandQueue()->WaitForFenceCPU(mFenceValues[currentBackBufferIndex]);
+
+        for (uint32 i = 0; i < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES; ++i)
+        {
+            D3D12_DESCRIPTOR_HEAP_TYPE type = (D3D12_DESCRIPTOR_HEAP_TYPE)i;
+            GetDescriptorAllocator(type)->ReleaseStaleDescriptors(mFrameValues[currentBackBufferIndex]);
+        }
+
         mCommandAllocators[currentBackBufferIndex]->Reset();
+
+        ++mFrameCount;
 
         auto resourceStateTracker = mResourceStateTrackers[currentBackBufferIndex];
         CommandListUtils::TransitionBarrier(resourceStateTracker, mSwapChain->GetCurrentBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET);
@@ -133,13 +141,5 @@ namespace Engine
         mFrameValues[currentBackBufferIndex] = GetFrameCount();
 
         currentBackBufferIndex = mSwapChain->Present();
-
-        GetGraphicsCommandQueue()->WaitForFenceCPU(mFenceValues[currentBackBufferIndex]);
-
-        for (uint32 i = 0; i < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES; ++i)
-        {
-            D3D12_DESCRIPTOR_HEAP_TYPE type = (D3D12_DESCRIPTOR_HEAP_TYPE)i;
-            GetDescriptorAllocator(type)->ReleaseStaleDescriptors(mFrameValues[currentBackBufferIndex]);
-        }
     }
 }

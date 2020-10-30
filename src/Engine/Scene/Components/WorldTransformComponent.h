@@ -6,6 +6,6 @@ namespace Engine::Scene::Components
 {
     struct WorldTransformComponent
     {
-        DirectX::XMMATRIX Transform;
+        DirectX::XMMATRIX transform;
     };
 }

@@ -21,7 +21,8 @@
 #include <Scene/Components/NameComponent.h>
 
 #include <Scene/Systems/WorldTransformSystem.h>
-#include <Scene/Systems/UISystem.h>
+#include <UI/Systems/UISystem.h>
+#include <Render/Systems/RenderSystem.h>
 
 namespace Engine
 {
@@ -54,6 +55,8 @@ namespace Engine
 */
         auto s = mGame->loadedScene.get();
         s->AddSystem(MakeUnique<Scene::Systems::WorldTransformSystem>());
+        s->AddSystem(MakeUnique<Scene::Systems::RenderSystem>(mRenderContext));
+
         s->AddSystem(MakeUnique<Scene::Systems::UISystem>(mRenderContext, mRenderContext->GetUIContext()));
     }
 

@@ -24,9 +24,6 @@ namespace Engine
 
         const uint32 NumDescriptors = 32;
 
-        uint32 mWidth;
-        uint32 mHeight;
-
     public:
         UIRenderContext(View view, ComPtr<ID3D12Device> device, uint32 numFramesInFlight, DXGI_FORMAT rtvFormat);
         ~UIRenderContext();

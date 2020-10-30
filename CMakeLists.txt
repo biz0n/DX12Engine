@@ -28,6 +28,7 @@ add_compile_definitions(DEBUG)
 
 project(d3d12)
 
+
 set(GUI_TYPE WIN32)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /UMBCS /D_UNICODE /DUNICODE")
 set(CMAKE_CXX_STANDARD 20)
@@ -43,7 +44,7 @@ file(GLOB_RECURSE SOURCES "src/Engine/*.cpp")
 
 add_executable(d3d12 WIN32 ${SOURCES} ${HEADERS} ${IMGUI})
 
-set_property(TARGET d3d12 PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}\\src\\Engine")
+set_property(TARGET d3d12 PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/src/Engine/")
 
 target_include_directories(d3d12 PRIVATE "src/Engine")
 
@@ -53,13 +54,7 @@ target_include_directories(d3d12 PRIVATE "src/Libraries/imgui/")
 
 target_link_libraries(d3d12 PRIVATE "d3d12.lib" "dxgi.lib" "d3dcompiler.lib" "dxguid.lib" "assimp" "DirectXTex" "EnTT")
 
-set_source_files_properties( src/Engine/Resources/Shaders/VertexShader.hlsl PROPERTIES 
-    VS_SHADER_TYPE Vertex
-    VS_SHADER_MODEL 5.1
-    VS_SHADER_ENTRYPOINT main
-)
-
-set_source_files_properties( src/Engine/Resources/Shaders/PixelShader.hlsl PROPERTIES 
+set_source_files_properties( src/Engine/Resources/Shaders/Forward.hlsl PROPERTIES 
     VS_SHADER_TYPE Pixel
     VS_SHADER_MODEL 5.1
     VS_SHADER_ENTRYPOINT main

@@ -12,6 +12,9 @@
 #include <Scene/CameraNode.h>
 #include <Scene/Mesh.h>
 
+#include <Scene/Camera.h>
+#include <Scene/PunctualLight.h>
+
 #include <assimp/Importer.hpp>
 #include <assimp/Exporter.hpp>
 #include <assimp/scene.h>
@@ -126,31 +129,35 @@ namespace Engine::Scene::Loader
             scene->cameras.push_back(MakeShared<CameraNode>());
         }
 
-        SharedPtr<LightNode> pointLight1 = MakeShared<LightNode>();
-        pointLight1->SetColor({50.0f, 30.0f, 10.0f});
+        SharedPtr<LightNode> pointLightNode1 = MakeShared<LightNode>();
+        PunctualLight pointLight1;
+        pointLight1.SetColor({50.0f, 30.0f, 10.0f});
 
         DirectX::XMFLOAT4X4 pointLight1Transform;
         DirectX::XMStoreFloat4x4(&pointLight1Transform, DirectX::XMMatrixTranslation(4.0f, 5.0f, -2.0f));
-        pointLight1->SetLocalTransform(pointLight1Transform);
+        pointLightNode1->SetLocalTransform(pointLight1Transform);
 
-        pointLight1->SetQuadraticAttenuation(1.0f);
-        pointLight1->SetEnabled(true);
-        pointLight1->SetLightType(LightType::PointLight);
+        pointLight1.SetQuadraticAttenuation(1.0f);
+        pointLight1.SetEnabled(true);
+        pointLight1.SetLightType(LightType::PointLight);
+        pointLightNode1->SetPunctualLight(pointLight1);
 
-        scene->lights.push_back(pointLight1);
+        scene->lights.push_back(pointLightNode1);
 
-        SharedPtr<LightNode> pointLight2 = MakeShared<LightNode>();
-        pointLight2->SetColor({20.0f, 20.0f, 20.0f});
+        SharedPtr<LightNode> pointLightNode2 = MakeShared<LightNode>();
+        PunctualLight pointLight2;
+        pointLight2.SetColor({20.0f, 20.0f, 20.0f});
 
         DirectX::XMFLOAT4X4 pointLight2Transform;
         DirectX::XMStoreFloat4x4(&pointLight2Transform, DirectX::XMMatrixTranslation(0.0f, 2.0f, 0.0f));
-        pointLight2->SetLocalTransform(pointLight2Transform);
+        pointLightNode2->SetLocalTransform(pointLight2Transform);
 
-        pointLight2->SetQuadraticAttenuation(1.0f);
-        pointLight2->SetEnabled(true);
-        pointLight2->SetLightType(LightType::PointLight);
+        pointLight2.SetQuadraticAttenuation(1.0f);
+        pointLight2.SetEnabled(true);
+        pointLight2.SetLightType(LightType::PointLight);
+        pointLightNode2->SetPunctualLight(pointLight2);
 
-        scene->lights.push_back(pointLight2);
+        scene->lights.push_back(pointLightNode2);
 
         return scene;
     }
@@ -209,6 +216,7 @@ namespace Engine::Scene::Loader
 
             entt::entity nextEntity = aNode->mNumChildren > 0 ? scene->registry->create() : entt::null;
             relationship->First = nextEntity;
+            relationship->ChildsCount = aNode->mNumChildren;
 
             for (uint32 i = 0; i < aNode->mNumChildren; i++)
             {
@@ -241,12 +249,13 @@ namespace Engine::Scene::Loader
         node->SetParent(parentNode);
     }
 
-    SharedPtr<Mesh> SceneLoader::ParseMesh(const aiMesh *aMesh, const LoadingContext &context)
+    std::tuple<String, SharedPtr<Mesh>> SceneLoader::ParseMesh(const aiMesh *aMesh, const LoadingContext &context)
     {
         SharedPtr<Mesh> mesh = MakeShared<Mesh>();
+        mesh->indexBuffer = MakeShared<IndexBuffer>();
+        mesh->vertexBuffer = MakeShared<VertexBuffer>();
         std::vector<Vertex> vertices;
         vertices.reserve(aMesh->mNumVertices);
-        mesh->Name = aMesh->mName.C_Str(); 
 
         for (uint32 i = 0; i < aMesh->mNumVertices; ++i)
         {
@@ -278,8 +287,8 @@ namespace Engine::Scene::Loader
             vertices.emplace_back(vertex);
         }
 
-        mesh->mVertexBuffer.SetData(vertices);
-        mesh->mVertexBuffer.SetName(Utils::ToWide("Vertices: " + (std::string)(aMesh->mName.C_Str())));
+        mesh->vertexBuffer->SetData(vertices);
+        mesh->vertexBuffer->SetName(Utils::ToWide("Vertices: " + (std::string)(aMesh->mName.C_Str())));
 
         std::vector<uint16> indices;
         indices.reserve(aMesh->mNumFaces * 3);
@@ -291,26 +300,26 @@ namespace Engine::Scene::Loader
             indices.push_back(face.mIndices[2]);
         }
 
-        mesh->mIndexBuffer.SetData(indices);
-        mesh->mIndexBuffer.SetName(Utils::ToWide("Indices: " + (std::string)(aMesh->mName.C_Str())));
+        mesh->indexBuffer->SetData(indices);
+        mesh->indexBuffer->SetName(Utils::ToWide("Indices: " + (std::string)(aMesh->mName.C_Str())));
 
         mesh->material = context.materials[aMesh->mMaterialIndex];
 
         switch (aMesh->mPrimitiveTypes)
         {
             case aiPrimitiveType_POINT:
-                mesh->mPrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
+                mesh->primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
                 break;
             case aiPrimitiveType_LINE:
-                mesh->mPrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_LINELIST;
+                mesh->primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_LINELIST;
                 break;
             case aiPrimitiveType_TRIANGLE:
             default:
-                mesh->mPrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+                mesh->primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
                 break;
         }
 
-        return mesh;
+        return std::make_tuple(aMesh->mName.C_Str(), mesh);
     }
 
     SharedPtr<Material> SceneLoader::ParseMaterial(const aiMaterial *aMaterial, LoadingContext &context)
@@ -338,9 +347,9 @@ namespace Engine::Scene::Loader
         {
             properties.metallicRaughness.roughnessFactor = roughnessFactor;
         }
-
+        
         aiColor3D emissiveFactor;
-        if (aMaterial->Get(AI_MATKEY_COLOR_EMISSIVE, emissiveFactor))
+        if (aMaterial->Get(AI_MATKEY_COLOR_EMISSIVE, emissiveFactor) == aiReturn_SUCCESS)
         {
             properties.emissive.factor = *reinterpret_cast<DirectX::XMFLOAT3 *>(&emissiveFactor);
         }
@@ -370,13 +379,13 @@ namespace Engine::Scene::Loader
         }
 
         bool unlit = false;
-        if (aMaterial->Get(AI_MATKEY_GLTF_UNLIT, unlit))
+        if (aMaterial->Get(AI_MATKEY_GLTF_UNLIT, unlit) == aiReturn_SUCCESS)
         {
             properties.unlit = unlit;
         }
 
         bool twoSided;
-        if (aMaterial->Get(AI_MATKEY_TWOSIDED, twoSided))
+        if (aMaterial->Get(AI_MATKEY_TWOSIDED, twoSided) == aiReturn_SUCCESS)
         {
             properties.doubleSided = twoSided;
         }
@@ -396,7 +405,7 @@ namespace Engine::Scene::Loader
             material->SetNormalTexture(normalTexture);
 
             float32 scale;
-            if (aMaterial->Get(AI_MATKEY_GLTF_TEXTURE_SCALE(aiTextureType_NORMALS, 0), scale))
+            if (aMaterial->Get(AI_MATKEY_GLTF_TEXTURE_SCALE(aiTextureType_NORMALS, 0), scale) == aiReturn_SUCCESS)
             {
                 properties.normalTextureInfo.scale = scale;
             }
@@ -410,7 +419,7 @@ namespace Engine::Scene::Loader
         }
 
         aiString ambientOcclusionTexturePath;
-        if (aMaterial->GetTexture(aiTextureType_AMBIENT_OCCLUSION, 0, &ambientOcclusionTexturePath) == aiReturn_SUCCESS)
+        if (aMaterial->GetTexture(aiTextureType_LIGHTMAP, 0, &ambientOcclusionTexturePath) == aiReturn_SUCCESS)
         {
             auto aoTexture = GetTexture(ambientOcclusionTexturePath, context);
             material->SetAmbientOcclusionTexture(aoTexture);
@@ -423,7 +432,7 @@ namespace Engine::Scene::Loader
             material->SetEmissiveTexture(emissiveTexture);
 
             float32 strength;
-            if (aMaterial->Get(AI_MATKEY_GLTF_TEXTURE_STRENGTH(aiTextureType_EMISSIVE, 0), strength))
+            if (aMaterial->Get(AI_MATKEY_GLTF_TEXTURE_STRENGTH(aiTextureType_EMISSIVE, 0), strength) == aiReturn_SUCCESS)
             {
                 properties.emissive.info.strength = strength;
             }
@@ -504,50 +513,44 @@ namespace Engine::Scene::Loader
 		auto iter = context.lightsMap.find(aNode->mName.C_Str());
         aiLight* aLight = iter->second;
 
-        SharedPtr<LightNode> light = MakeShared<LightNode>();
-        light->SetEnabled(true);
+        SharedPtr<LightNode> lightNode = MakeShared<LightNode>();
+        PunctualLight light;
+
+        light.SetEnabled(true);
 
         switch (aLight->mType)
         {
         case aiLightSource_DIRECTIONAL:
-            light->SetLightType(LightType::DirectionalLight);
+            light.SetLightType(LightType::DirectionalLight);
             break;
         case aiLightSource_POINT:
-            light->SetLightType(LightType::PointLight);
+            light.SetLightType(LightType::PointLight);
             break;
         case aiLightSource_SPOT:
-            light->SetLightType(LightType::SpotLight);
+            light.SetLightType(LightType::SpotLight);
             break;
         }
 
         DirectX::XMFLOAT3 direction{aLight->mDirection.x, aLight->mDirection.z, aLight->mDirection.y};
-        light->SetDirection(direction);
+        light.SetDirection(direction);
 
         DirectX::XMFLOAT3 color{aLight->mColorDiffuse.r, aLight->mColorDiffuse.g, aLight->mColorDiffuse.b};
-        light->SetColor(color);
+        light.SetColor(color);
 
-        light->SetConstantAttenuation(aLight->mAttenuationConstant);
-        light->SetLinearAttenuation(aLight->mAttenuationLinear);
-        light->SetQuadraticAttenuation(aLight->mAttenuationQuadratic);
+        light.SetConstantAttenuation(aLight->mAttenuationConstant);
+        light.SetLinearAttenuation(aLight->mAttenuationLinear);
+        light.SetQuadraticAttenuation(aLight->mAttenuationQuadratic);
 
-        light->SetInnerConeAngle(aLight->mAngleInnerCone);
-        light->SetOuterConeAngle(aLight->mAngleOuterCone);
+        light.SetInnerConeAngle(aLight->mAngleInnerCone);
+        light.SetOuterConeAngle(aLight->mAngleOuterCone);
 
         Components::LightComponent lightComponent;
-        lightComponent.Enabled = true;
-        lightComponent.LightType = light->GetLightType();
-        lightComponent.Direction = direction;
-        lightComponent.Color = color;
-        lightComponent.ConstantAttenuation = aLight->mAttenuationConstant;
-        lightComponent.LinearAttenuation = aLight->mAttenuationLinear;
-        lightComponent.QuadraticAttenuation = aLight->mAttenuationQuadratic;
-
-        lightComponent.InnerConeAngle = aLight->mAngleInnerCone;
-        lightComponent.OuterConeAngle = aLight->mAngleOuterCone;
+        lightComponent.light = light;
 
         context.registry->emplace<Components::LightComponent>(entity, lightComponent);
 
-        return light;
+        lightNode->SetPunctualLight(light);
+        return lightNode;
     }
 
     SharedPtr<MeshNode> SceneLoader::CreateMeshNode(const aiNode* aNode, const LoadingContext& context, entt::entity entity, Engine::Scene::Components::RelationshipComponent* relationship)
@@ -563,8 +566,8 @@ namespace Engine::Scene::Loader
 		for (uint32 i = 0; i < aNode->mNumMeshes; ++i)
 		{
 			int32 meshIndex = aNode->mMeshes[i];
-			auto mesh = context.meshes[meshIndex];
-			meshes.push_back(mesh);
+			auto meshPair = context.meshes[meshIndex];
+			meshes.push_back(std::get<1>(meshPair));
 
             auto meshEntity = nextEntity;
             if (i < (aNode->mNumMeshes - 1))
@@ -578,7 +581,7 @@ namespace Engine::Scene::Loader
 
             context.registry->emplace<Components::LocalTransformComponent>(meshEntity, DirectX::XMMatrixIdentity());
 
-            context.registry->emplace<Components::NameComponent>(meshEntity, mesh->Name);
+            context.registry->emplace<Components::NameComponent>(meshEntity, std::get<0>(meshPair));
 
             Components::RelationshipComponent meshRelationship;
             meshRelationship.Next = nextEntity;
@@ -586,10 +589,7 @@ namespace Engine::Scene::Loader
             context.registry->emplace<Components::RelationshipComponent>(meshEntity, meshRelationship);
 
             Components::MeshComponent meshComponent;
-            meshComponent.IndexBuffer = mesh->mIndexBuffer;
-            meshComponent.VertexBuffer = mesh->mVertexBuffer;
-            meshComponent.Material = mesh->material;
-            meshComponent.PrimitiveTopology = mesh->mPrimitiveTopology;
+            meshComponent.mesh = *std::get<1>(meshPair);
 
             context.registry->emplace<Components::MeshComponent>(meshEntity, meshComponent);
 		}
@@ -605,19 +605,16 @@ namespace Engine::Scene::Loader
 
         aiCamera* aCamera = iter->second;
 
-        cameraNode->SetNearPlane(aCamera->mClipPlaneNear);
-        cameraNode->SetFarPlane(aCamera->mClipPlaneFar);
-        cameraNode->SetFoV(aCamera->mHorizontalFOV);
+        Camera camera;
+
+        camera.SetNearPlane(aCamera->mClipPlaneNear);
+        camera.SetFarPlane(aCamera->mClipPlaneFar);
+        camera.SetFoV(aCamera->mHorizontalFOV);
+
+        cameraNode->SetCamera(camera);
 
         Components::CameraComponent cameraComponent;
-        cameraComponent.NearPlane = aCamera->mClipPlaneNear;
-        cameraComponent.FarPlane = aCamera->mClipPlaneFar;
-        cameraComponent.FoV = aCamera->mHorizontalFOV;
-
-        cameraComponent.AspectRatio = 1;
-        cameraComponent.Pitch = 0;
-        cameraComponent.Yaw = 0;
-        cameraComponent.Translation = {0};
+        cameraComponent.camera = camera;
 
         context.registry->emplace<Components::CameraComponent>(entity, cameraComponent);
 

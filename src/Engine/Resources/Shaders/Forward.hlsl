@@ -15,6 +15,10 @@ Texture2D metallicRoughnessTexture : register(t1);
 
 Texture2D normalTexture : register(t2);
 
+Texture2D emissiveTexture : register(t3);
+
+Texture2D occlusionTexture : register(t4);
+
 SamplerState gsamPointWrap : register(s0);
  
 struct VertexPosColor
@@ -92,8 +96,20 @@ PixelShaderOutput mainPS(VertexShaderOutput IN)
     {
         float4 metallicRoughness = metallicRoughnessTexture.Sample(gsamPointWrap, IN.TextureCoord);
 
-        metallic = metallic * metallicRoughness.r;
+        metallic = metallic * metallicRoughness.b;
         roughness = roughness * clamp(metallicRoughness.g, 0.04, 1.0);
+    }
+
+    float4 emissiveFactor = MaterialCB.EmissiveFactor;
+    if (MaterialCB.HasEmissiveTexture)
+    {
+        emissiveFactor *= emissiveTexture.Sample(gsamPointWrap, IN.TextureCoord);
+    }
+
+    float4 occlusion = MaterialCB.Ambient;
+    if (MaterialCB.HasOcclusionTexture)
+    {
+        occlusion = occlusionTexture.Sample(gsamPointWrap, IN.TextureCoord);
     }
     
     float3 V = normalize(FrameCB.EyePos - IN.PositionW);
@@ -132,8 +148,8 @@ PixelShaderOutput mainPS(VertexShaderOutput IN)
         directLuminance += luminance;
     }   
 
-    float3 ambient = 0.03 * baseColor.rgb * MaterialCB.Ambient.rgb;
-    float3 color = ambient + directLuminance;
+    float3 ambient = 0.03 * baseColor.rgb * occlusion.rgb;
+    float3 color = emissiveFactor.rgb + ambient + directLuminance;
 	
     color = color / (color + 1.0f);
     color = pow(color, 1.0/2.2);  
