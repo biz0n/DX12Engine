@@ -12,7 +12,6 @@ namespace Engine
     public:
         Buffer(const std::wstring &name);
         virtual ~Buffer();
-        virtual void CreateViews() = 0;
 
         template <typename T>
         void SetData(const std::vector<T> &data)

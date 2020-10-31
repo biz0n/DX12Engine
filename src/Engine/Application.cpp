@@ -11,6 +11,7 @@
 
 #include <Scene/SceneObject.h>
 #include <Scene/Loader/SceneLoader.h>
+#include <Scene/SceneLoadingInfo.h>
 #include <Types.h>
 
 #include <future>
@@ -19,10 +20,13 @@
 #include <Scene/Components/RelationshipComponent.h>
 #include <Scene/Components/LocalTransformComponent.h>
 #include <Scene/Components/NameComponent.h>
+#include <Scene/Components/MovingComponent.h>
+#include <Scene/Components/CameraComponent.h>
 
 #include <Scene/Systems/WorldTransformSystem.h>
 #include <UI/Systems/UISystem.h>
 #include <Render/Systems/RenderSystem.h>
+#include <Scene/Systems/MovingSystem.h>
 
 namespace Engine
 {
@@ -41,28 +45,41 @@ namespace Engine
         mKeyboard = MakeShared<Keyboard>();
         mRenderContext = MakeShared<RenderContext>(view);
 
-        mGame = MakeShared<Game>(mRenderContext, mKeyboard);
-        mGame->Initialize();
+        mSceneLoadingInfo = MakeShared<Scene::SceneLoadingInfo>();
+        mSceneLoadingInfo->scenes = {
+            { "Sponza", "Resources\\Scenes\\gltf2\\sponza\\sponza.gltf" },
+            { "Corset", "Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\Corset\\glTF\\Corset.gltf" },
+            { "Axis Test", "Resources\\Scenes\\gltf2\\axis.gltf" },
+            { "Metal Rough Spheres", "Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\MetalRoughSpheres\\glTF\\MetalRoughSpheres.gltf" },
+            { "Texture Settings Test", "Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\TextureSettingsTest\\glTF\\TextureSettingsTest.gltf" },
+            { "Normal Tangent Mirror Test", "Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\NormalTangentMirrorTest\\glTF\\NormalTangentMirrorTest.gltf" },
+            { "Flight Helmet", "Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\FlightHelmet\\glTF\\FlightHelmet.gltf" },
+            { "Damaged Helmet", "Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\DamagedHelmet\\glTF\\DamagedHelmet.gltf" },
+            { "Orientation Test", "Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\OrientationTest\\glTF\\OrientationTest.gltf" }
+        };
 
-/*
-        std::future<UniquePtr<Scene::SceneObject>> sceneFuture = std::async(std::launch::async, [](){
+        mSceneLoadingInfo->scenePath = mSceneLoadingInfo->scenes["Sponza"];
+        mSceneLoadingInfo->loadScene = true;
+    }
 
-            Scene::Loader::SceneLoader loader;
-            return loader.LoadScene("Resources\\Scenes\\gltf2\\sponza\\sponza.gltf");
-        });
+    void Application::InitScene(UniquePtr<Scene::SceneObject> scene)
+    {
+        auto camera = scene->registry->view<Scene::Components::CameraComponent>()[0];
+        scene->registry->emplace<Scene::Components::MovingComponent>(camera, Scene::Components::MovingComponent());
 
-        mScene = sceneFuture.get();
-*/
-        auto s = mGame->loadedScene.get();
-        s->AddSystem(MakeUnique<Scene::Systems::WorldTransformSystem>());
-        s->AddSystem(MakeUnique<Scene::Systems::RenderSystem>(mRenderContext));
+        scene->AddSystem(MakeUnique<Scene::Systems::WorldTransformSystem>());
+        scene->AddSystem(MakeUnique<Scene::Systems::RenderSystem>(mRenderContext));
 
-        s->AddSystem(MakeUnique<Scene::Systems::UISystem>(mRenderContext, mRenderContext->GetUIContext()));
+        scene->AddSystem(MakeUnique<Scene::Systems::UISystem>(mRenderContext, mRenderContext->GetUIContext()));
+
+        scene->AddSystem(MakeUnique<Scene::Systems::MovingSystem>(mKeyboard));
+
+        mScene = std::move(scene);
     }
 
     void Application::Destroy()
     {
-        mRenderContext->GetGraphicsCommandQueue()->Flush();
+        mRenderContext->WaitForIdle();
     }
 
     void Application::Draw()
@@ -75,14 +92,35 @@ namespace Engine
         }
         else
         {
+            if (mSceneLoadingInfo->loadScene)
+            {
+                mSceneLoadingInfo->loadScene = false;
+
+                mRenderContext->WaitForIdle();
+                mScene.reset();
+
+                mSceneLoadingInfo->sceneFuture = std::async(std::launch::async, [this]()
+                {    
+                    CoInitialize(nullptr);
+                    Scene::Loader::SceneLoader loader;
+                    return loader.LoadScene(mSceneLoadingInfo->scenePath);
+                });
+            }
+
+            if (mSceneLoadingInfo->sceneFuture._Is_ready())
+            {
+                InitScene(mSceneLoadingInfo->sceneFuture.get());
+                mSceneLoadingInfo->sceneFuture = {};
+            }
+
             mRenderContext->BeginFrame();
 
-            mGame->Update(timer);
-            mGame->Draw(timer);
+            if (mScene != nullptr)
+            {
+                mScene->Process(timer);
+            }
 
-
-            mGame->loadedScene.get()->Process(timer);
-            //mScene->Process(timer);
+            mSceneLoadingInfo->DrawSelector();
 
             mRenderContext->EndFrame();
         }
@@ -107,11 +145,9 @@ namespace Engine
 
     void Application::OnResize(int32 width, int32 height)
     {
-        mRenderContext->GetGraphicsCommandQueue()->Flush();
+        mRenderContext->WaitForIdle();
 
         mRenderContext->GetSwapChain()->Resize(width, height);
-
-        mGame->Resize(width, height);
 
         mRenderContext->GetUIContext()->Resize(width, height);
     }

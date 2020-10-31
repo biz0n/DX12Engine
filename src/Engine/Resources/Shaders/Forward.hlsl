@@ -148,7 +148,7 @@ PixelShaderOutput mainPS(VertexShaderOutput IN)
         directLuminance += luminance;
     }   
 
-    float3 ambient = 0.03 * baseColor.rgb * occlusion.rgb;
+    float3 ambient = 0.03 * baseColor.rgb * occlusion.r;
     float3 color = emissiveFactor.rgb + ambient + directLuminance;
 	
     color = color / (color + 1.0f);

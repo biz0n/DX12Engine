@@ -1,28 +1,25 @@
 #pragma once
 
 #include <Types.h>
+#include <Timer.h>
 #include <Scene/Systems/System.h>
+#include <Scene/Components/LocalTransformComponent.h>
+#include <Keyboard.h>
 
-
-namespace Engine
-{
-    class RenderContext;
-    class Game;
-}
+#include <entt/fwd.hpp>
 
 namespace Engine::Scene::Systems
 {
-    class RenderSystem : public System
+    class MovingSystem : public System
     {
         public:
-            RenderSystem(SharedPtr<RenderContext> renderContext);
-            ~RenderSystem() override;
+            MovingSystem(SharedPtr<Keyboard> keyboard);
+            ~MovingSystem() override;
         public:
             void Init(entt::registry *registry) override;
             void Process(entt::registry *registry, const Timer& timer) override;
-
         private:
-            SharedPtr<RenderContext> mRenderContext;
-            UniquePtr<Game> mGame;
+            SharedPtr<Keyboard> mKeyboard;
+
     };
 }

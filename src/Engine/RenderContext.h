@@ -58,6 +58,8 @@ namespace Engine
 
             uint32 GetCurrentBackBufferIndex() const { return mSwapChain->GetCurrentBackBufferIndex(); }
 
+            void WaitForIdle();
+
         private:
 
             SharedPtr<GlobalResourceStateTracker> mGlobalResourceStateTracker;

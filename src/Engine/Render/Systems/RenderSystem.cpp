@@ -2,6 +2,7 @@
 
 
 #include <RenderContext.h>
+#include <Game.h>
 
 #include <Scene/Components/WorldTransformComponent.h>
 #include <Scene/Components/LightComponent.h>
@@ -21,8 +22,19 @@ namespace Engine::Scene::Systems
     
     RenderSystem::~RenderSystem() = default;
 
-    void RenderSystem::Process(entt::registry *registry, const Timer& timer)
+    void RenderSystem::Init(entt::registry *registry)
     {
+        mGame = MakeUnique<Game>(mRenderContext);
+        mGame->Initialize();
+    }
+
+    void RenderSystem::Process(entt::registry *registry, const Timer& timer)
+    {   
+        mGame->UploadResources(registry);
+        mGame->Draw(timer, registry);
+
+
+        /*
         Render::RenderingScene scene;
 
         const auto& meshes = registry->view<Components::MeshComponent, Components::WorldTransformComponent>();
@@ -62,5 +74,6 @@ namespace Engine::Scene::Systems
 
             scene.cameras.push_back(camera);
         }
+        */
     }
 }

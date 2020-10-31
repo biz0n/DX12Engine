@@ -9,13 +9,13 @@ namespace Engine
     class RenderContext;
     class App;
     class SwapChain;
-    class Game;
     class Keyboard;
     struct View;
 
     namespace Scene
     {
         class SceneObject;
+        struct SceneLoadingInfo;
     }
 
     class Application
@@ -34,9 +34,12 @@ namespace Engine
         void OnResize(int32 width, int32 height);
 
     private:
+        void InitScene(UniquePtr<Scene::SceneObject> scene);
+
+    private:
         SharedPtr<RenderContext> mRenderContext;
-        SharedPtr<Game> mGame;
         SharedPtr<Keyboard> mKeyboard;
+        SharedPtr<Scene::SceneLoadingInfo> mSceneLoadingInfo;
 
         UniquePtr<Scene::SceneObject> mScene;
     private:

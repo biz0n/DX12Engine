@@ -20,6 +20,11 @@ namespace Engine::Scene
         void SetFoV(float32 fov) { mFoV = fov; }
         float32 GetFoV() const { return mFoV; }
 
+        dx::XMMATRIX GetProjectionMatrix(float32 aspectRation) const
+        {
+            return dx::XMMatrixPerspectiveFovLH(GetFoV(), aspectRation, GetNearPlane(), GetFarPlane());
+        }
+
     private:
         float32 mNearPlane;
         float32 mFarPlane;

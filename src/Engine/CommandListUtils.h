@@ -11,7 +11,9 @@
 #include <Scene/SceneForwards.h>
 #include <ResourceStateTracker.h>
 #include <Memory/MemoryForwards.h>
+#include <Scene/PunctualLight.h>
 
+#include <DirectXMath.h>
 #include <d3d12.h>
 #include <vector>
 
@@ -25,16 +27,18 @@ namespace Engine::CommandListUtils
 
     void UploadTexture(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, Scene::Texture *texture, SharedPtr<Engine::UploadBuffer> uploadBuffer);
 
-    void UploadMaterialTextures(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<Scene::Material> material, SharedPtr<Engine::UploadBuffer> uploadBuffer);
+    bool UploadMaterialTextures(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<Scene::Material> material, SharedPtr<Engine::UploadBuffer> uploadBuffer);
 
-    void BindVertexBuffer(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, const VertexBuffer &vertexBuffer);
-    void BindIndexBuffer(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, const IndexBuffer &indexBuffer);
+    void BindVertexBuffer(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, VertexBuffer &vertexBuffer);
+    void BindIndexBuffer(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, IndexBuffer &indexBuffer);
 
     void BindMaterial(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<::Engine::UploadBuffer> buffer, SharedPtr<DynamicDescriptorHeap> dynamicDescriptorHeap, SharedPtr<Scene::Material> material);
 
-    LightUniform GetLightUniform(const Scene::LightNode *lightNode);
+    LightUniform GetLightUniform(const Scene::PunctualLight& lightNode, const DirectX::XMMATRIX& world);
     MaterialUniform GetMaterialUniform(const Scene::Material *material);
 
     void TransitionBarrier(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, ComPtr<ID3D12Resource> resource, D3D12_RESOURCE_STATES targetState, bool forceFlush = false);
     void TransitionBarrier(SharedPtr<ResourceStateTracker> stateTracker, ComPtr<ID3D12Resource> resource, D3D12_RESOURCE_STATES targetState);
+
+    void ClearCache();
 } // namespace Engine::RenderUtils

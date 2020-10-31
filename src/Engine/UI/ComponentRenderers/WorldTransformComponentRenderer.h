@@ -3,6 +3,7 @@
 #include <UI/ComponentRenderers/ComponentRenderer.h>
 
 #include <Scene/Components/WorldTransformComponent.h>
+#include <MathUtils.h>
 
 #include <entt/entt.hpp>
 #include <imgui/imgui.h>
@@ -34,7 +35,7 @@ namespace Engine::UI::ComponentRenderers
                 DirectX::XMStoreFloat3(&position, positionVector);
 
                 float pitch, yaw, roll;
-                ExtractPitchYawRollFromXMMatrix(&pitch, &yaw, &roll, &matrix);
+                Math::ExtractPitchYawRollFromXMMatrix(&pitch, &yaw, &roll, &matrix);
                 //float pitch;
                 //DirectX::XMQuaternionToAxisAngle(&rotationQuaternion, &pitch, )
                 
@@ -43,15 +44,6 @@ namespace Engine::UI::ComponentRenderers
                 ImGui::InputFloat3("Tr", (float*)&position, 2, ImGuiInputTextFlags_ReadOnly);
                 ImGui::InputFloat3("Rt", rt, 2, ImGuiInputTextFlags_ReadOnly);
                 ImGui::InputFloat3("Sc", (float*)&scale, 2, ImGuiInputTextFlags_ReadOnly);
-            }
-
-            void ExtractPitchYawRollFromXMMatrix(float* flt_p_PitchOut, float* flt_p_YawOut, float* flt_p_RollOut, const DirectX::XMMATRIX* XMMatrix_p_Rotation)
-            {
-                DirectX::XMFLOAT4X4 XMFLOAT4X4_Values;
-                DirectX::XMStoreFloat4x4(&XMFLOAT4X4_Values, DirectX::XMMatrixTranspose(*XMMatrix_p_Rotation));
-                *flt_p_PitchOut = (float)asin(-XMFLOAT4X4_Values._23);
-                *flt_p_YawOut = (float)atan2(XMFLOAT4X4_Values._13, XMFLOAT4X4_Values._33);
-                *flt_p_RollOut = (float)atan2(XMFLOAT4X4_Values._21, XMFLOAT4X4_Values._22);
             }
     };
 }

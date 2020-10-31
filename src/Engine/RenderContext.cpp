@@ -113,8 +113,13 @@ namespace Engine
 
         ++mFrameCount;
 
+        // Temporary solution. Each command queue must have it's own resource tracker
+        auto uiCommandList = CreateGraphicsCommandList();
+        uiCommandList->SetName(L"UI Render List");
         auto resourceStateTracker = mResourceStateTrackers[currentBackBufferIndex];
         CommandListUtils::TransitionBarrier(resourceStateTracker, mSwapChain->GetCurrentBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET);
+        resourceStateTracker->FlushBarriers(uiCommandList);
+        GetGraphicsCommandQueue()->ExecuteCommandList(uiCommandList);
 
         mUIRenderContext->BeginFrame();
     }
@@ -141,5 +146,12 @@ namespace Engine
         mFrameValues[currentBackBufferIndex] = GetFrameCount();
 
         currentBackBufferIndex = mSwapChain->Present();
+    }
+
+    void RenderContext::WaitForIdle()
+    {
+        GetComputeCommandQueue()->Flush();
+        GetCopyCommandQueue()->Flush();
+        GetGraphicsCommandQueue()->Flush();
     }
 }

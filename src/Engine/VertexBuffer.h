@@ -11,14 +11,10 @@ namespace Engine
     public:
         VertexBuffer(const std::wstring &name = L"");
         virtual ~VertexBuffer();
-        void CreateViews() override;
 
-        D3D12_VERTEX_BUFFER_VIEW GetVertexBufferView() const { return mVertexBufferView; }
+        D3D12_VERTEX_BUFFER_VIEW GetVertexBufferView();
 
     private:
-        Size mNumVertices;
-        Size mVertexStride;
-
         D3D12_VERTEX_BUFFER_VIEW mVertexBufferView;
     };
 

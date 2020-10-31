@@ -3,7 +3,7 @@
 namespace Engine
 {
     VertexBuffer::VertexBuffer(const std::wstring &name)
-        : Buffer(name)
+        : Buffer(name), mVertexBufferView{0}
     {
     }
 
@@ -11,19 +11,21 @@ namespace Engine
     {
     }
 
-    void VertexBuffer::CreateViews()
+    D3D12_VERTEX_BUFFER_VIEW VertexBuffer::GetVertexBufferView()
     {
-        mNumVertices = mElementsCount;
-        mVertexStride = mElementSize;
+        if (!mVertexBufferView.BufferLocation)
+        {
+            auto size = mElementsCount * mElementSize;
 
-        auto size = mNumVertices * mVertexStride;
+            D3D12_VERTEX_BUFFER_VIEW vertexBufferView = {};
+            vertexBufferView.BufferLocation = mResource->GetGPUVirtualAddress();
+            vertexBufferView.SizeInBytes = static_cast<uint32>(size);
+            vertexBufferView.StrideInBytes = static_cast<uint32>(mElementSize);
 
-        D3D12_VERTEX_BUFFER_VIEW vertexBufferView = {};
-        vertexBufferView.BufferLocation = mResource->GetGPUVirtualAddress();
-        vertexBufferView.SizeInBytes = static_cast<uint32>(size);
-        vertexBufferView.StrideInBytes = static_cast<uint32>(mVertexStride);
+            mVertexBufferView = vertexBufferView;
+        }
 
-        mVertexBufferView = vertexBufferView;
+        return mVertexBufferView;
     }
 
 } // namespace Engine

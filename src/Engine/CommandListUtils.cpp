@@ -13,7 +13,6 @@
 #include <Scene/Loader/SceneLoader.h>
 #include <Scene/Image.h>
 #include <Scene/Texture.h>
-#include <Scene/LightNode.h>
 #include <Scene/Material.h>
 #include <Memory/UploadBuffer.h>
 #include <Scene/PunctualLight.h>
@@ -68,7 +67,6 @@ namespace Engine::CommandListUtils
 
         
         buffer.SetD3D12Resource(destinationResource);
-        buffer.CreateViews();
     }
 
     void UploadTexture(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, Scene::Texture *texture, SharedPtr<Engine::UploadBuffer> uploadBuffer)
@@ -148,80 +146,83 @@ namespace Engine::CommandListUtils
             texture->SetD3D12Resource(textureResource);
 
             gsTextureCache[filename] = textureResource.Get();
-
-           // commandListContext.TrackResource(textureResource);
-           // commandListContext.TrackResource(intermadiateResource);
         }
     }
 
-    void UploadMaterialTextures(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<Scene::Material> material, SharedPtr<Engine::UploadBuffer> uploadBuffer)
+    bool UploadMaterialTextures(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<Scene::Material> material, SharedPtr<Engine::UploadBuffer> uploadBuffer)
     {
-        if (material->HasBaseColorTexture())
+        bool anythingToLoad = false;
+        if (material->HasBaseColorTexture() && !material->GetBaseColorTexture()->GetD3D12Resource())
         {
+            anythingToLoad = anythingToLoad || true;
             UploadTexture(renderContext, commandList, material->GetBaseColorTexture().get(), uploadBuffer);
         }
 
-        if (material->HasMetallicRoughnessTexture())
+        if (material->HasMetallicRoughnessTexture() && !material->GetMetallicRoughnessTexture()->GetD3D12Resource())
         {
+            anythingToLoad = anythingToLoad || true;
             UploadTexture(renderContext, commandList, material->GetMetallicRoughnessTexture().get(), uploadBuffer);
         }
 
-        if (material->HasNormalTexture())
+        if (material->HasNormalTexture() && !material->GetNormalTexture()->GetD3D12Resource())
         {
+            anythingToLoad = anythingToLoad || true;
             UploadTexture(renderContext, commandList, material->GetNormalTexture().get(), uploadBuffer);
         }
 
-        if (material->HasEmissiveTexture())
+        if (material->HasEmissiveTexture() && !material->GetEmissiveTexture()->GetD3D12Resource())
         {
+            anythingToLoad = anythingToLoad || true;
             UploadTexture(renderContext, commandList, material->GetEmissiveTexture().get(), uploadBuffer);
         }
 
-        if (material->HasAmbientOcclusionTexture())
+        if (material->HasAmbientOcclusionTexture() && !material->GetAmbientOcclusionTexture()->GetD3D12Resource())
         {
+            anythingToLoad = anythingToLoad || true;
             UploadTexture(renderContext, commandList, material->GetAmbientOcclusionTexture().get(), uploadBuffer);
         }
+
+        return anythingToLoad;
     }
 
-    void BindVertexBuffer(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, const VertexBuffer &vertexBuffer)
+    void BindVertexBuffer(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, VertexBuffer &vertexBuffer)
     {
         TransitionBarrier(stateTracker, vertexBuffer.GetD3D12Resource(), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
         commandList->IASetVertexBuffers(0, 1, &vertexBuffer.GetVertexBufferView());
     }
 
-    void BindIndexBuffer(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, const IndexBuffer &indexBuffer)
+    void BindIndexBuffer(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, IndexBuffer &indexBuffer)
     {
         TransitionBarrier(stateTracker, indexBuffer.GetD3D12Resource(), D3D12_RESOURCE_STATE_INDEX_BUFFER);
 
         commandList->IASetIndexBuffer(&indexBuffer.GetIndexBufferView());
     }
 
-    LightUniform GetLightUniform(const Scene::LightNode *lightNode)
+    LightUniform GetLightUniform(const Scene::PunctualLight& lightNode, const DirectX::XMMATRIX& world)
     {
         LightUniform light = {};
 
-        light.LightType = lightNode->GetPunctualLight().GetLightType();
-        light.Enabled = lightNode->GetPunctualLight().IsEnabled();
-        light.Color = lightNode->GetPunctualLight().GetColor();
-
-        auto world = lightNode->GetWorldTransform();
+        light.LightType = lightNode.GetLightType();
+        light.Enabled = lightNode.IsEnabled();
+        light.Color = lightNode.GetColor();
 
         DirectX::XMStoreFloat3(&light.PositionWS,
                                DirectX::XMVector4Transform(
                                    DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f),
                                    world));
 
-        DirectX::XMFLOAT3 direction = lightNode->GetPunctualLight().GetDirection();
+        DirectX::XMFLOAT3 direction = lightNode.GetDirection();
         DirectX::XMStoreFloat3(&light.DirectionWS,
                                DirectX::XMVector4Transform(
                                    DirectX::XMVectorSet(direction.x, direction.y, direction.z, 0.0f),
                                    world));
 
-        light.ConstantAttenuation = lightNode->GetPunctualLight().GetConstantAttenuation();
-        light.LinearAttenuation = lightNode->GetPunctualLight().GetLinearAttenuation();
-        light.QuadraticAttenuation = lightNode->GetPunctualLight().GetQuadraticAttenuation();
-        light.InnerConeAngle = lightNode->GetPunctualLight().GetInnerConeAngle();
-        light.OuterConeAngle = lightNode->GetPunctualLight().GetOuterConeAngle();
+        light.ConstantAttenuation = lightNode.GetConstantAttenuation();
+        light.LinearAttenuation = lightNode.GetLinearAttenuation();
+        light.QuadraticAttenuation = lightNode.GetQuadraticAttenuation();
+        light.InnerConeAngle = lightNode.GetInnerConeAngle();
+        light.OuterConeAngle = lightNode.GetOuterConeAngle();
 
         return light;
     }
@@ -313,6 +314,11 @@ namespace Engine::CommandListUtils
             D3D12_RESOURCE_STATE_COMMON,
             targetState);
         stateTracker->ResourceBarrier(barrier);
+    }
+
+    void ClearCache()
+    {
+        gsTextureCache.clear();
     }
 
 } // namespace Engine::CommandListUtils

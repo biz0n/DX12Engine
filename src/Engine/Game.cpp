@@ -19,58 +19,43 @@
 #include <Scene/Loader/SceneLoader.h>
 #include <Scene/SceneObject.h>
 #include <Scene/Mesh.h>
-#include <Scene/Node.h>
-#include <Scene/MeshNode.h>
-#include <Scene/LightNode.h>
-#include <Scene/CameraNode.h>
 #include <Scene/Material.h>
 #include <Scene/Texture.h>
 #include <Scene/Vertex.h>
 #include <Scene/Camera.h>
+#include <Scene/PunctualLight.h>
+
+#include <Scene/Components/MeshComponent.h>
+#include <Scene/Components/WorldTransformComponent.h>
+#include <Scene/Components/CameraComponent.h>
+#include <Scene/Components/LightComponent.h>
+
 
 #include <Render/ShaderCreationInfo.h>
 
 #include <RootSignature.h>
 
-#include <DirectXTex.h>
+#include <entt/entt.hpp>
 
+#include <DirectXTex.h>
+#include <DirectXMath.h>
 #include <d3d12.h>
 
 namespace Engine
 {
-    Game::Game(SharedPtr<RenderContext> renderContext, SharedPtr<Keyboard> keyboard)
-        : mRenderContext(renderContext), mCanvas(renderContext->GetSwapChain()), mKeyboard(keyboard)
+    Game::Game(SharedPtr<RenderContext> renderContext)
+        : mRenderContext(renderContext), mCanvas(renderContext->GetSwapChain())
     {
     }
 
     Game::~Game()
     {
+        CommandListUtils::ClearCache();
     }
 
-    static bool isInitializing;
     bool Game::Initialize()
     {
-        isInitializing = true;
-        auto commandList = mRenderContext->CreateCopyCommandList();
-
-        commandList->SetName(L"Uploading resources List");
-
-        Scene::Loader::SceneLoader loader;
-        loadedScene = loader.LoadScene("Resources\\Scenes\\gltf2\\sponza\\sponza.gltf");
-        //loadedScene = loader.LoadScene("Resources\\Scenes\\San_Miguel\\san-miguel-low-poly.obj");
-        //loadedScene = loader.LoadScene("Resources\\Scenes\\gltf2\\axis.gltf", 1.0f);
-        //loadedScene = loader.LoadScene("Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\MetalRoughSpheres\\glTF\\MetalRoughSpheres.gltf", 1.0f);
-        //loadedScene = loader.LoadScene("Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\MetalRoughSpheres\\glTF-Binary\\MetalRoughSpheres.glb", 1.0f);
-        //loadedScene = loader.LoadScene("Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\TextureSettingsTest\\glTF\\TextureSettingsTest.gltf", 1.0f);
-        //loadedScene = loader.LoadScene("Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\NormalTangentMirrorTest\\glTF\\NormalTangentMirrorTest.gltf", 1.0f);
-        //loadedScene = loader.LoadScene("Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\FlightHelmet\\glTF\\FlightHelmet.gltf", 1.0f);
-        //loadedScene = loader.LoadScene("Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\DamagedHelmet\\glTF\\DamagedHelmet.gltf", 1.0f);
-        //loadedScene = loader.LoadScene("Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\OrientationTest\\glTF\\OrientationTest.gltf", 1.0f);
-
-        
-
-
-        mDepthBufferDescriptor = mRenderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_DSV)->Allocate();
+       // mDepthBufferDescriptor = mRenderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_DSV)->Allocate();
 
         auto cbvSrvUavDescriptorSize = mRenderContext->Device()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
@@ -81,11 +66,6 @@ namespace Engine
         }
 
         mShaderProvider = MakeUnique<Render::ShaderProvider>();
-
-
-
-
-        
 
         CD3DX12_DESCRIPTOR_RANGE1 texTable1;
         texTable1.Init(
@@ -152,89 +132,20 @@ namespace Engine
 
         mPipelineStateProvider = MakeUnique<Render::PipelineStateProvider>(mRenderContext->Device());
 
-        for (auto &node : loadedScene->nodes)
-        {
-            UploadMeshes(commandList, node, mUploadBuffer[mRenderContext->GetCurrentBackBufferIndex()]);
-        }
-
-        uint64 fenceValue = mRenderContext->GetCopyCommandQueue()->ExecuteCommandList(commandList);
-
-        mRenderContext->GetGraphicsCommandQueue()->InsertWaitForQueue(mRenderContext->GetCopyCommandQueue());
-
-        mRenderContext->GetCopyCommandQueue()->WaitForFenceCPU(fenceValue);
-
         mScreenViewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(mCanvas->GetWidth()), static_cast<float>(mCanvas->GetHeight()));
 
         mScissorRect = CD3DX12_RECT(0, 0, mCanvas->GetWidth(), mCanvas->GetHeight());
 
-        ResizeDepthBuffer(mCanvas->GetWidth(), mCanvas->GetHeight());
+        //ResizeDepthBuffer(mCanvas->GetWidth(), mCanvas->GetHeight());
 
-        isInitializing = false;
         return true;
-    }
-
-    void Game::UploadMeshes(ComPtr<ID3D12GraphicsCommandList> commandList, const SharedPtr<Scene::MeshNode>& node, SharedPtr<Engine::UploadBuffer> uploadBuffer)
-    {
-        for (auto &mesh : node->GetMeshes())
-        {
-            CommandListUtils::UploadVertexBuffer(mRenderContext, commandList, *mesh->vertexBuffer, uploadBuffer);
-            CommandListUtils::UploadIndexBuffer(mRenderContext, commandList, *mesh->indexBuffer, uploadBuffer);
-            CommandListUtils::UploadMaterialTextures(mRenderContext, commandList, mesh->material, uploadBuffer);
-        }
     }
 
     void Game::Deinitialize()
     {
     }
 
-    void Game::Update(const Timer &time)
-    {
-        float aspectRatio = mCanvas->GetWidth() / static_cast<float>(mCanvas->GetHeight());
-
-        auto camera = Camera();
-        mProjectionMatrix = camera->GetProjectionMatrix(aspectRatio);
-        mViewMatrix = camera->GetViewMatrix();
-        
-        const float32 speed = 5 * time.DeltaTime();
-        const float32 rotationSpeed = 1.0f * time.DeltaTime();
-        if (mKeyboard->IsKeyPressed(KeyCode::Key::Up))
-        {
-            camera->Rotate(0.0f, -rotationSpeed);
-        }
-        else if (mKeyboard->IsKeyPressed(KeyCode::Key::Down))
-        {
-            camera->Rotate(0.0f, +rotationSpeed);
-        }
-
-        if (mKeyboard->IsKeyPressed(KeyCode::Key::Left))
-        {
-            camera->Rotate(-rotationSpeed, 0.0f);
-        }
-        else if (mKeyboard->IsKeyPressed(KeyCode::Key::Right))
-        {
-            camera->Rotate(+rotationSpeed, 0.0f);
-        }
-
-        if (mKeyboard->IsKeyPressed(KeyCode::Key::W))
-        {
-            camera->Translate({0.0f, 0.0f, +speed});
-        }
-        else if (mKeyboard->IsKeyPressed(KeyCode::Key::S))
-        {
-            camera->Translate({0.0f, 0.0f, -speed});
-        }
-
-        if (mKeyboard->IsKeyPressed(KeyCode::Key::D))
-        {
-            camera->Translate({+speed, 0.0f, 0.0f});
-        }
-        else if (mKeyboard->IsKeyPressed(KeyCode::Key::A))
-        {
-            camera->Translate({-speed, 0.0f, 0.0f});
-        }
-    }
-
-    ComPtr<ID3D12PipelineState> Game::CreatePipelineState(const SharedPtr<Scene::Mesh>& mesh)
+    ComPtr<ID3D12PipelineState> Game::CreatePipelineState(const Scene::Mesh& mesh)
     {
         auto inputLayout = Scene::Vertex::GetInputLayout();
 
@@ -252,7 +163,7 @@ namespace Engine
         CD3DX12_RASTERIZER_DESC rasterizer = {};
         rasterizer.FillMode = D3D12_FILL_MODE_SOLID;
 
-        if (mesh->material->GetProperties().doubleSided)
+        if (mesh.material->GetProperties().doubleSided)
         {
             rasterizer.CullMode = D3D12_CULL_MODE_NONE;
         }
@@ -273,14 +184,46 @@ namespace Engine
         return mPipelineStateProvider->CreatePipelineState(pipelineStateStream);
     }
 
-    void Game::Draw(ComPtr<ID3D12GraphicsCommandList> commandList, const SharedPtr<Scene::MeshNode>& node, SharedPtr<UploadBuffer> buffer)
+    void Game::UploadResources(entt::registry* registry)
     {
-        if (isInitializing)
+        const auto& view = registry->view<Scene::Components::MeshComponent>();
+
+        auto commandList = mRenderContext->CreateCopyCommandList();
+
+        commandList->SetName(L"Uploading resources List");
+
+        auto uploadBuffer = mUploadBuffer[mRenderContext->GetCurrentBackBufferIndex()];
+        bool anythingToLoad = false;
+
+        for (auto &&[entity, meshComponent] : view.proxy())
         {
-            return;
+            auto mesh = meshComponent.mesh;
+            if (!mesh.vertexBuffer->GetD3D12Resource())
+            {
+                anythingToLoad = anythingToLoad || true;
+                CommandListUtils::UploadVertexBuffer(mRenderContext, commandList, *mesh.vertexBuffer, uploadBuffer);
+            }
+            if (!mesh.indexBuffer->GetD3D12Resource())
+            {
+                anythingToLoad = anythingToLoad || true;
+                CommandListUtils::UploadIndexBuffer(mRenderContext, commandList, *mesh.indexBuffer, uploadBuffer);
+            }
+            anythingToLoad = CommandListUtils::UploadMaterialTextures(mRenderContext, commandList, mesh.material, uploadBuffer) || anythingToLoad;
         }
 
-        DirectX::XMMATRIX tWorld = DirectX::XMMatrixTranspose(node->GetWorldTransform());
+        if (anythingToLoad)
+        {
+            uint64 fenceValue = mRenderContext->GetCopyCommandQueue()->ExecuteCommandList(commandList);
+
+            mRenderContext->GetGraphicsCommandQueue()->InsertWaitForQueue(mRenderContext->GetCopyCommandQueue());
+
+            mRenderContext->GetCopyCommandQueue()->WaitForFenceCPU(fenceValue);
+        }
+    }
+
+    void Game::Draw(ComPtr<ID3D12GraphicsCommandList> commandList, const Scene::Mesh& mesh, const dx::XMMATRIX& world, SharedPtr<UploadBuffer> buffer)
+    {
+        DirectX::XMMATRIX tWorld = DirectX::XMMatrixTranspose(world);
         auto d = DirectX::XMMatrixDeterminant(tWorld);
         DirectX::XMMATRIX tWorldInverseTranspose = DirectX::XMMatrixInverse(&d, tWorld);
         tWorldInverseTranspose = DirectX::XMMatrixTranspose(tWorldInverseTranspose);
@@ -296,30 +239,28 @@ namespace Engine
         auto dynamicDescriptorHeap = mDynamicDescriptorHeaps[mCanvas->GetCurrentBackBufferIndex()];
         auto resourceStateTracker = mRenderContext->GetResourceStateTracker();
 
-        for (auto &mesh : node->GetMeshes())
-        {
-            commandList->SetPipelineState(CreatePipelineState(mesh).Get());
 
-            commandList->IASetPrimitiveTopology(mesh->primitiveTopology);
+        commandList->SetPipelineState(CreatePipelineState(mesh).Get());
+
+        commandList->IASetPrimitiveTopology(mesh.primitiveTopology);
 
 
-            CommandListUtils::BindMaterial(
-                mRenderContext, 
-                commandList, buffer, 
-                dynamicDescriptorHeap, 
-                mesh->material);
-            CommandListUtils::BindVertexBuffer(commandList, resourceStateTracker, *mesh->vertexBuffer);
-            CommandListUtils::BindIndexBuffer(commandList, resourceStateTracker, *mesh->indexBuffer);
+        CommandListUtils::BindMaterial(
+            mRenderContext, 
+            commandList, buffer, 
+            dynamicDescriptorHeap, 
+            mesh.material);
+        CommandListUtils::BindVertexBuffer(commandList, resourceStateTracker, *mesh.vertexBuffer);
+        CommandListUtils::BindIndexBuffer(commandList, resourceStateTracker, *mesh.indexBuffer);
 
-            resourceStateTracker->FlushBarriers(commandList);
+        resourceStateTracker->FlushBarriers(commandList);
 
-            dynamicDescriptorHeap->CommitStagedDescriptors(mRenderContext->Device(), commandList);
+        dynamicDescriptorHeap->CommitStagedDescriptors(mRenderContext->Device(), commandList);
 
-            commandList->DrawIndexedInstanced(static_cast<uint32>(mesh->indexBuffer->GetElementsCount()), 1, 0, 0, 0);
-        }
+        commandList->DrawIndexedInstanced(static_cast<uint32>(mesh.indexBuffer->GetElementsCount()), 1, 0, 0, 0);
     }
 
-    void Game::Draw(const Timer &time)
+    void Game::Draw(const Timer &time, entt::registry* registry)
     {
         auto commandList = mRenderContext->CreateGraphicsCommandList();
         commandList->SetName(L"Render scene List");
@@ -327,21 +268,39 @@ namespace Engine
         auto currentBackBufferIndex = mCanvas->GetCurrentBackBufferIndex();
 
         mUploadBuffer[currentBackBufferIndex]->Reset();
-        mDynamicDescriptorHeaps[mCanvas->GetCurrentBackBufferIndex()]->Reset();
+        mDynamicDescriptorHeaps[currentBackBufferIndex]->Reset();
+        mFrameResources[currentBackBufferIndex].clear();
         auto resourceStateTracker = mRenderContext->GetResourceStateTracker();
+
+
+
+        auto width = mCanvas->GetWidth();
+        auto height = mCanvas->GetHeight();
+        auto oldWidth = mDepthBuffer != nullptr ? mDepthBuffer->GetDesc().Width : 0;
+        if (oldWidth < width)
+        {
+            auto a = 1;
+        }
+
+        mDepthBufferDescriptor = mRenderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_DSV)->Allocate();
+        ResizeDepthBuffer(width, height);
+        mFrameResources[currentBackBufferIndex].push_back(mDepthBuffer);
 
         auto backBuffer = mCanvas->GetCurrentBackBuffer();
 
         auto rtv = mCanvas->GetCurrentRenderTargetView();
 
         resourceStateTracker->FlushBarriers(commandList);
-        FLOAT clearColor[] = {0.4f, 0.6f, 0.9f, 1.0f};
-
-        commandList->RSSetViewports(1, &mScreenViewport);
-        commandList->RSSetScissorRects(1, &mScissorRect);
-
         
 
+        auto screenViewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float32>(width), static_cast<float32>(height));
+        auto scissorRect = CD3DX12_RECT(0, 0, width, height);
+
+        commandList->RSSetViewports(1, &screenViewport);
+        commandList->RSSetScissorRects(1, &scissorRect);
+
+        
+        FLOAT clearColor[] = {0.4f, 0.6f, 0.9f, 1.0f};
         commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
         commandList->ClearDepthStencilView(mDepthBufferDescriptor.GetDescriptor(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
@@ -351,22 +310,45 @@ namespace Engine
         
         commandList->SetGraphicsRootSignature(mRootSignature->GetD3D12RootSignature().Get());
 
-        mDynamicDescriptorHeaps[mCanvas->GetCurrentBackBufferIndex()]->ParseRootSignature(mRootSignature.get());
+        mDynamicDescriptorHeaps[currentBackBufferIndex]->ParseRootSignature(mRootSignature.get());
 
-        DirectX::XMMATRIX mvpMatrix = DirectX::XMMatrixMultiply(mViewMatrix, mProjectionMatrix);
+        float aspectRatio = mCanvas->GetWidth() / static_cast<float>(mCanvas->GetHeight());
+
+        auto cameraEntity = registry->view<Scene::Components::CameraComponent>()[0];
+        auto camera = registry->get<Scene::Components::CameraComponent>(cameraEntity).camera;
+        auto cameraWT = registry->get<Scene::Components::WorldTransformComponent>(cameraEntity).transform;
+
+        auto projectionMatrix = camera.GetProjectionMatrix(aspectRatio);
+        dx::XMVECTOR up = dx::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+        dx::XMVECTOR forward = dx::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+
+        dx::XMVECTOR sc;
+        dx::XMVECTOR rt;
+        dx::XMVECTOR tr;
+        dx::XMMatrixDecompose(&sc, &rt, &tr, cameraWT);
+
+        auto rotationMatrix = dx::XMMatrixRotationQuaternion(rt);
+        auto lookAtDirection = dx::XMVector3Transform(
+                forward,
+                dx::XMMatrixRotationQuaternion(rt));
+
+        using namespace DirectX;
+        auto viewMatrix = dx::XMMatrixLookAtLH(tr, tr + lookAtDirection, up);
+
+        DirectX::XMMATRIX mvpMatrix = DirectX::XMMatrixMultiply(viewMatrix, projectionMatrix);
         mvpMatrix = DirectX::XMMatrixTranspose(mvpMatrix);
 
         FrameUniform cb = {};
         DirectX::XMStoreFloat4x4(&cb.ViewProj, mvpMatrix);
 
-        cb.EyePos = Camera()->GetPosition();
+        dx::XMStoreFloat3(&cb.EyePos, tr);
 
+        const auto& lightsView = registry->view<Scene::Components::LightComponent, Scene::Components::WorldTransformComponent>();
         std::vector<LightUniform> lights;
-        lights.reserve(loadedScene->lights.size());
-        for (uint32 i = 0; i < loadedScene->lights.size(); ++i)
+        lights.reserve(lightsView.size());
+        for (auto &&[entity, lightComponent, transformComponent] : lightsView.proxy())
         {
-            Scene::LightNode *lightNode = loadedScene->lights[i].get();
-            LightUniform light = CommandListUtils::GetLightUniform(lightNode);
+            LightUniform light = CommandListUtils::GetLightUniform(lightComponent.light, transformComponent.transform);
 
             lights.emplace_back(light);
         }
@@ -383,17 +365,13 @@ namespace Engine
 
         commandList->SetGraphicsRootShaderResourceView(3, lightsAllocation.GPU);
 
-        for (auto &node : loadedScene->nodes)
+        const auto& meshsView = registry->view<Scene::Components::MeshComponent, Scene::Components::WorldTransformComponent>();
+        for (auto &&[entity, meshComponent, transformComponent] : meshsView.proxy())
         {
-            Draw(commandList, node, mUploadBuffer[currentBackBufferIndex]);
+            Draw(commandList, meshComponent.mesh, transformComponent.transform, mUploadBuffer[currentBackBufferIndex]);
         }
 
         mRenderContext->GetGraphicsCommandQueue()->ExecuteCommandList(commandList);
-    }
-
-    SharedPtr<Scene::CameraNode> Game::Camera() const 
-    {
-        return loadedScene->cameras[0]; 
     }
 
     void Game::Resize(int32 width, int32 height)

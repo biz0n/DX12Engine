@@ -81,10 +81,13 @@ namespace Engine::Scene::Systems
                 {
                     ImGui::BeginChild("Scene items area");
                     {
-                        const auto &rootEntity = registry->view<Scene::Components::Root>()[0];
-                        const auto &relationship = registry->get<Scene::Components::RelationshipComponent>(rootEntity);
+                        const auto& roots = registry->view<Scene::Components::Root>();
+                        for (auto rootEntity : roots)
+                        {
+                            const auto &relationship = registry->get<Scene::Components::RelationshipComponent>(rootEntity);
 
-                        showChilds(rootEntity, relationship);
+                            showChilds(rootEntity, relationship);
+                        }
                     }
                     ImGui::EndChild();
                 }

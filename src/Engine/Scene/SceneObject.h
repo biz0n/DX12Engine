@@ -24,12 +24,6 @@ namespace Engine::Scene
         }
 
     public:
-        std::vector<SharedPtr<MeshNode>> nodes;
-
-        std::vector<SharedPtr<LightNode>> lights;
-
-        std::vector<SharedPtr<CameraNode>> cameras;
-
         UniquePtr<entt::registry> registry;
 
     public:

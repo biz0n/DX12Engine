@@ -6,10 +6,6 @@
 #include <Scene/Vertex.h>
 
 #include <Scene/SceneObject.h>
-#include <Scene/Node.h>
-#include <Scene/MeshNode.h>
-#include <Scene/LightNode.h>
-#include <Scene/CameraNode.h>
 #include <Scene/Mesh.h>
 
 #include <Scene/Camera.h>
@@ -119,50 +115,53 @@ namespace Engine::Scene::Loader
 
         auto rootEntity = scene->registry->create();
         Engine::Scene::Components::RelationshipComponent relationship;
-        ParseNode(aScene, aScene->mRootNode, scene.get(), nullptr, context, rootEntity, &relationship);
+        ParseNode(aScene, aScene->mRootNode, scene.get(), context, rootEntity, &relationship);
 
         scene->registry->emplace<Components::RelationshipComponent>(rootEntity, relationship);
         scene->registry->emplace<Components::Root>(rootEntity);
 
         if (aScene->mNumCameras == 0)
         {
-            scene->cameras.push_back(MakeShared<CameraNode>());
+            auto cameraEntity = scene->registry->create();
+            scene->registry->emplace<Components::CameraComponent>(cameraEntity, Camera());
+            scene->registry->emplace<Components::LocalTransformComponent>(cameraEntity, dx::XMMatrixIdentity());
+            
+            scene->registry->emplace<Components::NameComponent>(cameraEntity, "Default Camera");
+            scene->registry->emplace<Components::RelationshipComponent>(cameraEntity, Components::RelationshipComponent());
+            scene->registry->emplace<Components::Root>(cameraEntity);
         }
 
-        SharedPtr<LightNode> pointLightNode1 = MakeShared<LightNode>();
+        std::function<void(const PunctualLight&, const dx::XMMATRIX&, String)> addLight = [&scene](const PunctualLight& light, const dx::XMMATRIX& transform, String name)
+        {
+            auto lightEntity= scene->registry->create();
+            scene->registry->emplace<Components::LightComponent>(lightEntity, light);
+            scene->registry->emplace<Components::LocalTransformComponent>(lightEntity, transform);
+            scene->registry->emplace<Components::RelationshipComponent>(lightEntity, Components::RelationshipComponent());
+            scene->registry->emplace<Components::Root>(lightEntity);
+            scene->registry->emplace<Components::NameComponent>(lightEntity, name);
+        };
+
+
         PunctualLight pointLight1;
         pointLight1.SetColor({50.0f, 30.0f, 10.0f});
-
-        DirectX::XMFLOAT4X4 pointLight1Transform;
-        DirectX::XMStoreFloat4x4(&pointLight1Transform, DirectX::XMMatrixTranslation(4.0f, 5.0f, -2.0f));
-        pointLightNode1->SetLocalTransform(pointLight1Transform);
-
         pointLight1.SetQuadraticAttenuation(1.0f);
         pointLight1.SetEnabled(true);
         pointLight1.SetLightType(LightType::PointLight);
-        pointLightNode1->SetPunctualLight(pointLight1);
 
-        scene->lights.push_back(pointLightNode1);
+        addLight(pointLight1, DirectX::XMMatrixTranslation(4.0f, 5.0f, -2.0f), "Custom light 1");
 
-        SharedPtr<LightNode> pointLightNode2 = MakeShared<LightNode>();
         PunctualLight pointLight2;
-        pointLight2.SetColor({20.0f, 20.0f, 20.0f});
-
-        DirectX::XMFLOAT4X4 pointLight2Transform;
-        DirectX::XMStoreFloat4x4(&pointLight2Transform, DirectX::XMMatrixTranslation(0.0f, 2.0f, 0.0f));
-        pointLightNode2->SetLocalTransform(pointLight2Transform);
-
+        pointLight2.SetColor({50.0f, 50.0f, 50.0f});
         pointLight2.SetQuadraticAttenuation(1.0f);
         pointLight2.SetEnabled(true);
         pointLight2.SetLightType(LightType::PointLight);
-        pointLightNode2->SetPunctualLight(pointLight2);
 
-        scene->lights.push_back(pointLightNode2);
+        addLight(pointLight2, DirectX::XMMatrixTranslation(0.0f, 2.0f, 0.0f), "Custom light 2");
 
         return scene;
     }
 
-    void SceneLoader::ParseNode(const aiScene *aScene, const aiNode *aNode, SceneObject *scene, SharedPtr<Node> parentNode, const LoadingContext &context, entt::entity entity, Engine::Scene::Components::RelationshipComponent* relationship)
+    void SceneLoader::ParseNode(const aiScene *aScene, const aiNode *aNode, SceneObject *scene, const LoadingContext &context, entt::entity entity, Engine::Scene::Components::RelationshipComponent* relationship)
     {
         aiVector3D scaling;
 		aiQuaternion rotation;
@@ -177,40 +176,30 @@ namespace Engine::Scene::Loader
         DirectX::XMMATRIX srt = s * r * t;
 		DirectX::XMStoreFloat4x4(&transform, s * r * t);
 
-        SharedPtr<Node> node;
-
 		if (IsMeshNode(aNode, context))
 		{
             scene->registry->emplace<Components::NameComponent>(entity, aNode->mName.C_Str());
             scene->registry->emplace<Scene::Components::LocalTransformComponent>(entity, srt);
 
-            auto meshNode = CreateMeshNode(aNode, context, entity, relationship);
-			scene->nodes.push_back(meshNode);
-			node = meshNode;
+            CreateMeshNode(aNode, context, entity, relationship);
             
 		}
         else if (IsLightNode(aNode, context))
         {
-            auto lightNode = CreateLightNode(aNode, context, entity);
-            scene->lights.push_back(lightNode);
-            node = lightNode;
+            CreateLightNode(aNode, context, entity);
 
             scene->registry->emplace<Components::NameComponent>(entity, "Light_" + std::string(aNode->mName.C_Str()));
             scene->registry->emplace<Scene::Components::LocalTransformComponent>(entity, srt);
         }
         else if (IsCameraNode(aNode, context))
         {
-            auto cameraNode = CreateCameraNode(aNode, context, entity);
-            scene->cameras.push_back(cameraNode);
-            node = cameraNode;
+            CreateCameraNode(aNode, context, entity);
 
             scene->registry->emplace<Components::NameComponent>(entity, "Camera_" + std::string(aNode->mName.C_Str()));
             scene->registry->emplace<Scene::Components::LocalTransformComponent>(entity, srt);
         }
         else
         {
-            node = MakeShared<Node>();
-
             scene->registry->emplace<Components::NameComponent>(entity, aNode->mName.C_Str());
             scene->registry->emplace<Scene::Components::LocalTransformComponent>(entity, srt);
 
@@ -237,16 +226,11 @@ namespace Engine::Scene::Loader
                 childRelationship.Parent = entity;
                 childRelationship.Next = nextEntity;
 
-                ParseNode(aScene, aChild, scene, node, context, childEntity, &childRelationship);
+                ParseNode(aScene, aChild, scene, context, childEntity, &childRelationship);
 
                 scene->registry->emplace<Components::RelationshipComponent>(childEntity, childRelationship);
             }
         }
-
-        node->SetLocalTransform(transform);
-        node->SetName(aNode->mName.C_Str());
-
-        node->SetParent(parentNode);
     }
 
     std::tuple<String, SharedPtr<Mesh>> SceneLoader::ParseMesh(const aiMesh *aMesh, const LoadingContext &context)
@@ -393,6 +377,7 @@ namespace Engine::Scene::Loader
         aiString albedoTexturePath;
         if (aMaterial->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_TEXTURE, &albedoTexturePath) == aiReturn_SUCCESS)
         {
+            ParseSampler(aMaterial, AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_TEXTURE);
             auto albedoTexture = GetTexture(albedoTexturePath, context);
             albedoTexture->SetSRGB(true);
             material->SetBaseColorTexture(albedoTexture);
@@ -401,6 +386,7 @@ namespace Engine::Scene::Loader
         aiString normalTexturePath;
         if (aMaterial->GetTexture(aiTextureType_NORMALS, 0, &normalTexturePath) == aiReturn_SUCCESS)
         {
+            ParseSampler(aMaterial, aiTextureType_NORMALS, 0);
             auto normalTexture = GetTexture(normalTexturePath, context);
             material->SetNormalTexture(normalTexture);
 
@@ -414,6 +400,7 @@ namespace Engine::Scene::Loader
         aiString metallicRoughnessTexturePath;
         if (aMaterial->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE, &metallicRoughnessTexturePath) == aiReturn_SUCCESS)
         {
+            ParseSampler(aMaterial, AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE);
             auto metallicRoughnessTexture = GetTexture(metallicRoughnessTexturePath, context);
             material->SetMetallicRoughnessTexture(metallicRoughnessTexture);
         }
@@ -421,6 +408,7 @@ namespace Engine::Scene::Loader
         aiString ambientOcclusionTexturePath;
         if (aMaterial->GetTexture(aiTextureType_LIGHTMAP, 0, &ambientOcclusionTexturePath) == aiReturn_SUCCESS)
         {
+            ParseSampler(aMaterial, aiTextureType_LIGHTMAP, 0);
             auto aoTexture = GetTexture(ambientOcclusionTexturePath, context);
             material->SetAmbientOcclusionTexture(aoTexture);
         }
@@ -428,6 +416,7 @@ namespace Engine::Scene::Loader
         aiString emissiveTexturePath;
         if (aMaterial->GetTexture(aiTextureType_EMISSIVE, 0, &emissiveTexturePath) == aiReturn_SUCCESS)
         {
+            ParseSampler(aMaterial, aiTextureType_EMISSIVE, 0);
             auto emissiveTexture = GetTexture(emissiveTexturePath, context);
             material->SetEmissiveTexture(emissiveTexture);
 
@@ -443,6 +432,33 @@ namespace Engine::Scene::Loader
         return material;
     }
 
+    void SceneLoader::ParseSampler(const aiMaterial* aMaterial, aiTextureType textureType, unsigned int idx)
+    {
+        aiTextureMapMode wrapS;
+        if (aMaterial->Get<aiTextureMapMode>(AI_MATKEY_MAPPINGMODE_U(textureType, idx), wrapS) == aiReturn_SUCCESS)
+        {
+            auto a = 1;
+        }
+
+        aiTextureMapMode wrapT;
+        if (aMaterial->Get<aiTextureMapMode>(AI_MATKEY_MAPPINGMODE_V(textureType, idx), wrapT) == aiReturn_SUCCESS)
+        {
+            auto a = 1;
+        }
+
+        SamplerMagFilter magFilter;
+        if (aMaterial->Get<SamplerMagFilter>(AI_MATKEY_GLTF_MAPPINGFILTER_MAG(textureType, idx), magFilter) == aiReturn_SUCCESS)
+        {
+            auto a = 1;
+        }
+
+        SamplerMinFilter minFilter;
+        if (aMaterial->Get<SamplerMinFilter>(AI_MATKEY_GLTF_MAPPINGFILTER_MIN(textureType, idx), minFilter) == aiReturn_SUCCESS)
+        {
+            auto a = 1;
+        }
+    }
+
     SharedPtr<Texture> SceneLoader::GetTexture(const aiTexture *aTexture, const LoadingContext &context)
     {
         std::vector<Byte> buffer;
@@ -453,6 +469,7 @@ namespace Engine::Scene::Loader
 
         SharedPtr<Texture> texture = MakeShared<Texture>(Utils::ToWide(image->GetName()));
         texture->SetImage(image);
+        
         return texture;
     }
 
@@ -508,12 +525,11 @@ namespace Engine::Scene::Loader
         return iter != context.camerasMap.end();
 	}
 
-    SharedPtr<LightNode> SceneLoader::CreateLightNode(const aiNode* aNode, const LoadingContext &context, entt::entity entity)
+    void SceneLoader::CreateLightNode(const aiNode* aNode, const LoadingContext &context, entt::entity entity)
     {
 		auto iter = context.lightsMap.find(aNode->mName.C_Str());
         aiLight* aLight = iter->second;
 
-        SharedPtr<LightNode> lightNode = MakeShared<LightNode>();
         PunctualLight light;
 
         light.SetEnabled(true);
@@ -549,19 +565,16 @@ namespace Engine::Scene::Loader
 
         context.registry->emplace<Components::LightComponent>(entity, lightComponent);
 
-        lightNode->SetPunctualLight(light);
-        return lightNode;
     }
 
-    SharedPtr<MeshNode> SceneLoader::CreateMeshNode(const aiNode* aNode, const LoadingContext& context, entt::entity entity, Engine::Scene::Components::RelationshipComponent* relationship)
+    void SceneLoader::CreateMeshNode(const aiNode* aNode, const LoadingContext& context, entt::entity entity, Engine::Scene::Components::RelationshipComponent* relationship)
     {
-        SharedPtr<MeshNode> meshNode = MakeShared<MeshNode>();
-
         std::vector<SharedPtr<Mesh>> meshes;
         meshes.reserve(static_cast<Size>(aNode->mNumMeshes));
 
         entt::entity nextEntity = context.registry->create();;
         relationship->First = nextEntity;
+        relationship->ChildsCount = aNode->mNumMeshes;
 
 		for (uint32 i = 0; i < aNode->mNumMeshes; ++i)
 		{
@@ -593,14 +606,10 @@ namespace Engine::Scene::Loader
 
             context.registry->emplace<Components::MeshComponent>(meshEntity, meshComponent);
 		}
-        meshNode->SetMeshes(meshes);
-
-        return meshNode;
     }
 
-    SharedPtr<CameraNode> SceneLoader::CreateCameraNode(const aiNode* aNode, const LoadingContext& context, entt::entity entity)
+    void SceneLoader::CreateCameraNode(const aiNode* aNode, const LoadingContext& context, entt::entity entity)
     {
-        SharedPtr<CameraNode> cameraNode = MakeShared<CameraNode>();
         auto iter = context.camerasMap.find(aNode->mName.C_Str());
 
         aiCamera* aCamera = iter->second;
@@ -611,14 +620,10 @@ namespace Engine::Scene::Loader
         camera.SetFarPlane(aCamera->mClipPlaneFar);
         camera.SetFoV(aCamera->mHorizontalFOV);
 
-        cameraNode->SetCamera(camera);
-
         Components::CameraComponent cameraComponent;
         cameraComponent.camera = camera;
 
         context.registry->emplace<Components::CameraComponent>(entity, cameraComponent);
-
-        return cameraNode;
     }
 
 } // namespace Engine::Scene::Loader

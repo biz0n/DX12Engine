@@ -2,7 +2,7 @@
 
 namespace Engine
 {
-    Resource::Resource(const std::wstring &name)
+    Resource::Resource(const std::wstring &name) : mResource(nullptr)
     {
         mResourceName = name;
     }
