@@ -65,7 +65,8 @@ namespace Engine
             RECT R = {0, 0, mWidth, mHeight};
             AdjustWindowRect(&R, WS_OVERLAPPEDWINDOW, false);
 
-            hWnd = CreateWindow(
+            hWnd = CreateWindowEx(
+                WS_EX_NOREDIRECTIONBITMAP,
                 WindowClass::GetName(),
                 mName,
                 WS_OVERLAPPEDWINDOW,
@@ -81,14 +82,15 @@ namespace Engine
             if (hWnd == nullptr)
             {
                 MessageBox(0, TEXT("RegisterClass Failed."), 0, 0);
+                return EXIT_FAILURE;
             }
 
-            isAppInitialized = true;
             View view = {};
             view.WindowHandle = hWnd;
             view.width = mWidth;
             view.height = mHeight;
 
+            isAppInitialized = true;
             application->Init(view);
 
             ShowWindow(hWnd, SW_SHOW);
