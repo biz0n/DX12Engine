@@ -27,6 +27,7 @@
 #include <Scene/Components/WorldTransformComponent.h>
 #include <Scene/Components/CameraComponent.h>
 #include <Scene/Components/LightComponent.h>
+#include <Scene/Components/AABBComponent.h>
 
 
 #include <Render/ShaderCreationInfo.h>
@@ -37,6 +38,7 @@
 
 #include <DirectXTex.h>
 #include <DirectXMath.h>
+#include <DirectXCollision.h>
 #include <d3d12.h>
 
 namespace Engine
@@ -348,10 +350,21 @@ namespace Engine
 
         commandList->SetGraphicsRootShaderResourceView(3, lightsAllocation.GPU);
 
+        dx::BoundingFrustum frustum(projectionMatrix);
+        dx::XMStoreFloat4(&frustum.Orientation, rt);
+        dx::XMStoreFloat3(&frustum.Origin, tr);
+
         const auto& meshsView = registry.view<Scene::Components::MeshComponent, Scene::Components::WorldTransformComponent>();
         for (auto &&[entity, meshComponent, transformComponent] : meshsView.proxy())
         {
-            Draw(commandList, meshComponent.mesh, transformComponent.transform, mUploadBuffer[currentBackBufferIndex]);
+            auto& aabb = registry.get<Scene::Components::AABBComponent>(entity);
+            dx::BoundingBox b;
+            aabb.boundingBox.Transform(b, transformComponent.transform);
+
+            if (frustum.Intersects(b))
+            {
+                Draw(commandList, meshComponent.mesh, transformComponent.transform, mUploadBuffer[currentBackBufferIndex]);
+            }
         }
 
         mRenderContext->GetGraphicsCommandQueue()->ExecuteCommandList(commandList);

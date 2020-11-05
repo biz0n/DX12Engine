@@ -24,10 +24,12 @@
 #include <Scene/Components/CameraComponent.h>
 #include <Scene/Components/MeshComponent.h>
 #include <Scene/Components/NameComponent.h>
+#include <Scene/Components/AABBComponent.h>
 
 #include <filesystem>
 
 #include <entt/entt.hpp>
+#include <DirectXCollision.h>
 
 namespace Engine::Scene::Loader
 {
@@ -50,7 +52,8 @@ namespace Engine::Scene::Loader
                 aiProcess_ConvertToLeftHanded |
                 //aiProcess_JoinIdenticalVertices |
                 //aiProcess_GenNormals |
-                aiProcess_CalcTangentSpace
+                aiProcess_CalcTangentSpace |
+                aiProcess_GenBoundingBoxes
                 // aiProcess_OptimizeMeshes |
                 // aiProcess_OptimizeGraph
                 ;
@@ -235,11 +238,11 @@ namespace Engine::Scene::Loader
         }
     }
 
-    std::tuple<String, SharedPtr<Mesh>> SceneLoader::ParseMesh(const aiMesh *aMesh, const LoadingContext &context)
+    std::tuple<String, Mesh, dx::BoundingBox> SceneLoader::ParseMesh(const aiMesh *aMesh, const LoadingContext &context)
     {
-        SharedPtr<Mesh> mesh = MakeShared<Mesh>();
-        mesh->indexBuffer = MakeShared<IndexBuffer>();
-        mesh->vertexBuffer = MakeShared<VertexBuffer>();
+        Mesh mesh;
+        mesh.indexBuffer = MakeShared<IndexBuffer>();
+        mesh.vertexBuffer = MakeShared<VertexBuffer>();
         std::vector<Vertex> vertices;
         vertices.reserve(aMesh->mNumVertices);
 
@@ -273,8 +276,8 @@ namespace Engine::Scene::Loader
             vertices.emplace_back(vertex);
         }
 
-        mesh->vertexBuffer->SetData(vertices);
-        mesh->vertexBuffer->SetName(StringToWString("Vertices: " + (std::string)(aMesh->mName.C_Str())));
+        mesh.vertexBuffer->SetData(vertices);
+        mesh.vertexBuffer->SetName(StringToWString("Vertices: " + (std::string)(aMesh->mName.C_Str())));
 
         std::vector<uint16> indices;
         indices.reserve(aMesh->mNumFaces * 3);
@@ -286,26 +289,35 @@ namespace Engine::Scene::Loader
             indices.push_back(face.mIndices[2]);
         }
 
-        mesh->indexBuffer->SetData(indices);
-        mesh->indexBuffer->SetName(StringToWString("Indices: " + (std::string)(aMesh->mName.C_Str())));
+        mesh.indexBuffer->SetData(indices);
+        mesh.indexBuffer->SetName(StringToWString("Indices: " + (std::string)(aMesh->mName.C_Str())));
 
-        mesh->material = context.materials[aMesh->mMaterialIndex];
+        mesh.material = context.materials[aMesh->mMaterialIndex];
 
         switch (aMesh->mPrimitiveTypes)
         {
             case aiPrimitiveType_POINT:
-                mesh->primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
+                mesh.primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
                 break;
             case aiPrimitiveType_LINE:
-                mesh->primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_LINELIST;
+                mesh.primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_LINELIST;
                 break;
             case aiPrimitiveType_TRIANGLE:
             default:
-                mesh->primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+                mesh.primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
                 break;
         }
 
-        return std::make_tuple(aMesh->mName.C_Str(), mesh);
+        const auto& aabbMin = aMesh->mAABB.mMin;
+        const auto& aabbMax = aMesh->mAABB.mMax;
+
+        dx::BoundingBox boundingBox;
+        dx::BoundingBox::CreateFromPoints(
+            boundingBox, 
+            dx::XMVectorSet(aabbMin.x, aabbMin.y, aabbMin.z, 0.0),
+            dx::XMVectorSet(aabbMax.x, aabbMax.y, aabbMax.z, 0.0));
+        
+        return std::make_tuple(aMesh->mName.C_Str(), mesh, boundingBox);
     }
 
     SharedPtr<Material> SceneLoader::ParseMaterial(const aiMaterial *aMaterial, LoadingContext &context)
@@ -439,25 +451,21 @@ namespace Engine::Scene::Loader
         aiTextureMapMode wrapS;
         if (aMaterial->Get<aiTextureMapMode>(AI_MATKEY_MAPPINGMODE_U(textureType, idx), wrapS) == aiReturn_SUCCESS)
         {
-            auto a = 1;
         }
 
         aiTextureMapMode wrapT;
         if (aMaterial->Get<aiTextureMapMode>(AI_MATKEY_MAPPINGMODE_V(textureType, idx), wrapT) == aiReturn_SUCCESS)
         {
-            auto a = 1;
         }
 
         SamplerMagFilter magFilter;
         if (aMaterial->Get<SamplerMagFilter>(AI_MATKEY_GLTF_MAPPINGFILTER_MAG(textureType, idx), magFilter) == aiReturn_SUCCESS)
         {
-            auto a = 1;
         }
 
         SamplerMinFilter minFilter;
         if (aMaterial->Get<SamplerMinFilter>(AI_MATKEY_GLTF_MAPPINGFILTER_MIN(textureType, idx), minFilter) == aiReturn_SUCCESS)
         {
-            auto a = 1;
         }
     }
 
@@ -571,9 +579,6 @@ namespace Engine::Scene::Loader
 
     void SceneLoader::CreateMeshNode(const aiNode* aNode, const LoadingContext& context, entt::entity entity, Engine::Scene::Components::RelationshipComponent* relationship)
     {
-        std::vector<SharedPtr<Mesh>> meshes;
-        meshes.reserve(static_cast<Size>(aNode->mNumMeshes));
-
         entt::entity nextEntity = context.registry->create();;
         relationship->first = nextEntity;
         relationship->childsCount = aNode->mNumMeshes;
@@ -581,8 +586,7 @@ namespace Engine::Scene::Loader
 		for (uint32 i = 0; i < aNode->mNumMeshes; ++i)
 		{
 			int32 meshIndex = aNode->mMeshes[i];
-			auto meshPair = context.meshes[meshIndex];
-			meshes.push_back(std::get<1>(meshPair));
+			auto meshData = context.meshes[meshIndex];
 
             auto meshEntity = nextEntity;
             if (i < (aNode->mNumMeshes - 1))
@@ -596,7 +600,7 @@ namespace Engine::Scene::Loader
 
             context.registry->emplace<Components::LocalTransformComponent>(meshEntity, DirectX::XMMatrixIdentity());
 
-            context.registry->emplace<Components::NameComponent>(meshEntity, std::get<0>(meshPair));
+            context.registry->emplace<Components::NameComponent>(meshEntity, std::get<0>(meshData));
 
             Components::RelationshipComponent meshRelationship;
             meshRelationship.next = nextEntity;
@@ -605,9 +609,10 @@ namespace Engine::Scene::Loader
             context.registry->emplace<Components::RelationshipComponent>(meshEntity, meshRelationship);
 
             Components::MeshComponent meshComponent;
-            meshComponent.mesh = *std::get<1>(meshPair);
+            meshComponent.mesh = std::get<1>(meshData);
 
             context.registry->emplace<Components::MeshComponent>(meshEntity, meshComponent);
+            context.registry->emplace<Components::AABBComponent>(meshEntity, std::get<2>(meshData));
 		}
     }
 
