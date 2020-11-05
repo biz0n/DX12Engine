@@ -10,6 +10,7 @@
 #include <Scene/Components./WorldTransformComponent.h>
 #include <Scene/Texture.h>
 
+#include <UI/ComponentRenderers./StateComponentsRenderer.h>
 #include <UI/ComponentRenderers/WorldTransformComponentRenderer.h>
 #include <UI/ComponentRenderers/MeshComponentRenderer.h>
 
@@ -21,6 +22,7 @@ namespace Engine::Scene::Systems
     UISystem::UISystem(SharedPtr<RenderContext> renderContext, SharedPtr<UIRenderContext> uiRenderContext)
         : System(), mUIRenderContext(uiRenderContext), mRenderContext(renderContext)
     {
+        mComponentRenderers.push_back(MakeUnique<UI::ComponentRenderers::StateComponentsRenderer>());
         mComponentRenderers.push_back(MakeUnique<UI::ComponentRenderers::WorldTransformComponentRenderer>());
         mComponentRenderers.push_back(MakeUnique<UI::ComponentRenderers::MeshComponentRenderer>(renderContext, uiRenderContext));
     }

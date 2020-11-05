@@ -28,6 +28,7 @@
 #include <Scene/Components/CameraComponent.h>
 #include <Scene/Components/LightComponent.h>
 #include <Scene/Components/AABBComponent.h>
+#include <Scene/Components/IsDisabledComponent.h>
 
 
 #include <Render/ShaderCreationInfo.h>
@@ -356,7 +357,7 @@ namespace Engine
         dx::XMStoreFloat4(&frustum.Orientation, rt);
         dx::XMStoreFloat3(&frustum.Origin, tr);
 
-        const auto& meshsView = registry.view<Scene::Components::MeshComponent, Scene::Components::WorldTransformComponent>();
+        const auto& meshsView = registry.view<Scene::Components::MeshComponent, Scene::Components::WorldTransformComponent>(entt::exclude<Scene::Components::IsDisabledComponent>);
         for (auto &&[entity, meshComponent, transformComponent] : meshsView.proxy())
         {
             auto& aabb = registry.get<Scene::Components::AABBComponent>(entity);
