@@ -16,7 +16,7 @@ namespace Engine::UI::ComponentRenderers
     class WorldTransformComponentRenderer : public ComponentRenderer<Engine::Scene::Components::WorldTransformComponent>
     {
         public:
-            WorldTransformComponentRenderer() {}
+            WorldTransformComponentRenderer() : ComponentRenderer("WorldTransform Component") {}
             ~WorldTransformComponentRenderer() {}
 
         protected:

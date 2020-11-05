@@ -21,12 +21,12 @@ namespace Engine
 
         DescriptorTableCache &descriptorTableCache = mDescriptoTableCache[rootParameterIndex];
 
-        if ((offset + numDescriptors) > descriptorTableCache.NumDescriptors)
+        if ((offset + numDescriptors) > descriptorTableCache.numDescriptors)
         {
             throw std::length_error("");
         }
 
-        D3D12_CPU_DESCRIPTOR_HANDLE *dstHandle = (descriptorTableCache.BaseDescriptor + offset);
+        D3D12_CPU_DESCRIPTOR_HANDLE *dstHandle = (descriptorTableCache.baseDescriptor + offset);
 
         for (uint32 i = 0; i < numDescriptors; ++i)
         {
@@ -50,8 +50,8 @@ namespace Engine
             uint32 numDescriptorsPerTable = rootSignature->GetNumDescriptorsPerTable(index);
 
             DescriptorTableCache &descriptorTableCache = mDescriptoTableCache[index];
-            descriptorTableCache.NumDescriptors = numDescriptorsPerTable;
-            descriptorTableCache.BaseDescriptor = mDescriptorHandlesCache.get() + offset;
+            descriptorTableCache.numDescriptors = numDescriptorsPerTable;
+            descriptorTableCache.baseDescriptor = mDescriptorHandlesCache.get() + offset;
 
             offset += numDescriptorsPerTable;
 
@@ -76,8 +76,8 @@ namespace Engine
         while (_BitScanForward(&index, mStaleDescriptorsTableBitMask))
         {
             DescriptorTableCache &descriptorTableCache = mDescriptoTableCache[index];
-            uint32 numDescriptors = descriptorTableCache.NumDescriptors;
-            D3D12_CPU_DESCRIPTOR_HANDLE *srcDescriptor = descriptorTableCache.BaseDescriptor;
+            uint32 numDescriptors = descriptorTableCache.numDescriptors;
+            D3D12_CPU_DESCRIPTOR_HANDLE *srcDescriptor = descriptorTableCache.baseDescriptor;
 
             D3D12_CPU_DESCRIPTOR_HANDLE dstDescriptor[]{mCurrentCpuHandle};
 
@@ -151,7 +151,7 @@ namespace Engine
 
         while (_BitScanForward(&index, staleDescriptorTableBitMask))
         {
-            staleDescriptorsCount += mDescriptoTableCache[index].NumDescriptors;
+            staleDescriptorsCount += mDescriptoTableCache[index].numDescriptors;
             staleDescriptorTableBitMask ^= (1 << index);
         }
 

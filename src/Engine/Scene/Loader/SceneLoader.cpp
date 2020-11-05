@@ -1,5 +1,6 @@
 #include "SceneLoader.h"
-#include <Utils.h>
+
+#include <StringUtils.h>
 #include <Scene/Image.h>
 #include <Scene/Texture.h>
 #include <Scene/Material.h>
@@ -73,7 +74,7 @@ namespace Engine::Scene::Loader
 
         LoadingContext context;
         context.RootPath = filePath.parent_path().string();
-        context.registry = scene->registry.get();
+        context.registry = &scene->GetRegistry();
 
         context.textures.reserve(aScene->mNumTextures);
         for (uint32 i = 0; i < aScene->mNumTextures; ++i)
@@ -113,32 +114,32 @@ namespace Engine::Scene::Loader
 			context.camerasMap[aCamera->mName.C_Str()] = aCamera;
 		}
 
-        auto rootEntity = scene->registry->create();
+        auto rootEntity = context.registry->create();
         Engine::Scene::Components::RelationshipComponent relationship;
-        ParseNode(aScene, aScene->mRootNode, scene.get(), context, rootEntity, &relationship);
+        ParseNode(aScene, aScene->mRootNode, context, rootEntity, &relationship);
 
-        scene->registry->emplace<Components::RelationshipComponent>(rootEntity, relationship);
-        scene->registry->emplace<Components::Root>(rootEntity);
+        context.registry->emplace<Components::RelationshipComponent>(rootEntity, relationship);
+        context.registry->emplace<Components::Root>(rootEntity);
 
         if (aScene->mNumCameras == 0)
         {
-            auto cameraEntity = scene->registry->create();
-            scene->registry->emplace<Components::CameraComponent>(cameraEntity, Camera());
-            scene->registry->emplace<Components::LocalTransformComponent>(cameraEntity, dx::XMMatrixIdentity());
+            auto cameraEntity = context.registry->create();
+            context.registry->emplace<Components::CameraComponent>(cameraEntity, Camera());
+            context.registry->emplace<Components::LocalTransformComponent>(cameraEntity, dx::XMMatrixIdentity());
             
-            scene->registry->emplace<Components::NameComponent>(cameraEntity, "Default Camera");
-            scene->registry->emplace<Components::RelationshipComponent>(cameraEntity, Components::RelationshipComponent());
-            scene->registry->emplace<Components::Root>(cameraEntity);
+            context.registry->emplace<Components::NameComponent>(cameraEntity, "Default Camera");
+            context.registry->emplace<Components::RelationshipComponent>(cameraEntity, Components::RelationshipComponent());
+            context.registry->emplace<Components::Root>(cameraEntity);
         }
 
-        std::function<void(const PunctualLight&, const dx::XMMATRIX&, String)> addLight = [&scene](const PunctualLight& light, const dx::XMMATRIX& transform, String name)
+        std::function<void(const PunctualLight&, const dx::XMMATRIX&, String)> addLight = [&context](const PunctualLight& light, const dx::XMMATRIX& transform, String name)
         {
-            auto lightEntity= scene->registry->create();
-            scene->registry->emplace<Components::LightComponent>(lightEntity, light);
-            scene->registry->emplace<Components::LocalTransformComponent>(lightEntity, transform);
-            scene->registry->emplace<Components::RelationshipComponent>(lightEntity, Components::RelationshipComponent());
-            scene->registry->emplace<Components::Root>(lightEntity);
-            scene->registry->emplace<Components::NameComponent>(lightEntity, name);
+            auto lightEntity= context.registry->create();
+            context.registry->emplace<Components::LightComponent>(lightEntity, light);
+            context.registry->emplace<Components::LocalTransformComponent>(lightEntity, transform);
+            context.registry->emplace<Components::RelationshipComponent>(lightEntity, Components::RelationshipComponent());
+            context.registry->emplace<Components::Root>(lightEntity);
+            context.registry->emplace<Components::NameComponent>(lightEntity, name);
         };
 
 
@@ -161,7 +162,7 @@ namespace Engine::Scene::Loader
         return scene;
     }
 
-    void SceneLoader::ParseNode(const aiScene *aScene, const aiNode *aNode, SceneObject *scene, const LoadingContext &context, entt::entity entity, Engine::Scene::Components::RelationshipComponent* relationship)
+    void SceneLoader::ParseNode(const aiScene *aScene, const aiNode *aNode, const LoadingContext &context, entt::entity entity, Engine::Scene::Components::RelationshipComponent* relationship)
     {
         aiVector3D scaling;
 		aiQuaternion rotation;
@@ -178,8 +179,8 @@ namespace Engine::Scene::Loader
 
 		if (IsMeshNode(aNode, context))
 		{
-            scene->registry->emplace<Components::NameComponent>(entity, aNode->mName.C_Str());
-            scene->registry->emplace<Scene::Components::LocalTransformComponent>(entity, srt);
+            context.registry->emplace<Components::NameComponent>(entity, aNode->mName.C_Str());
+            context.registry->emplace<Scene::Components::LocalTransformComponent>(entity, srt);
 
             CreateMeshNode(aNode, context, entity, relationship);
             
@@ -188,24 +189,24 @@ namespace Engine::Scene::Loader
         {
             CreateLightNode(aNode, context, entity);
 
-            scene->registry->emplace<Components::NameComponent>(entity, "Light_" + std::string(aNode->mName.C_Str()));
-            scene->registry->emplace<Scene::Components::LocalTransformComponent>(entity, srt);
+            context.registry->emplace<Components::NameComponent>(entity, "Light_" + std::string(aNode->mName.C_Str()));
+            context.registry->emplace<Scene::Components::LocalTransformComponent>(entity, srt);
         }
         else if (IsCameraNode(aNode, context))
         {
             CreateCameraNode(aNode, context, entity);
 
-            scene->registry->emplace<Components::NameComponent>(entity, "Camera_" + std::string(aNode->mName.C_Str()));
-            scene->registry->emplace<Scene::Components::LocalTransformComponent>(entity, srt);
+            context.registry->emplace<Components::NameComponent>(entity, "Camera_" + std::string(aNode->mName.C_Str()));
+            context.registry->emplace<Scene::Components::LocalTransformComponent>(entity, srt);
         }
         else
         {
-            scene->registry->emplace<Components::NameComponent>(entity, aNode->mName.C_Str());
-            scene->registry->emplace<Scene::Components::LocalTransformComponent>(entity, srt);
+            context.registry->emplace<Components::NameComponent>(entity, aNode->mName.C_Str());
+            context.registry->emplace<Scene::Components::LocalTransformComponent>(entity, srt);
 
-            entt::entity nextEntity = aNode->mNumChildren > 0 ? scene->registry->create() : entt::null;
-            relationship->First = nextEntity;
-            relationship->ChildsCount = aNode->mNumChildren;
+            entt::entity nextEntity = aNode->mNumChildren > 0 ? context.registry->create() : entt::null;
+            relationship->first = nextEntity;
+            relationship->childsCount = aNode->mNumChildren;
 
             for (uint32 i = 0; i < aNode->mNumChildren; i++)
             {
@@ -215,7 +216,7 @@ namespace Engine::Scene::Loader
 
                 if (i < (aNode->mNumChildren - 1))
                 {
-                    nextEntity = scene->registry->create();
+                    nextEntity = context.registry->create();
                 }
                 else
                 {
@@ -223,12 +224,13 @@ namespace Engine::Scene::Loader
                 }
 
                 Components::RelationshipComponent childRelationship;
-                childRelationship.Parent = entity;
-                childRelationship.Next = nextEntity;
+                childRelationship.parent = entity;
+                childRelationship.next = nextEntity;
+                childRelationship.depth = relationship->depth + 1;
 
-                ParseNode(aScene, aChild, scene, context, childEntity, &childRelationship);
+                ParseNode(aScene, aChild, context, childEntity, &childRelationship);
 
-                scene->registry->emplace<Components::RelationshipComponent>(childEntity, childRelationship);
+                context.registry->emplace<Components::RelationshipComponent>(childEntity, childRelationship);
             }
         }
     }
@@ -272,7 +274,7 @@ namespace Engine::Scene::Loader
         }
 
         mesh->vertexBuffer->SetData(vertices);
-        mesh->vertexBuffer->SetName(Utils::ToWide("Vertices: " + (std::string)(aMesh->mName.C_Str())));
+        mesh->vertexBuffer->SetName(StringToWString("Vertices: " + (std::string)(aMesh->mName.C_Str())));
 
         std::vector<uint16> indices;
         indices.reserve(aMesh->mNumFaces * 3);
@@ -285,7 +287,7 @@ namespace Engine::Scene::Loader
         }
 
         mesh->indexBuffer->SetData(indices);
-        mesh->indexBuffer->SetName(Utils::ToWide("Indices: " + (std::string)(aMesh->mName.C_Str())));
+        mesh->indexBuffer->SetName(StringToWString("Indices: " + (std::string)(aMesh->mName.C_Str())));
 
         mesh->material = context.materials[aMesh->mMaterialIndex];
 
@@ -467,7 +469,7 @@ namespace Engine::Scene::Loader
         String name = context.RootPath + "\\" + aTexture->mFilename.C_Str();
         SharedPtr<Scene::Image> image = Scene::Image::LoadImageFromData(buffer, aTexture->achFormatHint, name);
 
-        SharedPtr<Texture> texture = MakeShared<Texture>(Utils::ToWide(image->GetName()));
+        SharedPtr<Texture> texture = MakeShared<Texture>(StringToWString(image->GetName()));
         texture->SetImage(image);
         
         return texture;
@@ -495,7 +497,7 @@ namespace Engine::Scene::Loader
                 }
             }
 
-            SharedPtr<Texture> texture = MakeShared<Texture>(Utils::ToWide(image->GetName()));
+            SharedPtr<Texture> texture = MakeShared<Texture>(StringToWString(image->GetName()));
             texture->SetImage(image);
             return texture;
         }
@@ -573,8 +575,8 @@ namespace Engine::Scene::Loader
         meshes.reserve(static_cast<Size>(aNode->mNumMeshes));
 
         entt::entity nextEntity = context.registry->create();;
-        relationship->First = nextEntity;
-        relationship->ChildsCount = aNode->mNumMeshes;
+        relationship->first = nextEntity;
+        relationship->childsCount = aNode->mNumMeshes;
 
 		for (uint32 i = 0; i < aNode->mNumMeshes; ++i)
 		{
@@ -597,8 +599,9 @@ namespace Engine::Scene::Loader
             context.registry->emplace<Components::NameComponent>(meshEntity, std::get<0>(meshPair));
 
             Components::RelationshipComponent meshRelationship;
-            meshRelationship.Next = nextEntity;
-            meshRelationship.Parent = entity;
+            meshRelationship.next = nextEntity;
+            meshRelationship.parent = entity;
+            meshRelationship.depth = relationship->depth + 1;
             context.registry->emplace<Components::RelationshipComponent>(meshEntity, meshRelationship);
 
             Components::MeshComponent meshComponent;

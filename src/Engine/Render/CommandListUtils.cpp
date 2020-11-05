@@ -1,6 +1,5 @@
 #include "CommandListUtils.h"
 
-#include <Utils.h>
 #include <Exceptions.h>
 #include <d3dx12.h>
 
@@ -8,7 +7,7 @@
 #include <Memory/DescriptorAllocator.h>
 #include <Memory/DescriptorAllocation.h>
 #include <Memory/DynamicDescriptorHeap.h>
-#include <RenderContext.h>
+#include <Render/RenderContext.h>
 
 #include <Scene/Loader/SceneLoader.h>
 #include <Scene/Image.h>
@@ -63,7 +62,7 @@ namespace Engine::CommandListUtils
         resourceTracker->TrackResource(destinationResource.Get(), D3D12_RESOURCE_STATE_COMMON);
         TransitionBarrier(commandList, resourceTracker, destinationResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, true);
 
-        UpdateSubresources(commandList.Get(), destinationResource.Get(), uploadBuffer->GetD3D12Resource(), allocation.Offset, 0, 1, &subresource);
+        UpdateSubresources(commandList.Get(), destinationResource.Get(), uploadBuffer->GetD3D12Resource(), allocation.offset, 0, 1, &subresource);
 
         
         buffer.SetD3D12Resource(destinationResource);
@@ -138,7 +137,7 @@ namespace Engine::CommandListUtils
                 commandList.Get(),
                 textureResource.Get(),
                 uploadBuffer->GetD3D12Resource(),
-                allocation.Offset,
+                allocation.offset,
                 0,
                 static_cast<unsigned int>(subresources.size()),
                 subresources.data());

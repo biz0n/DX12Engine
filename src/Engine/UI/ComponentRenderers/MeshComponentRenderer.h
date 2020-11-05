@@ -2,8 +2,8 @@
 
 #include <Types.h>
 
-#include <RenderContext.h>
-#include <UIRenderContext.h>
+#include <Render/RenderContext.h>
+#include <Render/UIRenderContext.h>
 
 #include <UI/ComponentRenderers/ComponentRenderer.h>
 
@@ -25,14 +25,13 @@ namespace Engine::UI::ComponentRenderers
             SharedPtr<UIRenderContext> mUIRenderContext;
         public:
             MeshComponentRenderer(SharedPtr<RenderContext> renderContext, SharedPtr<UIRenderContext> uiRenderContext)
-                : mRenderContext(renderContext), mUIRenderContext(uiRenderContext)
+                : ComponentRenderer("Mesh Component"), mRenderContext(renderContext), mUIRenderContext(uiRenderContext)
              {}
             ~MeshComponentRenderer() {}
 
         protected:
             void RenderComponent(entt::registry& registry, entt::entity entity, Engine::Scene::Components::MeshComponent& meshComponent) override
             {
-
                 if (meshComponent.mesh.material->HasBaseColorTexture())
                 {
                     auto texture = meshComponent.mesh.material->GetBaseColorTexture();

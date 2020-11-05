@@ -2,7 +2,7 @@
 
 #include <Scene/SceneForwards.h>
 #include <Types.h>
-#include <RootSignature.h>
+#include <Render/RootSignature.h>
 
 #include <Memory/MemoryForwards.h>
 #include <Memory/DescriptorAllocation.h>
@@ -10,22 +10,16 @@
 #include <Render/ShaderProvider.h>
 
 #include <Timer.h>
-#include <Events.h>
 
-#include <bitset>
-#include <DirectXMath.h>
-#include <SwapChain.h>
+#include <Render/SwapChain.h>
 
 #include <entt/fwd.hpp>
+#include <DirectXMath.h>
 
 namespace Engine
 {
-    class CommandListContext;
-    
-    class App;
     class SwapChain;
     class RenderContext;
-    class Keyboard;
 
     class Game
     {
@@ -35,17 +29,14 @@ namespace Engine
 
         bool Initialize();
 
-
-        void UploadResources(entt::registry* registry);
-        void Draw(const Timer &time, entt::registry* registry);
+        void UploadResources(Scene::SceneObject* scene);
+        void Draw(const Timer &time, Scene::SceneObject* scene);
 
         void Deinitialize();
 
-        void Resize(int32 width, int32 height);
-
     private:
 
-        void ResizeDepthBuffer(int32 width, int32 height);
+        void CreateDepthBuffer(int32 width, int32 height);
 
         void Draw(ComPtr<ID3D12GraphicsCommandList> commandList, const Scene::Mesh& node, const dx::XMMATRIX& world, SharedPtr<UploadBuffer> buffer);
 
@@ -63,9 +54,6 @@ namespace Engine
 
         ComPtr<ID3D12Resource> mDepthBuffer;
         DescriptorAllocation mDepthBufferDescriptor;
-
-        D3D12_VIEWPORT mScreenViewport;
-        D3D12_RECT mScissorRect;
 
         SharedPtr<SwapChain> mCanvas;
         SharedPtr<RenderContext> mRenderContext;

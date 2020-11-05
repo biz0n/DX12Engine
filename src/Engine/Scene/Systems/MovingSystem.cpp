@@ -2,6 +2,7 @@
 
 #include <Types.h>
 #include <MathUtils.h>
+#include <Scene/SceneObject.h>
 #include <Scene/Components/MovingComponent.h>
 #include <Scene/Components/LocalTransformComponent.h>
 
@@ -15,9 +16,10 @@ namespace Engine::Scene::Systems
 
    MovingSystem::~MovingSystem() = default;
 
-   void MovingSystem::Init(entt::registry *registry)
+   void MovingSystem::Init(SceneObject *scene)
    {
-      const auto &view = registry->view<Components::MovingComponent, Components::LocalTransformComponent>();
+      auto& registry = scene->GetRegistry();
+      const auto &view = registry.view<Components::MovingComponent, Components::LocalTransformComponent>();
       for (auto &&[entity, movingComponent, transformComponent] : view.proxy())
       {
          float32 pitch, yaw, roll;
@@ -27,9 +29,10 @@ namespace Engine::Scene::Systems
       }
    }
 
-   void MovingSystem::Process(entt::registry *registry, const Timer &timer)
+   void MovingSystem::Process(SceneObject *scene, const Timer &timer)
    {
-      const auto &view = registry->view<Components::MovingComponent, Components::LocalTransformComponent>();
+      auto& registry = scene->GetRegistry();
+      const auto &view = registry.view<Components::MovingComponent, Components::LocalTransformComponent>();
 
       const float32 speed = 5 * timer.DeltaTime();
       const float32 rotationSpeed = 1.0f * timer.DeltaTime();
@@ -95,7 +98,7 @@ namespace Engine::Scene::Systems
          auto translate = dx::XMMatrixTranslationFromVector(t + positionOffset);
          transformComponent.transform = rotationMatrix * translate;
 
-         registry->replace<Components::LocalTransformComponent>(entity, transformComponent);
+         registry.replace<Components::LocalTransformComponent>(entity, transformComponent);
       }
    }
 } // namespace Engine::Scene::Systems

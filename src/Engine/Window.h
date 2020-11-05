@@ -3,7 +3,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <Types.h>
-#include <Events.h>
+#include <IO/KeyEvent.h>
 
 namespace Engine
 {

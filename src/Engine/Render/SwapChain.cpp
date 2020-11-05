@@ -1,11 +1,11 @@
 #include "SwapChain.h"
 
 #include <View.h>
-#include <Graphics.h>
+#include <Render/Graphics.h>
 #include <Exceptions.h>
 #include <Memory/DescriptorAllocator.h>
 #include <Memory/DescriptorAllocation.h>
-#include <ResourceStateTracker.h>
+#include <Render/ResourceStateTracker.h>
 
 namespace Engine
 {

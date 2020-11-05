@@ -18,18 +18,13 @@ namespace Engine::Scene
     public:
         SceneObject()
         {
-            registry = MakeUnique<entt::registry>();
-
-            
         }
-
     public:
-        UniquePtr<entt::registry> registry;
+        entt::registry& GetRegistry() { return registry; }
 
-    public:
         void AddSystem(UniquePtr<Systems::System> system)
         {
-            system->Init(registry.get());
+            system->Init(this);
             mSystems.push_back(std::move(system));
         }
 
@@ -37,11 +32,12 @@ namespace Engine::Scene
         {
             for (int i = 0; i < mSystems.size(); ++i)
             {
-                mSystems[i]->Process(registry.get(), timer);
+                mSystems[i]->Process(this, timer);
             }
         }
 
     private:
+        entt::registry registry;
         std::vector<UniquePtr<Systems::System>> mSystems;
     };
 }

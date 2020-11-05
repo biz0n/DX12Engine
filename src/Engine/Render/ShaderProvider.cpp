@@ -1,6 +1,7 @@
 #include "ShaderProvider.h"
 
-#include <Utils.h>
+#include <ShaderCompiler.h>
+#include <StringUtils.h>
 
 namespace Engine::Render
 {
@@ -19,8 +20,8 @@ namespace Engine::Render
         }
         else
         {
-            auto shader = Utils::CompileShader(
-                Utils::ToWide(creationInfo.path),
+            auto shader = ShaderCompiler::Compile(
+                StringToWString(creationInfo.path),
                 creationInfo.defines.data(),
                 creationInfo.entryPoint,
                 creationInfo.target);

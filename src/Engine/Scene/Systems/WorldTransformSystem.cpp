@@ -1,6 +1,7 @@
 #include "WorldTransformSystem.h"
 
 #include <entt/entt.hpp>
+#include <Scene/SceneObject.h>
 
 #include <DirectXMath.h>
 #include <queue>
@@ -13,67 +14,55 @@ namespace Engine::Scene::Systems
 
     WorldTransformSystem::~WorldTransformSystem() = default;
 
-    void WorldTransformSystem::Init(entt::registry *registry)
+    void WorldTransformSystem::Init(SceneObject *scene)
     {
-        registry->on_construct<Components::LocalTransformComponent>().connect<&WorldTransformSystem::InitWithDirty>(this);
-        registry->on_construct<Components::RelationshipComponent>().connect<&WorldTransformSystem::InitWithDirty>(this);
+        auto& registry = scene->GetRegistry();
+        registry.on_construct<Components::LocalTransformComponent>().connect<&WorldTransformSystem::InitWithDirty>(this);
+        registry.on_construct<Components::RelationshipComponent>().connect<&WorldTransformSystem::InitWithDirty>(this);
 
-        registry->on_update<Components::LocalTransformComponent>().connect<&WorldTransformSystem::MarkAsDirty>(this);
+        registry.on_update<Components::LocalTransformComponent>().connect<&WorldTransformSystem::MarkAsDirty>(this);
 
-        auto& view = registry->view<Components::RelationshipComponent, Components::LocalTransformComponent>();
+        const auto& view = registry.view<Components::RelationshipComponent, Components::LocalTransformComponent>();
         for (auto e : view)
         {
-            registry->emplace_or_replace<Components::Dirty>(e);
+            registry.emplace_or_replace<Components::Dirty>(e);
         }
     }
 
-    void WorldTransformSystem::Process(entt::registry *registry, const Timer &timer)
+    void WorldTransformSystem::Process(SceneObject *scene, const Timer &timer)
     {
-        auto group = registry->group<Scene::Components::Dirty, Scene::Components::LocalTransformComponent, Scene::Components::RelationshipComponent>();
+        auto& registry = scene->GetRegistry();
+        auto group = registry.group<Scene::Components::Dirty, Scene::Components::LocalTransformComponent, Scene::Components::RelationshipComponent>();
         group.sort([this, &registry](const entt::entity left, const entt::entity right) 
         {
-            const auto &leftRshp = registry->get<Scene::Components::RelationshipComponent>(left);
-            const auto &rightRshp = registry->get<Scene::Components::RelationshipComponent>(right);
+            const auto &leftRshp = registry.get<Scene::Components::RelationshipComponent>(left);
+            const auto &rightRshp = registry.get<Scene::Components::RelationshipComponent>(right);
             
-            return left == rightRshp.Parent 
-                   || 
-                   leftRshp.Next == right 
-                   || 
-                   (
-                       !(leftRshp.Parent == right || rightRshp.Next == left) 
-                       && 
-                       (
-                           (leftRshp.Parent == rightRshp.Parent && left < right)
-                           ||
-                           (leftRshp.Parent == entt::null && rightRshp.Parent != entt::null)
-                           ||
-                           ((leftRshp.Parent < rightRshp.Parent && rightRshp.Parent != entt::null))
-                       )
-                   );
+            return leftRshp.depth < rightRshp.depth;
         });
 
         for (auto e : group)
         {
-            const auto& local = registry->get<Scene::Components::LocalTransformComponent>(e);
-            const auto& relationship = registry->get<Scene::Components::RelationshipComponent>(e);
+            const auto& local = registry.get<Scene::Components::LocalTransformComponent>(e);
+            const auto& relationship = registry.get<Scene::Components::RelationshipComponent>(e);
 
             DirectX::XMMATRIX worldTransform;
-            if (relationship.Parent == entt::null)
+            if (relationship.parent == entt::null)
             {
                 worldTransform = local.transform;                
             }
             else
             {
-                const auto& parentWorld = registry->get<Scene::Components::WorldTransformComponent>(relationship.Parent);
+                const auto& parentWorld = registry.get<Scene::Components::WorldTransformComponent>(relationship.parent);
 
                 worldTransform = DirectX::XMMatrixMultiply(parentWorld.transform, local.transform);
             }
 
-            registry->emplace_or_replace<Scene::Components::WorldTransformComponent>(e, worldTransform);
-            registry->remove<Scene::Components::Dirty>(e);
+            registry.emplace_or_replace<Scene::Components::WorldTransformComponent>(e, worldTransform);
+            registry.remove<Scene::Components::Dirty>(e);
         }
 
-        registry->remove<Scene::Components::Dirty>(group.begin(), group.end());
+        registry.remove<Scene::Components::Dirty>(group.begin(), group.end());
     }
 
     void WorldTransformSystem::InitWithDirty(entt::registry& r, entt::entity entity)
@@ -101,13 +90,13 @@ namespace Engine::Scene::Systems
                 r.emplace_or_replace<Components::Dirty>(std::get<0>(e));
                 relationship = std::get<1>(e);
 
-                auto child = relationship.First;
+                auto child = relationship.first;
                 while(child != entt::null)
                 {
                     relationship = r.get<Components::RelationshipComponent>(child);
                     entities.push(std::make_tuple(child, relationship));
 
-                    child = relationship.Next;
+                    child = relationship.next;
                 }
             }
         }

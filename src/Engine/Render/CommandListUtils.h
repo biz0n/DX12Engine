@@ -1,15 +1,15 @@
 #pragma once
 
 #include <Types.h>
-#include <Buffer.h>
-#include <VertexBuffer.h>
-#include <IndexBuffer.h>
+#include <Memory/Buffer.h>
+#include <Memory/VertexBuffer.h>
+#include <Memory/IndexBuffer.h>
 #include <ShaderTypes.h>
-#include <RenderContext.h>
+#include <Render/RenderContext.h>
 
 #include <Memory/UploadBuffer.h>
 #include <Scene/SceneForwards.h>
-#include <ResourceStateTracker.h>
+#include <Render/ResourceStateTracker.h>
 #include <Memory/MemoryForwards.h>
 #include <Scene/PunctualLight.h>
 

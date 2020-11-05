@@ -84,7 +84,6 @@ namespace Engine
                 MessageBox(0, TEXT("RegisterClass Failed."), 0, 0);
                 return EXIT_FAILURE;
             }
-
             View view = {};
             view.WindowHandle = hWnd;
             view.width = mWidth;

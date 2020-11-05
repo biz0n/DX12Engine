@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Timer.h>
+#include <Scene/SceneForwards.h>
 
 #include <entt/fwd.hpp>
 
@@ -12,8 +13,8 @@ namespace Engine::Scene::Systems
             System(){}
             virtual ~System() = 0;
         public:
-            virtual void Init(entt::registry *registry){}
-            virtual void Process(entt::registry *registry, const Timer& timer){}
+            virtual void Init(SceneObject *scene){}
+            virtual void Process(SceneObject *scene, const Timer& timer){}
             
     };
 

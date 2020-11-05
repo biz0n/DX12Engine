@@ -44,8 +44,8 @@ namespace Engine
         Allocation allocation;
         allocation.CPU = mMappedData + alignedOffset;
         allocation.GPU = mGpuAddress + alignedOffset;
-        allocation.BufferSize = alignedSize;
-        allocation.Offset = alignedOffset;
+        allocation.bufferSize = alignedSize;
+        allocation.offset = alignedOffset;
 
         mOffset = alignedOffset + alignedSize;
 

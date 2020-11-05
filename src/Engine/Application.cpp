@@ -1,13 +1,13 @@
 #include "Application.h"
 
 #include <View.h>
-#include <RenderContext.h>
-#include <SwapChain.h>
-#include <Game.h>
+#include <Render/RenderContext.h>
+#include <Render/SwapChain.h>
+#include <Render/Game.h>
 #include <Timer.h>
-#include <CommandQueue.h>
-#include <UIRenderContext.h>
-#include <Keyboard.h>
+#include <Render/CommandQueue.h>
+#include <Render/UIRenderContext.h>
+#include <IO/Keyboard.h>
 
 #include <Scene/SceneObject.h>
 #include <Scene/Loader/SceneLoader.h>
@@ -64,8 +64,9 @@ namespace Engine
 
     void Application::InitScene(UniquePtr<Scene::SceneObject> scene)
     {
-        auto camera = scene->registry->view<Scene::Components::CameraComponent>()[0];
-        scene->registry->emplace<Scene::Components::MovingComponent>(camera, Scene::Components::MovingComponent());
+        auto& registry = scene->GetRegistry();
+        auto camera = registry.view<Scene::Components::CameraComponent>()[0];
+        registry.emplace<Scene::Components::MovingComponent>(camera, Scene::Components::MovingComponent());
 
         scene->AddSystem(MakeUnique<Scene::Systems::WorldTransformSystem>());
         scene->AddSystem(MakeUnique<Scene::Systems::RenderSystem>(mRenderContext));

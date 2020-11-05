@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Resource.h>
+#include <Memory/Resource.h>
 #include <Memory/DescriptorAllocator.h>
 #include <Memory/DescriptorAllocation.h>
 #include <Scene/SceneForwards.h>

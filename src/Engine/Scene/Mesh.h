@@ -1,8 +1,8 @@
 #pragma once
 
 #include <Types.h>
-#include <IndexBuffer.h>
-#include <VertexBuffer.h>
+#include <Memory/IndexBuffer.h>
+#include <Memory/VertexBuffer.h>
 #include <Scene/SceneForwards.h>
 
 #include <d3d12.h>

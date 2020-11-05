@@ -7,11 +7,11 @@ namespace Engine::Scene::Components
 {
     struct RelationshipComponent
     {
-        Size ChildsCount{0};
-        entt::entity First{entt::null};
-       // entt::entity Prev{entt::null};
-        entt::entity Next{entt::null};
-        entt::entity Parent{entt::null};
+        Size childsCount{0};
+        Size depth{0};
+        entt::entity first{entt::null};
+        entt::entity next{entt::null};
+        entt::entity parent{entt::null};
     };
 
     struct Root

@@ -7,8 +7,7 @@ namespace Engine
 
     void Keyboard::KeyPressed(KeyEvent event)
     {
-         // Pitushok
-         mKeyState[event.Key] = (event.State == KeyEvent::KeyState::Pressed);
+         mKeyState[event.key] = (event.state == KeyEvent::KeyState::Pressed);
     }
 
     bool Keyboard::IsKeyPressed(KeyCode::Key key)

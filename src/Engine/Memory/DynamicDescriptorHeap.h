@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Types.h>
-#include <RootSignature.h>
+#include <Render/RootSignature.h>
 #include <d3dx12.h>
 
 #include <d3d12.h>
@@ -32,18 +32,18 @@ namespace Engine
         struct DescriptorTableCache
         {
             DescriptorTableCache()
-                : NumDescriptors(0), BaseDescriptor(nullptr)
+                : numDescriptors(0), baseDescriptor(nullptr)
             {
             }
 
             void Reset()
             {
-                NumDescriptors = 0;
-                BaseDescriptor = nullptr;
+                numDescriptors = 0;
+                baseDescriptor = nullptr;
             }
 
-            uint32 NumDescriptors;
-            D3D12_CPU_DESCRIPTOR_HANDLE *BaseDescriptor;
+            uint32 numDescriptors;
+            D3D12_CPU_DESCRIPTOR_HANDLE *baseDescriptor;
         };
 
         UniquePtr<D3D12_CPU_DESCRIPTOR_HANDLE[]> mDescriptorHandlesCache;

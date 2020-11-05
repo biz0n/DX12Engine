@@ -1,8 +1,9 @@
 #include "UISystem.h"
 
-#include <UIRenderContext.h>
-#include <RenderContext.h>
+#include <Render/UIRenderContext.h>
+#include <Render/RenderContext.h>
 
+#include <Scene/SceneObject.h>
 #include <Scene/Components/NameComponent.h>
 #include <Scene/Components/RelationshipComponent.h>
 #include <Scene/Components/MeshComponent.h>
@@ -26,8 +27,9 @@ namespace Engine::Scene::Systems
 
     UISystem::~UISystem() = default;
 
-    void UISystem::Process(entt::registry *registry, const Timer &timer)
+    void UISystem::Process(SceneObject *scene, const Timer &timer)
     {
+        auto& registry = scene->GetRegistry();
         static bool show_demo_window = true;
         if (show_demo_window)
             ImGui::ShowDemoWindow(&show_demo_window);
@@ -36,16 +38,17 @@ namespace Engine::Scene::Systems
 
         static entt::entity selectedEntity = entt::null;
         showChilds = [&registry, &showChilds](entt::entity e, Scene::Components::RelationshipComponent r) {
-            const auto &name = registry->get<Scene::Components::NameComponent>(e);
+            const auto &name = registry.get<Scene::Components::NameComponent>(e);
 
             const auto node_flags =
                 ImGuiTreeNodeFlags_OpenOnArrow |
                 ((selectedEntity == e) ? ImGuiTreeNodeFlags_Selected : 0) |
-                (r.First != entt::null ? 0 : (ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen));
+                (r.first != entt::null ? 0 : (ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen));
 
-            if (r.First == entt::null)
+            
+            if (r.first == entt::null)
             {
-                ImGui::TreeNodeEx((void *)(intptr_t)e, node_flags, name.Name.c_str());
+                ImGui::TreeNodeEx((void *)(intptr_t)e, node_flags, "%i: %s(%i)", e, name.Name.c_str(), r.depth);
                 if (ImGui::IsItemClicked())
                 {
                     selectedEntity = e;
@@ -53,19 +56,19 @@ namespace Engine::Scene::Systems
             }
             else
             {
-                bool isOpened = ImGui::TreeNodeEx((void *)(intptr_t)e, node_flags, name.Name.c_str());
+                bool isOpened = ImGui::TreeNodeEx((void *)(intptr_t)e, node_flags, "%i: %s(%i) [%i]", e, name.Name.c_str(), r.depth, r.childsCount);
                 if (ImGui::IsItemClicked())
                 {
                     selectedEntity = e;
                 }
                 if (isOpened)
                 {
-                    auto child = r.First;
+                    auto child = r.first;
                     while (child != entt::null)
                     {
-                        const auto &relationship = registry->get<Scene::Components::RelationshipComponent>(child);
+                        const auto &relationship = registry.get<Scene::Components::RelationshipComponent>(child);
                         showChilds(child, relationship);
-                        child = relationship.Next;
+                        child = relationship.next;
                     }
                     ImGui::TreePop();
                 }
@@ -81,10 +84,10 @@ namespace Engine::Scene::Systems
                 {
                     ImGui::BeginChild("Scene items area");
                     {
-                        const auto& roots = registry->view<Scene::Components::Root>();
+                        const auto& roots = registry.view<Scene::Components::Root>();
                         for (auto rootEntity : roots)
                         {
-                            const auto &relationship = registry->get<Scene::Components::RelationshipComponent>(rootEntity);
+                            const auto &relationship = registry.get<Scene::Components::RelationshipComponent>(rootEntity);
 
                             showChilds(rootEntity, relationship);
                         }
@@ -98,7 +101,13 @@ namespace Engine::Scene::Systems
                     {
                         for (auto &r : mComponentRenderers)
                         {
-                            r->RenderComponent(*registry, selectedEntity);
+                            if (r->HasComponent(registry, selectedEntity))
+                            {
+                                if (ImGui::CollapsingHeader(r->Name().c_str()))
+                                {
+                                    r->RenderComponent(registry, selectedEntity);
+                                }
+                            }
                         }
                     }
                     ImGui::EndChild();

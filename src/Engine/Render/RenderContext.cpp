@@ -3,12 +3,12 @@
 #include <Exceptions.h>
 #include <Memory/DescriptorAllocator.h>
 #include <Memory/DescriptorAllocation.h>
-#include <SwapChain.h>
-#include <CommandAllocatorPool.h>
-#include <UIRenderContext.h>
-#include <CommandListUtils.h>
-#include <CommandQueue.h>
-#include <Graphics.h>
+#include <Render/SwapChain.h>
+#include <Memory/CommandAllocatorPool.h>
+#include <Render/UIRenderContext.h>
+#include <Render/CommandListUtils.h>
+#include <Render/CommandQueue.h>
+#include <Render/Graphics.h>
 
 namespace Engine
 {

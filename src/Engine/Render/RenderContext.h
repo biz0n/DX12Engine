@@ -3,7 +3,7 @@
 #include <View.h>
 #include <Types.h>
 #include <Memory/MemoryForwards.h>
-#include <SwapChain.h>
+#include <Render/SwapChain.h>
 
 #include <d3d12.h>
 #include <dxgi1_6.h>

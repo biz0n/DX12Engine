@@ -3,6 +3,8 @@
 #include <Types.h>
 #include <d3d12.h>
 
+#include <vector>
+
 namespace Engine
 {
     class UploadBuffer
@@ -12,13 +14,19 @@ namespace Engine
         {
             Byte *CPU;
             D3D12_GPU_VIRTUAL_ADDRESS GPU;
-            Size BufferSize;
-            Size Offset;
+            Size bufferSize;
+            Size offset;
 
             template <typename T>
             void CopyTo(T *data)
             {
                 memcpy(CPU, data, sizeof(T));
+            }
+
+            template <typename T>
+            void CopyTo(const std::vector<T>& v)
+            {
+                memcpy(CPU, v.data(), sizeof(T) * v.size());
             }
         };
 

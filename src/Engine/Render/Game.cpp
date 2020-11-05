@@ -1,20 +1,18 @@
 #include "Game.h"
 
-#include <Utils.h>
 #include <stdlib.h>
 #include <ShaderTypes.h>
 
-#include <SwapChain.h>
+#include <Render/SwapChain.h>
 #include <Memory/UploadBuffer.h>
 #include <Memory/DynamicDescriptorHeap.h>
 #include <Memory/DescriptorAllocation.h>
 #include <Memory/DescriptorAllocator.h>
-#include <ResourceStateTracker.h>
-#include <RenderContext.h>
-#include <Keyboard.h>
+#include <Render/ResourceStateTracker.h>
+#include <Render/RenderContext.h>
 
-#include <CommandListUtils.h>
-#include <CommandQueue.h>
+#include <Render/CommandListUtils.h>
+#include <Render/CommandQueue.h>
 
 #include <Scene/Loader/SceneLoader.h>
 #include <Scene/SceneObject.h>
@@ -33,7 +31,7 @@
 
 #include <Render/ShaderCreationInfo.h>
 
-#include <RootSignature.h>
+#include <Render/RootSignature.h>
 
 #include <entt/entt.hpp>
 
@@ -55,8 +53,6 @@ namespace Engine
 
     bool Game::Initialize()
     {
-       // mDepthBufferDescriptor = mRenderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_DSV)->Allocate();
-
         auto cbvSrvUavDescriptorSize = mRenderContext->Device()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
         for (uint32 frameIndex = 0; frameIndex < SwapChain::SwapChainBufferCount; ++frameIndex)
@@ -132,12 +128,6 @@ namespace Engine
 
         mPipelineStateProvider = MakeUnique<Render::PipelineStateProvider>(mRenderContext->Device());
 
-        mScreenViewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(mCanvas->GetWidth()), static_cast<float>(mCanvas->GetHeight()));
-
-        mScissorRect = CD3DX12_RECT(0, 0, mCanvas->GetWidth(), mCanvas->GetHeight());
-
-        //ResizeDepthBuffer(mCanvas->GetWidth(), mCanvas->GetHeight());
-
         return true;
     }
 
@@ -184,9 +174,9 @@ namespace Engine
         return mPipelineStateProvider->CreatePipelineState(pipelineStateStream);
     }
 
-    void Game::UploadResources(entt::registry* registry)
+    void Game::UploadResources(Scene::SceneObject* scene)
     {
-        const auto& view = registry->view<Scene::Components::MeshComponent>();
+        const auto& view = scene->GetRegistry().view<Scene::Components::MeshComponent>();
 
         auto commandList = mRenderContext->CreateCopyCommandList();
 
@@ -260,7 +250,7 @@ namespace Engine
         commandList->DrawIndexedInstanced(static_cast<uint32>(mesh.indexBuffer->GetElementsCount()), 1, 0, 0, 0);
     }
 
-    void Game::Draw(const Timer &time, entt::registry* registry)
+    void Game::Draw(const Timer &time,Scene::SceneObject* scene)
     {
         auto commandList = mRenderContext->CreateGraphicsCommandList();
         commandList->SetName(L"Render scene List");
@@ -272,18 +262,11 @@ namespace Engine
         mFrameResources[currentBackBufferIndex].clear();
         auto resourceStateTracker = mRenderContext->GetResourceStateTracker();
 
-
-
         auto width = mCanvas->GetWidth();
         auto height = mCanvas->GetHeight();
-        auto oldWidth = mDepthBuffer != nullptr ? mDepthBuffer->GetDesc().Width : 0;
-        if (oldWidth < width)
-        {
-            auto a = 1;
-        }
 
         mDepthBufferDescriptor = mRenderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_DSV)->Allocate();
-        ResizeDepthBuffer(width, height);
+        CreateDepthBuffer(width, height);
         mFrameResources[currentBackBufferIndex].push_back(mDepthBuffer);
 
         auto backBuffer = mCanvas->GetCurrentBackBuffer();
@@ -306,17 +289,16 @@ namespace Engine
 
         commandList->OMSetRenderTargets(1, &rtv, false, &mDepthBufferDescriptor.GetDescriptor());
 
-
-        
         commandList->SetGraphicsRootSignature(mRootSignature->GetD3D12RootSignature().Get());
 
         mDynamicDescriptorHeaps[currentBackBufferIndex]->ParseRootSignature(mRootSignature.get());
 
         float aspectRatio = mCanvas->GetWidth() / static_cast<float>(mCanvas->GetHeight());
 
-        auto cameraEntity = registry->view<Scene::Components::CameraComponent>()[0];
-        auto camera = registry->get<Scene::Components::CameraComponent>(cameraEntity).camera;
-        auto cameraWT = registry->get<Scene::Components::WorldTransformComponent>(cameraEntity).transform;
+        auto& registry = scene->GetRegistry();
+        auto cameraEntity = registry.view<Scene::Components::CameraComponent>()[0];
+        auto camera = registry.get<Scene::Components::CameraComponent>(cameraEntity).camera;
+        auto cameraWT = registry.get<Scene::Components::WorldTransformComponent>(cameraEntity).transform;
 
         auto projectionMatrix = camera.GetProjectionMatrix(aspectRatio);
         dx::XMVECTOR up = dx::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
@@ -343,7 +325,7 @@ namespace Engine
 
         dx::XMStoreFloat3(&cb.EyePos, tr);
 
-        const auto& lightsView = registry->view<Scene::Components::LightComponent, Scene::Components::WorldTransformComponent>();
+        const auto& lightsView = registry.view<Scene::Components::LightComponent, Scene::Components::WorldTransformComponent>();
         std::vector<LightUniform> lights;
         lights.reserve(lightsView.size());
         for (auto &&[entity, lightComponent, transformComponent] : lightsView.proxy())
@@ -361,11 +343,12 @@ namespace Engine
         commandList->SetGraphicsRootConstantBufferView(1, cbAllocation.GPU);
 
         auto lightsAllocation = mUploadBuffer[currentBackBufferIndex]->Allocate(lights.size() * sizeof(LightUniform), sizeof(LightUniform));
-        memcpy(lightsAllocation.CPU, lights.data(), lights.size() * sizeof(LightUniform));
+
+        lightsAllocation.CopyTo(lights);
 
         commandList->SetGraphicsRootShaderResourceView(3, lightsAllocation.GPU);
 
-        const auto& meshsView = registry->view<Scene::Components::MeshComponent, Scene::Components::WorldTransformComponent>();
+        const auto& meshsView = registry.view<Scene::Components::MeshComponent, Scene::Components::WorldTransformComponent>();
         for (auto &&[entity, meshComponent, transformComponent] : meshsView.proxy())
         {
             Draw(commandList, meshComponent.mesh, transformComponent.transform, mUploadBuffer[currentBackBufferIndex]);
@@ -374,15 +357,7 @@ namespace Engine
         mRenderContext->GetGraphicsCommandQueue()->ExecuteCommandList(commandList);
     }
 
-    void Game::Resize(int32 width, int32 height)
-    {
-        mScreenViewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float32>(width), static_cast<float32>(height));
-        mScissorRect = CD3DX12_RECT(0, 0, width, height);
-
-        ResizeDepthBuffer(width, height);
-    }
-
-    void Game::ResizeDepthBuffer(int32 width, int32 height)
+    void Game::CreateDepthBuffer(int32 width, int32 height)
     {
         D3D12_CLEAR_VALUE optimizedClearValue = {};
         optimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;

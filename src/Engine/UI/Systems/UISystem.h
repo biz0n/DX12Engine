@@ -2,6 +2,7 @@
 
 #include <Types.h>
 #include <Scene/Systems/System.h>
+#include <Scene/SceneForwards.h>
 #include <UI/ComponentRenderers/ComponentRenderer.h>
 
 #include <vector>
@@ -21,7 +22,7 @@ namespace Engine::Scene::Systems
             UISystem(SharedPtr<RenderContext> renderContext, SharedPtr<UIRenderContext> uiRenderContext);
             ~UISystem() override;
         public:
-            void Process(entt::registry *registry, const Timer& timer) override;
+            void Process(SceneObject *scene, const Timer& timer) override;
 
         private:
             SharedPtr<UIRenderContext> mUIRenderContext;

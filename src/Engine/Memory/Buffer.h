@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Types.h>
-#include <Resource.h>
+#include <Memory/Resource.h>
 
 #include <vector>
 

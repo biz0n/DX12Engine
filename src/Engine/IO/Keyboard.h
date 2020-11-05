@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Events.h>
-#include <KeyCodes.h>
+#include <IO/KeyEvent.h>
+#include <io/KeyCodes.h>
 
 #include <bitset>
 

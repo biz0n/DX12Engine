@@ -65,7 +65,7 @@ namespace Engine::Scene::Loader
         UniquePtr<SceneObject> LoadScene(String path, Optional<float32> scale = {});
 
     private:
-        void ParseNode(const aiScene* aScene, const aiNode* aNode, SceneObject* scene, const LoadingContext& context, entt::entity entity, Engine::Scene::Components::RelationshipComponent* relationship);
+        void ParseNode(const aiScene* aScene, const aiNode* aNode, const LoadingContext& context, entt::entity entity, Engine::Scene::Components::RelationshipComponent* relationship);
         SharedPtr<Texture> GetTexture(const aiString& path, LoadingContext& context);
         SharedPtr<Texture> GetTexture(const aiTexture* aTexture, const LoadingContext& context);
         SharedPtr<Material> ParseMaterial(const aiMaterial* aMaterial, LoadingContext& context);

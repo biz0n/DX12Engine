@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Types.h>
+#include <Scene/SceneForwards.h>
 #include <Scene/Systems/System.h>
 
 
@@ -18,8 +19,8 @@ namespace Engine::Scene::Systems
             RenderSystem(SharedPtr<RenderContext> renderContext);
             ~RenderSystem() override;
         public:
-            void Init(entt::registry *registry) override;
-            void Process(entt::registry *registry, const Timer& timer) override;
+            void Init(SceneObject *scene) override;
+            void Process(SceneObject *scene, const Timer& timer) override;
 
         private:
             SharedPtr<RenderContext> mRenderContext;
