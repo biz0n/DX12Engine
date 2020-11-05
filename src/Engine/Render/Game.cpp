@@ -208,8 +208,10 @@ namespace Engine
             uint64 fenceValue = mRenderContext->GetCopyCommandQueue()->ExecuteCommandList(commandList);
 
             mRenderContext->GetGraphicsCommandQueue()->InsertWaitForQueue(mRenderContext->GetCopyCommandQueue());
-
-            mRenderContext->GetCopyCommandQueue()->WaitForFenceCPU(fenceValue);
+        }
+        else
+        {
+            commandList->Close();
         }
     }
 
