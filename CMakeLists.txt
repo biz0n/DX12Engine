@@ -34,6 +34,7 @@ set(GUI_TYPE WIN32)
 set(CMAKE_CXX_STANDARD 20)
 
 file(GLOB IMGUI "src/Libraries/imgui/imgui/*.cpp" "src/Libraries/imgui/imgui/*.h")
+file(GLOB PIX "src/Libraries/PIX/*.h")
 
 file(GLOB_RECURSE HEADERS "src/Engine/*.h")
 file(GLOB_RECURSE SOURCES "src/Engine/*.cpp")
@@ -52,7 +53,15 @@ target_include_directories(d3d12 PRIVATE "src/Libraries/D3DX12/")
 
 target_include_directories(d3d12 PRIVATE "src/Libraries/imgui/")
 
-target_link_libraries(d3d12 PRIVATE "d3d12.lib" "dxgi.lib" "d3dcompiler.lib" "dxguid.lib" "assimp" "DirectXTex" "EnTT")
+target_include_directories(d3d12 PRIVATE "src/Libraries/PIX/")
+
+target_link_libraries(d3d12 PRIVATE "d3d12.lib" "dxgi.lib" "d3dcompiler.lib" "dxguid.lib" "assimp" "DirectXTex" "EnTT" "${CMAKE_SOURCE_DIR}/src/Libraries/PIX/WinPixEventRuntime.lib")
+
+add_custom_command (TARGET d3d12 POST_BUILD
+# COPY
+COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/src/Libraries/PIX/WinPixEventRuntime.dll	 ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug
+# Output Message
+COMMENT "Copying PIX binaries" VERBATIM)
 
 set_source_files_properties( src/Engine/Resources/Shaders/Forward.hlsl PROPERTIES 
     VS_SHADER_TYPE Pixel
@@ -75,3 +84,4 @@ endfunction(assign_source_group)
 
 assign_source_group("${CMAKE_CURRENT_SOURCE_DIR}/src/Engine" ${SOURCES} ${HEADERS})
 assign_source_group("${CMAKE_CURRENT_SOURCE_DIR}/src/Libraries/imgui" ${IMGUI})
+assign_source_group("${CMAKE_CURRENT_SOURCE_DIR}/src/Libraries/PIX" ${PIX})

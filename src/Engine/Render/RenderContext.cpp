@@ -1,6 +1,7 @@
 #include "RenderContext.h"
 
 #include <Exceptions.h>
+#include <EventTracker.h>
 #include <Memory/DescriptorAllocator.h>
 #include <Memory/DescriptorAllocation.h>
 #include <Render/SwapChain.h>
@@ -12,7 +13,7 @@
 
 namespace Engine
 {
-    RenderContext::RenderContext(View view) : mFrameCount(0)
+    RenderContext::RenderContext(View view) : mFrameCount(0), mEventTracker{}
     {
         mGraphics = MakeUnique<Graphics>();
 

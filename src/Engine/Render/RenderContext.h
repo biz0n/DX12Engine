@@ -2,6 +2,7 @@
 
 #include <View.h>
 #include <Types.h>
+#include <EventTracker.h>
 #include <Memory/MemoryForwards.h>
 #include <Render/SwapChain.h>
 
@@ -41,6 +42,8 @@ namespace Engine
 
             SharedPtr<UIRenderContext> GetUIContext() const { return mUIRenderContext; }
 
+            EventTracker& GetEventTracker() {return mEventTracker; }
+
             uint64 GetFrameCount() const { return mFrameCount; }
 
             void BeginFrame();
@@ -78,6 +81,8 @@ namespace Engine
             SharedPtr<SwapChain> mSwapChain;
 
             SharedPtr<UIRenderContext> mUIRenderContext;
+
+            EventTracker mEventTracker;
 
             uint64 mFrameCount;
             uint64 mFenceValues[SwapChain::SwapChainBufferCount] = {0};
