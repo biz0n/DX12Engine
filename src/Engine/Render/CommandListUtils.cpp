@@ -92,12 +92,12 @@ namespace Engine::CommandListUtils
         }
 
         D3D12_RESOURCE_DESC desc = {};
-        desc.Width = static_cast<UINT>(metadata.width);
-        desc.Height = static_cast<UINT>(metadata.height);
-        desc.MipLevels = static_cast<UINT16>(metadata.mipLevels);
+        desc.Width = static_cast<uint32>(metadata.width);
+        desc.Height = static_cast<uint32>(metadata.height);
+        desc.MipLevels = static_cast<uint16>(metadata.mipLevels);
         desc.DepthOrArraySize = (metadata.dimension == DirectX::TEX_DIMENSION_TEXTURE3D)
-            ? static_cast<UINT16>(metadata.depth)
-            : static_cast<UINT16>(metadata.arraySize);
+            ? static_cast<uint16>(metadata.depth)
+            : static_cast<uint16>(metadata.arraySize);
         desc.Format = format;
         desc.Flags = D3D12_RESOURCE_FLAG_NONE;
         desc.SampleDesc.Count = 1;
@@ -119,7 +119,7 @@ namespace Engine::CommandListUtils
             metadata,
             subresources));
 
-        const UINT64 uploadBufferSize = GetRequiredIntermediateSize(
+        const uint64 uploadBufferSize = GetRequiredIntermediateSize(
             textureResource.Get(),
             0,
             static_cast<unsigned int>(subresources.size()));

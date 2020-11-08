@@ -47,7 +47,7 @@ namespace Engine::Scene
         */
         }
 
-        if (generateMips)
+        if (generateMips && scratch->GetMetadata().mipLevels == 1)
         {
             UniquePtr<DirectX::ScratchImage> mipChain = MakeUnique<DirectX::ScratchImage>();
             GenerateMipMaps(
@@ -61,9 +61,12 @@ namespace Engine::Scene
             scratch = std::move(mipChain);
         }
 
+       // DirectX::SaveToDDSFile(scratch->GetImages(),scratch->GetImageCount(), scratch->GetMetadata(), DirectX::DDS_FLAGS_NONE, dds.wstring().c_str());
+
         SharedPtr<Image> image = MakeShared<Image>();
         image->SetImage(std::move(scratch));
         image->SetName(path);
+
         return image;
     }
 
