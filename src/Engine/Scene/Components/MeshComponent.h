@@ -6,8 +6,8 @@
 
 namespace Engine::Scene::Components
 {
-	struct MeshComponent
-	{
-		Mesh mesh;
-	};
+    struct MeshComponent
+    {
+        Mesh mesh;
+    };
 }

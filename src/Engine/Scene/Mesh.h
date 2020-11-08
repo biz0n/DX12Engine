@@ -9,12 +9,12 @@
 
 namespace Engine::Scene
 {
-	class Mesh
-	{
-	public:
-		SharedPtr<IndexBuffer> indexBuffer;
-		SharedPtr<VertexBuffer> vertexBuffer;
-		SharedPtr<Material> material;
-		D3D_PRIMITIVE_TOPOLOGY primitiveTopology;
-	};
+    class Mesh
+    {
+    public:
+        SharedPtr<IndexBuffer> indexBuffer;
+        SharedPtr<VertexBuffer> vertexBuffer;
+        SharedPtr<Material> material;
+        D3D_PRIMITIVE_TOPOLOGY primitiveTopology;
+    };
 }
