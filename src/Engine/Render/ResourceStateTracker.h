@@ -33,13 +33,20 @@ namespace Engine
 
         void FlushBarriers(ComPtr<ID3D12GraphicsCommandList> commandList);
 
+        uint32 FlushPendingBarriers(ComPtr<ID3D12GraphicsCommandList> commandList);
+
+        void CommitFinalResourceStates();
+
         void TrackResource(ID3D12Resource *resource, D3D12_RESOURCE_STATES state);
 
         void UntrackResource(ID3D12Resource *resource);
 
     private:
         SharedPtr<GlobalResourceStateTracker> mGlobalReourceTracker;
+
         std::vector<D3D12_RESOURCE_BARRIER> mBarriers;
+        std::vector<D3D12_RESOURCE_BARRIER> mPendingBarriers;
+        std::unordered_map<ID3D12Resource *, D3D12_RESOURCE_STATES> mFinalStates;
     };
 
 } // namespace Engine

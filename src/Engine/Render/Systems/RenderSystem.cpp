@@ -1,21 +1,13 @@
 #include "RenderSystem.h"
 
-
-#include <Render/RenderContext.h>
-#include <Render/Game.h>
+#include <Render/SceneRenderer.h>
 
 #include <Scene/SceneObject.h>
-#include <Scene/Components/WorldTransformComponent.h>
-#include <Scene/Components/LightComponent.h>
-#include <Scene/Components/CameraComponent.h>
-#include <Scene/Components/MeshComponent.h>
-
-#include <entt/entt.hpp>
 
 namespace Engine::Scene::Systems
 {
-    RenderSystem::RenderSystem(SharedPtr<RenderContext> renderContext)
-     : mRenderContext(renderContext)
+    RenderSystem::RenderSystem(UniquePtr<Render::SceneRenderer> renderer)
+     : mRenderer(std::move(renderer))
      {
      }
     
@@ -23,13 +15,11 @@ namespace Engine::Scene::Systems
 
     void RenderSystem::Init(SceneObject *scene)
     {
-        mGame = MakeUnique<Game>(mRenderContext);
-        mGame->Initialize();
+        mRenderer->Initialize();
     }
 
     void RenderSystem::Process(SceneObject *scene, const Timer& timer)
     {   
-        mGame->UploadResources(scene);
-        mGame->Draw(timer, scene);
+        mRenderer->Render(scene, timer);
     }
 }

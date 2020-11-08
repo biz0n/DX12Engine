@@ -17,6 +17,8 @@ namespace Engine
 
         uint64 ExecuteCommandList(ID3D12GraphicsCommandList *commandList);
 
+        uint64 ExecuteCommandLists(Size count, ID3D12CommandList *const *commandLists);
+
         uint64 ExecuteCommandList(ComPtr<ID3D12GraphicsCommandList> commandList) { return ExecuteCommandList(commandList.Get()); }
 
         bool IsFenceCompleted(uint64 fenceValue);

@@ -5,10 +5,9 @@
 #include <Scene/Systems/System.h>
 
 
-namespace Engine
+namespace Engine::Render
 {
-    class RenderContext;
-    class Game;
+    class SceneRenderer;
 }
 
 namespace Engine::Scene::Systems
@@ -16,14 +15,13 @@ namespace Engine::Scene::Systems
     class RenderSystem : public System
     {
         public:
-            RenderSystem(SharedPtr<RenderContext> renderContext);
+            RenderSystem(UniquePtr<Render::SceneRenderer> renderer);
             ~RenderSystem() override;
         public:
             void Init(SceneObject *scene) override;
             void Process(SceneObject *scene, const Timer& timer) override;
 
         private:
-            SharedPtr<RenderContext> mRenderContext;
-            UniquePtr<Game> mGame;
+            UniquePtr<Render::SceneRenderer> mRenderer;
     };
 }

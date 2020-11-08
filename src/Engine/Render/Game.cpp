@@ -29,7 +29,7 @@
 #include <Scene/Components/LightComponent.h>
 #include <Scene/Components/AABBComponent.h>
 #include <Scene/Components/IsDisabledComponent.h>
-
+#include <Render/SceneRenderer.h>
 
 #include <Render/ShaderCreationInfo.h>
 
@@ -44,24 +44,19 @@
 
 namespace Engine
 {
-    Game::Game(SharedPtr<RenderContext> renderContext)
-        : mRenderContext(renderContext), mCanvas(renderContext->GetSwapChain())
+    Game::Game()
     {
     }
 
     Game::~Game()
     {
-        CommandListUtils::ClearCache();
     }
 
-    bool Game::Initialize()
+    bool Game::Initialize(SharedPtr<RenderContext> renderContext)
     {
-        auto cbvSrvUavDescriptorSize = mRenderContext->Device()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-        for (uint32 frameIndex = 0; frameIndex < SwapChain::SwapChainBufferCount; ++frameIndex)
+        for (uint32 frameIndex = 0; frameIndex < EngineConfig::SwapChainBufferCount; ++frameIndex)
         {
-            mDynamicDescriptorHeaps[frameIndex] = MakeShared<DynamicDescriptorHeap>(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, cbvSrvUavDescriptorSize);
-            mUploadBuffer[frameIndex] = MakeShared<UploadBuffer>(mRenderContext->Device().Get(), 512 * 1024 * 1024);
+            _mUploadBuffer[frameIndex] = MakeShared<UploadBuffer>(renderContext->Device().Get(), 512 * 1024 * 1024);
         }
 
         mShaderProvider = MakeUnique<Render::ShaderProvider>();
@@ -127,9 +122,9 @@ namespace Engine
         rootSigDesc.Init_1_1(_countof(rootParameters), rootParameters, 1, &sampler,
                              D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
-        mRootSignature = MakeUnique<RootSignature>(mRenderContext->Device(), &rootSigDesc);
+        mRootSignature = MakeUnique<RootSignature>(renderContext->Device(), &rootSigDesc);
 
-        mPipelineStateProvider = MakeUnique<Render::PipelineStateProvider>(mRenderContext->Device());
+        mPipelineStateProvider = MakeUnique<Render::PipelineStateProvider>(renderContext->Device());
 
         return true;
     }
@@ -138,7 +133,7 @@ namespace Engine
     {
     }
 
-    ComPtr<ID3D12PipelineState> Game::CreatePipelineState(const Scene::Mesh& mesh)
+    ComPtr<ID3D12PipelineState> Game::CreatePipelineState(const Scene::Mesh& mesh, SharedPtr<RenderContext> renderContext)
     {
         auto inputLayout = Scene::Vertex::GetInputLayout();
 
@@ -151,7 +146,7 @@ namespace Engine
 
         D3D12_RT_FORMAT_ARRAY rtvFormats = {};
         rtvFormats.NumRenderTargets = 1;
-        rtvFormats.RTFormats[0] = mRenderContext->GetSwapChain()->GetCurrentBackBuffer()->GetDesc().Format;
+        rtvFormats.RTFormats[0] = renderContext->GetSwapChain()->GetCurrentBackBuffer()->GetDesc().Format;
 
         CD3DX12_RASTERIZER_DESC rasterizer = {};
         rasterizer.FillMode = D3D12_FILL_MODE_SOLID;
@@ -177,15 +172,18 @@ namespace Engine
         return mPipelineStateProvider->CreatePipelineState(pipelineStateStream);
     }
 
-    void Game::UploadResources(Scene::SceneObject* scene)
+    void Game::UploadResources(Scene::SceneObject* scene, SharedPtr<RenderContext> renderContext)
     {
         const auto& view = scene->GetRegistry().view<Scene::Components::MeshComponent>();
 
-        auto commandList = mRenderContext->CreateCopyCommandList();
+        auto stateTracker = MakeShared<ResourceStateTracker>(renderContext->GetGlobalResourceStateTracker());
+
+        auto commandList = renderContext->CreateCopyCommandList();
 
         commandList->SetName(L"Uploading resources List");
 
-        auto uploadBuffer = mUploadBuffer[mRenderContext->GetCurrentBackBufferIndex()];
+        auto uploadBuffer = _mUploadBuffer[renderContext->GetCurrentBackBufferIndex()];
+        uploadBuffer->Reset();
         bool anythingToLoad = false;
 
         for (auto &&[entity, meshComponent] : view.proxy())
@@ -194,30 +192,48 @@ namespace Engine
             if (!mesh.vertexBuffer->GetD3D12Resource())
             {
                 anythingToLoad = anythingToLoad || true;
-                CommandListUtils::UploadVertexBuffer(mRenderContext, commandList, *mesh.vertexBuffer, uploadBuffer);
+                CommandListUtils::UploadVertexBuffer(renderContext, commandList, stateTracker, *mesh.vertexBuffer, uploadBuffer);
             }
             if (!mesh.indexBuffer->GetD3D12Resource())
             {
                 anythingToLoad = anythingToLoad || true;
-                CommandListUtils::UploadIndexBuffer(mRenderContext, commandList, *mesh.indexBuffer, uploadBuffer);
+                CommandListUtils::UploadIndexBuffer(renderContext, commandList, stateTracker, *mesh.indexBuffer, uploadBuffer);
             }
-            anythingToLoad = CommandListUtils::UploadMaterialTextures(mRenderContext, commandList, mesh.material, uploadBuffer) || anythingToLoad;
+            anythingToLoad = CommandListUtils::UploadMaterialTextures(renderContext, commandList, stateTracker, mesh.material, uploadBuffer) || anythingToLoad;
+        }
+
+        std::vector<ID3D12CommandList*> commandLists;
+
+        auto barriersCommandList = renderContext->CreateCopyCommandList();
+
+        auto barriers = stateTracker->FlushPendingBarriers(barriersCommandList);
+        stateTracker->CommitFinalResourceStates();
+
+        barriersCommandList->Close();
+        commandList->Close();
+
+        if (barriers > 0)
+        {
+            commandLists.push_back(barriersCommandList.Get());
         }
 
         if (anythingToLoad)
         {
-            uint64 fenceValue = mRenderContext->GetCopyCommandQueue()->ExecuteCommandList(commandList);
-
-            mRenderContext->GetGraphicsCommandQueue()->InsertWaitForQueue(mRenderContext->GetCopyCommandQueue());
+            commandLists.push_back(commandList.Get());
         }
-        else
+
+        if (commandLists.size() > 0)
         {
-            commandList->Close();
+            uint64 fenceValue = renderContext->GetCopyCommandQueue()->ExecuteCommandLists(commandLists.size(), commandLists.data());
+
+            renderContext->GetGraphicsCommandQueue()->InsertWaitForQueue(renderContext->GetCopyCommandQueue(), fenceValue);
         }
     }
 
-    void Game::Draw(ComPtr<ID3D12GraphicsCommandList> commandList, const Scene::Mesh& mesh, const dx::XMMATRIX& world, SharedPtr<UploadBuffer> buffer)
+    void Game::Draw(ComPtr<ID3D12GraphicsCommandList> commandList, const Scene::Mesh& mesh, const dx::XMMATRIX& world, Render::PassContext& passContext)
     {
+        auto renderContext = passContext.renderContext;
+
         DirectX::XMMATRIX tWorld = DirectX::XMMatrixTranspose(world);
         auto d = DirectX::XMMatrixDeterminant(tWorld);
         DirectX::XMMATRIX tWorldInverseTranspose = DirectX::XMMatrixInverse(&d, tWorld);
@@ -226,62 +242,60 @@ namespace Engine
         DirectX::XMStoreFloat4x4(&cb.World, tWorld);
         DirectX::XMStoreFloat4x4(&cb.InverseTranspose, tWorldInverseTranspose);
 
-        auto cbAllocation = buffer->Allocate(sizeof(MeshUniform));
+        auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(MeshUniform));
         cbAllocation.CopyTo(&cb);
 
         commandList->SetGraphicsRootConstantBufferView(0, cbAllocation.GPU);
 
-        auto dynamicDescriptorHeap = mDynamicDescriptorHeaps[mCanvas->GetCurrentBackBufferIndex()];
-        auto resourceStateTracker = mRenderContext->GetResourceStateTracker();
+        auto dynamicDescriptorHeap = passContext.frameContext->dynamicDescriptorHeap;
+        auto resourceStateTracker = passContext.resourceStateTracker;
 
 
-        commandList->SetPipelineState(CreatePipelineState(mesh).Get());
+        commandList->SetPipelineState(CreatePipelineState(mesh, renderContext).Get());
 
         commandList->IASetPrimitiveTopology(mesh.primitiveTopology);
 
 
         CommandListUtils::BindMaterial(
-            mRenderContext, 
-            commandList, buffer, 
+            renderContext, 
+            commandList, 
+            resourceStateTracker,
+            passContext.frameContext->uploadBuffer, 
             dynamicDescriptorHeap, 
             mesh.material);
         CommandListUtils::BindVertexBuffer(commandList, resourceStateTracker, *mesh.vertexBuffer);
         CommandListUtils::BindIndexBuffer(commandList, resourceStateTracker, *mesh.indexBuffer);
 
-        resourceStateTracker->FlushBarriers(commandList);
 
-        dynamicDescriptorHeap->CommitStagedDescriptors(mRenderContext->Device(), commandList);
+        dynamicDescriptorHeap->CommitStagedDescriptors(renderContext->Device(), commandList);
 
         commandList->DrawIndexedInstanced(static_cast<uint32>(mesh.indexBuffer->GetElementsCount()), 1, 0, 0, 0);
     }
 
-    void Game::Draw(const Timer &time,Scene::SceneObject* scene)
+    void Game::Draw(Render::PassContext& passContext)
     {
-        auto commandList = mRenderContext->CreateGraphicsCommandList();
+        auto renderContext = passContext.renderContext;
+        auto canvas = renderContext->GetSwapChain();
+
+        auto commandList = passContext.commandList;
         commandList->SetName(L"Render scene List");
 
-        mRenderContext->GetEventTracker().StartGPUEvent("Render scene list", commandList);
+        renderContext->GetEventTracker().StartGPUEvent("Render scene list", commandList);
 
-        auto currentBackBufferIndex = mCanvas->GetCurrentBackBufferIndex();
+        auto resourceStateTracker = passContext.resourceStateTracker;
 
-        mUploadBuffer[currentBackBufferIndex]->Reset();
-        mDynamicDescriptorHeaps[currentBackBufferIndex]->Reset();
-        mFrameResources[currentBackBufferIndex].clear();
-        auto resourceStateTracker = mRenderContext->GetResourceStateTracker();
+        auto width = canvas->GetWidth();
+        auto height = canvas->GetHeight();
 
-        auto width = mCanvas->GetWidth();
-        auto height = mCanvas->GetHeight();
+        mDepthBufferDescriptor = renderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_DSV)->Allocate();
+        CreateDepthBuffer(width, height, renderContext->Device());
+        passContext.frameContext->usingResources.push_back(mDepthBuffer);
 
-        mDepthBufferDescriptor = mRenderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_DSV)->Allocate();
-        CreateDepthBuffer(width, height);
-        mFrameResources[currentBackBufferIndex].push_back(mDepthBuffer);
+        auto backBuffer = canvas->GetCurrentBackBuffer();
 
-        auto backBuffer = mCanvas->GetCurrentBackBuffer();
+        auto rtv = canvas->GetCurrentRenderTargetView();
 
-        auto rtv = mCanvas->GetCurrentRenderTargetView();
-
-        resourceStateTracker->FlushBarriers(commandList);
-        
+        CommandListUtils::TransitionBarrier(resourceStateTracker, canvas->GetCurrentBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET);
 
         auto screenViewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float32>(width), static_cast<float32>(height));
         auto scissorRect = CD3DX12_RECT(0, 0, width, height);
@@ -298,11 +312,11 @@ namespace Engine
 
         commandList->SetGraphicsRootSignature(mRootSignature->GetD3D12RootSignature().Get());
 
-        mDynamicDescriptorHeaps[currentBackBufferIndex]->ParseRootSignature(mRootSignature.get());
+        passContext.frameContext->dynamicDescriptorHeap->ParseRootSignature(mRootSignature.get());
 
-        float aspectRatio = mCanvas->GetWidth() / static_cast<float>(mCanvas->GetHeight());
+        float aspectRatio = canvas->GetWidth() / static_cast<float>(canvas->GetHeight());
 
-        auto& registry = scene->GetRegistry();
+        auto& registry = passContext.scene->GetRegistry();
         auto cameraEntity = registry.view<Scene::Components::CameraComponent>()[0];
         auto camera = registry.get<Scene::Components::CameraComponent>(cameraEntity).camera;
         auto cameraWT = registry.get<Scene::Components::WorldTransformComponent>(cameraEntity).transform;
@@ -344,12 +358,12 @@ namespace Engine
 
         cb.LightsCount = static_cast<uint32>(lights.size());
 
-        auto cbAllocation = mUploadBuffer[currentBackBufferIndex]->Allocate(sizeof(FrameUniform));
+        auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(FrameUniform));
         cbAllocation.CopyTo(&cb);
 
         commandList->SetGraphicsRootConstantBufferView(1, cbAllocation.GPU);
 
-        auto lightsAllocation = mUploadBuffer[currentBackBufferIndex]->Allocate(lights.size() * sizeof(LightUniform), sizeof(LightUniform));
+        auto lightsAllocation = passContext.frameContext->uploadBuffer->Allocate(lights.size() * sizeof(LightUniform), sizeof(LightUniform));
 
         lightsAllocation.CopyTo(lights);
 
@@ -368,22 +382,20 @@ namespace Engine
 
             if (frustum.Intersects(b))
             {
-                Draw(commandList, meshComponent.mesh, transformComponent.transform, mUploadBuffer[currentBackBufferIndex]);
+                Draw(commandList, meshComponent.mesh, transformComponent.transform, passContext);
             }
         }
 
-        mRenderContext->GetEventTracker().EndGPUEvent(commandList);
-
-        mRenderContext->GetGraphicsCommandQueue()->ExecuteCommandList(commandList);
+        renderContext->GetEventTracker().EndGPUEvent(commandList);
     }
 
-    void Game::CreateDepthBuffer(int32 width, int32 height)
+    void Game::CreateDepthBuffer(int32 width, int32 height, ComPtr<ID3D12Device> device)
     {
         D3D12_CLEAR_VALUE optimizedClearValue = {};
         optimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
         optimizedClearValue.DepthStencil = {1.0f, 0};
 
-        ThrowIfFailed(mRenderContext->Device()->CreateCommittedResource(
+        ThrowIfFailed(device->CreateCommittedResource(
             &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
             D3D12_HEAP_FLAG_NONE,
             &CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, width, height, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE),
@@ -397,7 +409,7 @@ namespace Engine
         dsv.Texture2D.MipSlice = 0;
         dsv.Flags = D3D12_DSV_FLAG_NONE;
 
-        mRenderContext->Device()->CreateDepthStencilView(
+        device->CreateDepthStencilView(
             mDepthBuffer.Get(),
             &dsv,
             mDepthBufferDescriptor.GetDescriptor());

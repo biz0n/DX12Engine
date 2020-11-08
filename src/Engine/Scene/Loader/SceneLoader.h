@@ -34,8 +34,8 @@ namespace Engine::Scene::Loader
             String RootPath;
             std::vector<std::tuple<String, Mesh, dx::BoundingBox>> meshes;
             std::vector<SharedPtr<Material>> materials;
-            std::vector<SharedPtr<Texture>> textures;
-            std::unordered_map<String, SharedPtr<Scene::Image>> images;
+            std::vector<SharedPtr<Texture>> dataTextures;
+            std::unordered_map<String, SharedPtr<Scene::Texture>> fileTextures;
             std::unordered_map<String, aiLight*> lightsMap;
             std::unordered_map<String, aiCamera*> camerasMap;
 

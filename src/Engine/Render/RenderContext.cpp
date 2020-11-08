@@ -40,16 +40,15 @@ namespace Engine
             mGlobalResourceStateTracker,
             GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_RTV), mDirrectCommandQueue->D3D12CommandQueue());
 
-        for (auto frameIndex = 0; frameIndex < SwapChain::SwapChainBufferCount; ++frameIndex)
+        for (auto frameIndex = 0; frameIndex < EngineConfig::SwapChainBufferCount; ++frameIndex)
         {
-            mCommandAllocators[frameIndex] = MakeUnique<CommandAllocatorPool>(Device(), 3);
-            mResourceStateTrackers[frameIndex] = MakeShared<ResourceStateTracker>(mGlobalResourceStateTracker);
+            mCommandAllocators[frameIndex] = MakeUnique<CommandAllocatorPool>(Device(), 0);
         }
 
         mUIRenderContext = MakeShared<UIRenderContext>(
             view,
             Device(),
-            SwapChain::SwapChainBufferCount,
+            EngineConfig::SwapChainBufferCount,
             mSwapChain->GetCurrentBackBuffer()->GetDesc().Format);
     }
 
@@ -114,36 +113,54 @@ namespace Engine
 
         ++mFrameCount;
 
-        // Temporary solution. Each command queue must have it's own resource tracker
-        auto uiCommandList = CreateGraphicsCommandList();
-        uiCommandList->SetName(L"UI Render List");
-        auto resourceStateTracker = mResourceStateTrackers[currentBackBufferIndex];
-        CommandListUtils::TransitionBarrier(resourceStateTracker, mSwapChain->GetCurrentBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET);
-        resourceStateTracker->FlushBarriers(uiCommandList);
-        GetGraphicsCommandQueue()->ExecuteCommandList(uiCommandList);
-
         mUIRenderContext->BeginFrame();
     }
 
     void RenderContext::EndFrame()
     {       
         auto currentBackBufferIndex = mSwapChain->GetCurrentBackBufferIndex();
-        auto resourceStateTracker = mResourceStateTrackers[currentBackBufferIndex];
+        auto resourceStateTracker = MakeShared<ResourceStateTracker>(mGlobalResourceStateTracker);
 
         auto uiCommandList = CreateGraphicsCommandList();
         uiCommandList->SetName(L"UI Render List");
 
+        CommandListUtils::TransitionBarrier(resourceStateTracker, mSwapChain->GetCurrentBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET);
+
         auto rtv = mSwapChain->GetCurrentRenderTargetView();
         uiCommandList->OMSetRenderTargets(1, &rtv, false, nullptr);
 
-        resourceStateTracker->FlushBarriers(uiCommandList);
+        //resourceStateTracker->FlushBarriers(uiCommandList);
         mUIRenderContext->Draw(uiCommandList);
 
-        CommandListUtils::TransitionBarrier(resourceStateTracker, mSwapChain->GetCurrentBackBuffer(), D3D12_RESOURCE_STATE_PRESENT);
-
         resourceStateTracker->FlushBarriers(uiCommandList);
+        uiCommandList->Close();
 
-        mFenceValues[currentBackBufferIndex] = GetGraphicsCommandQueue()->ExecuteCommandList(uiCommandList);
+        auto prePassCommandList = CreateGraphicsCommandList();
+
+        auto barriers = resourceStateTracker->FlushPendingBarriers(prePassCommandList);
+        resourceStateTracker->CommitFinalResourceStates();
+
+        prePassCommandList->Close();
+        
+
+        std::vector<ID3D12CommandList*> commandLists;
+
+        if (barriers > 0)
+        {
+            commandLists.push_back(prePassCommandList.Get());
+        }
+        commandLists.push_back(uiCommandList.Get());
+
+        auto postPassCommandList = CreateGraphicsCommandList();
+        CommandListUtils::TransitionBarrier(resourceStateTracker, mSwapChain->GetCurrentBackBuffer(), D3D12_RESOURCE_STATE_PRESENT);
+        resourceStateTracker->FlushPendingBarriers(postPassCommandList);
+        resourceStateTracker->CommitFinalResourceStates();
+        postPassCommandList->Close();
+
+        commandLists.push_back(postPassCommandList.Get());
+
+
+        mFenceValues[currentBackBufferIndex] = GetGraphicsCommandQueue()->ExecuteCommandLists(commandLists.size(), commandLists.data());
         mFrameValues[currentBackBufferIndex] = GetFrameCount();
 
         currentBackBufferIndex = mSwapChain->Present();

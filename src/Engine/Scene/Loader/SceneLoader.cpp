@@ -79,12 +79,12 @@ namespace Engine::Scene::Loader
         context.RootPath = filePath.parent_path().string();
         context.registry = &scene->GetRegistry();
 
-        context.textures.reserve(aScene->mNumTextures);
+        context.dataTextures.reserve(aScene->mNumTextures);
         for (uint32 i = 0; i < aScene->mNumTextures; ++i)
         {
             aiTexture *aTexture = aScene->mTextures[i];
             auto texture = GetTexture(aTexture, context);
-            context.textures.push_back(texture);
+            context.dataTextures.push_back(texture);
         }
 
         context.materials.reserve(static_cast<Size>(aScene->mNumMaterials));
@@ -155,7 +155,7 @@ namespace Engine::Scene::Loader
         addLight(pointLight1, DirectX::XMMatrixTranslation(4.0f, 5.0f, -2.0f), "Custom light 1");
 
         PunctualLight pointLight2;
-        pointLight2.SetColor({50.0f, 50.0f, 50.0f});
+        pointLight2.SetColor({20.0f, 20.0f, 20.0f});
         pointLight2.SetQuadraticAttenuation(1.0f);
         pointLight2.SetEnabled(true);
         pointLight2.SetLightType(LightType::PointLight);
@@ -489,30 +489,29 @@ namespace Engine::Scene::Loader
         {
             std::filesystem::path filePath = context.RootPath + "\\" + path.C_Str();
 
-            SharedPtr<Scene::Image> image;
             String filePathStr = filePath.string();
-            auto iter = context.images.find(filePathStr);
-            if (iter != context.images.end())
+            auto iter = context.fileTextures.find(filePathStr);
+            if (iter != context.fileTextures.end())
             {
-                image = iter->second;
+                return iter->second;
             }
             else
             {
                 if (std::filesystem::exists(filePath))
                 {
-                    image = Scene::Image::LoadImageFromFile(filePathStr);
-                    context.images[filePathStr] = image;
+                    auto image = Scene::Image::LoadImageFromFile(filePathStr);
+                    SharedPtr<Texture> texture = MakeShared<Texture>(StringToWString(image->GetName()));
+                    texture->SetImage(image);        
+                    context.fileTextures[filePathStr] = texture;
+
+                    return texture;
                 }
             }
-
-            SharedPtr<Texture> texture = MakeShared<Texture>(StringToWString(image->GetName()));
-            texture->SetImage(image);
-            return texture;
         }
         else
         {
             int index = atoi(path.C_Str() + 1);
-            return context.textures[index];
+            return context.dataTextures[index];
         }
 
         return nullptr;

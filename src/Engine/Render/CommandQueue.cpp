@@ -42,6 +42,19 @@ namespace Engine
         return mFenceNextValue++;
     }
 
+    uint64 CommandQueue::ExecuteCommandLists(Size count, ID3D12CommandList *const *commandLists)
+    {
+        if (count > 0)
+        {
+            mCommandQueue->ExecuteCommandLists(static_cast<uint32>(count), commandLists);
+
+            ThrowIfFailed(mCommandQueue->Signal(mFence.Get(), mFenceNextValue));
+
+            return mFenceNextValue++;
+        }
+        return mFenceNextValue;
+    }
+
     bool CommandQueue::IsFenceCompleted(uint64 fenceValue)
     {
         if (fenceValue > mFenceValue)

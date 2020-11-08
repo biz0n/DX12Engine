@@ -1,9 +1,5 @@
 #include "EventTracker.h"
 
-#if defined(DEBUG) || defined(_DEBUG)
-#define USE_PIX
-#endif
-
 #include <pix3.h>
 
 namespace Engine

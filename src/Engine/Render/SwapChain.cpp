@@ -62,7 +62,7 @@ namespace Engine
         mWidth = width;
         mHeight = height;
 
-        for (uint32 i = 0; i < SwapChainBufferCount; ++i)
+        for (uint32 i = 0; i < EngineConfig::SwapChainBufferCount; ++i)
         {
             mResourceStateTracker->UntrackResource(mBackBuffers[i].Get());
             mBackBuffers[i].Reset();
@@ -70,7 +70,7 @@ namespace Engine
 
         DXGI_SWAP_CHAIN_DESC desc = {};
         ThrowIfFailed(mSwapChain->GetDesc(&desc));
-        ThrowIfFailed(mSwapChain->ResizeBuffers(SwapChainBufferCount, width, height, desc.BufferDesc.Format, desc.Flags));
+        ThrowIfFailed(mSwapChain->ResizeBuffers(EngineConfig::SwapChainBufferCount, width, height, desc.BufferDesc.Format, desc.Flags));
 
         mCurrentBackBufferIndex = mSwapChain->GetCurrentBackBufferIndex();
 
@@ -92,7 +92,7 @@ namespace Engine
         sd.SampleDesc = {1, 0};
 
         sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-        sd.BufferCount = SwapChainBufferCount;
+        sd.BufferCount = EngineConfig::SwapChainBufferCount;
         sd.Windowed = true;
 
         sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
@@ -112,8 +112,8 @@ namespace Engine
 
     void SwapChain::UpdateBackBuffers()
     {
-        mBackBufferAllocation = mRTVDescriptorAllocator->Allocate(SwapChainBufferCount);
-        for (uint32 i = 0; i < SwapChainBufferCount; ++i)
+        mBackBufferAllocation = mRTVDescriptorAllocator->Allocate(EngineConfig::SwapChainBufferCount);
+        for (uint32 i = 0; i < EngineConfig::SwapChainBufferCount; ++i)
         {
             ComPtr<ID3D12Resource> backBuffer;
             ThrowIfFailed(mSwapChain->GetBuffer(i, IID_PPV_ARGS(&backBuffer)));

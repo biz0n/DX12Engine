@@ -18,45 +18,45 @@
 
 namespace Engine
 {
+    namespace Render
+    {
+        class PassContext;
+    }
+
     class SwapChain;
     class RenderContext;
 
     class Game
     {
     public:
-        Game(SharedPtr<RenderContext> renderContext);
+        Game();
         ~Game();
 
-        bool Initialize();
+        bool Initialize(SharedPtr<RenderContext> renderContext);
 
-        void UploadResources(Scene::SceneObject* scene);
-        void Draw(const Timer &time, Scene::SceneObject* scene);
+        void UploadResources(Scene::SceneObject* scene, SharedPtr<RenderContext> renderContext);
+        void Draw(Render::PassContext& passContext);
 
         void Deinitialize();
 
     private:
 
-        void CreateDepthBuffer(int32 width, int32 height);
+        void CreateDepthBuffer(int32 width, int32 height, ComPtr<ID3D12Device> device);
 
-        void Draw(ComPtr<ID3D12GraphicsCommandList> commandList, const Scene::Mesh& node, const dx::XMMATRIX& world, SharedPtr<UploadBuffer> buffer);
+        void Draw(ComPtr<ID3D12GraphicsCommandList> commandList, const Scene::Mesh& node, const dx::XMMATRIX& world, Render::PassContext& passContext);
 
-        ComPtr<ID3D12PipelineState> CreatePipelineState(const Scene::Mesh& mesh);
+        ComPtr<ID3D12PipelineState> CreatePipelineState(const Scene::Mesh& mesh, SharedPtr<RenderContext> renderContext);
 
     private:
 
-        SharedPtr<DynamicDescriptorHeap> mDynamicDescriptorHeaps[SwapChain::SwapChainBufferCount];
-        SharedPtr<UploadBuffer> mUploadBuffer[SwapChain::SwapChainBufferCount];
-        std::vector<ComPtr<ID3D12Resource>> mFrameResources[SwapChain::SwapChainBufferCount];
+        SharedPtr<UploadBuffer> _mUploadBuffer[EngineConfig::SwapChainBufferCount];
 
     private:
         UniquePtr<RootSignature> mRootSignature;
-        ComPtr<ID3D12PipelineState> mPipelineState;
 
         ComPtr<ID3D12Resource> mDepthBuffer;
         DescriptorAllocation mDepthBufferDescriptor;
 
-        SharedPtr<SwapChain> mCanvas;
-        SharedPtr<RenderContext> mRenderContext;
         UniquePtr<Render::PipelineStateProvider> mPipelineStateProvider;
         UniquePtr<Render::ShaderProvider> mShaderProvider;
     };

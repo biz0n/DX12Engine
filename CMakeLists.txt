@@ -59,7 +59,7 @@ target_link_libraries(d3d12 PRIVATE "d3d12.lib" "dxgi.lib" "d3dcompiler.lib" "dx
 
 add_custom_command (TARGET d3d12 POST_BUILD
 # COPY
-COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/src/Libraries/PIX/WinPixEventRuntime.dll	 ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug
+COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/src/Libraries/PIX/WinPixEventRuntime.dll ${CMAKE_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE}
 # Output Message
 COMMENT "Copying PIX binaries" VERBATIM)
 

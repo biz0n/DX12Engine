@@ -38,7 +38,7 @@ namespace Engine
 
             SharedPtr<SwapChain> GetSwapChain() const { return mSwapChain; }
 
-            SharedPtr<ResourceStateTracker> GetResourceStateTracker() const { return mResourceStateTrackers[mSwapChain->GetCurrentBackBufferIndex()]; }
+            SharedPtr<GlobalResourceStateTracker> GetGlobalResourceStateTracker() const { return mGlobalResourceStateTracker ;}
 
             SharedPtr<UIRenderContext> GetUIContext() const { return mUIRenderContext; }
 
@@ -75,8 +75,7 @@ namespace Engine
             SharedPtr<CommandQueue> mComputeCommandQueue;
             SharedPtr<CommandQueue> mCopyCommandQueue;
 
-            UniquePtr<CommandAllocatorPool> mCommandAllocators[SwapChain::SwapChainBufferCount];
-            SharedPtr<ResourceStateTracker> mResourceStateTrackers[SwapChain::SwapChainBufferCount];
+            UniquePtr<CommandAllocatorPool> mCommandAllocators[EngineConfig::SwapChainBufferCount];
 
             SharedPtr<SwapChain> mSwapChain;
 
@@ -85,7 +84,7 @@ namespace Engine
             EventTracker mEventTracker;
 
             uint64 mFrameCount;
-            uint64 mFenceValues[SwapChain::SwapChainBufferCount] = {0};
-            uint64 mFrameValues[SwapChain::SwapChainBufferCount] = {0};
+            uint64 mFenceValues[EngineConfig::SwapChainBufferCount] = {0};
+            uint64 mFrameValues[EngineConfig::SwapChainBufferCount] = {0};
     };
 }
