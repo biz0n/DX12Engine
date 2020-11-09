@@ -7,21 +7,21 @@
 
 namespace Engine::Render
 {
-    class SceneRenderer;
+    class MeshRenderer;
 }
 
 namespace Engine::Scene::Systems
 {
-    class RenderSystem : public System
+    class MeshRenderSystem : public System
     {
         public:
-            RenderSystem(UniquePtr<Render::SceneRenderer> renderer);
-            ~RenderSystem() override;
+            MeshRenderSystem(UniquePtr<Render::MeshRenderer> renderer);
+            ~MeshRenderSystem() override;
         public:
             void Init(SceneObject *scene) override;
             void Process(SceneObject *scene, const Timer& timer) override;
 
         private:
-            UniquePtr<Render::SceneRenderer> mRenderer;
+            UniquePtr<Render::MeshRenderer> mRenderer;
     };
 }

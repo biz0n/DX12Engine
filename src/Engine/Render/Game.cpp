@@ -29,7 +29,7 @@
 #include <Scene/Components/LightComponent.h>
 #include <Scene/Components/AABBComponent.h>
 #include <Scene/Components/IsDisabledComponent.h>
-#include <Render/SceneRenderer.h>
+#include <Render/MeshRenderer.h>
 
 #include <Render/ShaderCreationInfo.h>
 
@@ -58,8 +58,6 @@ namespace Engine
         {
             _mUploadBuffer[frameIndex] = MakeShared<UploadBuffer>(renderContext->Device().Get(), 512 * 1024 * 1024);
         }
-
-        mShaderProvider = MakeUnique<Render::ShaderProvider>();
 
         CD3DX12_DESCRIPTOR_RANGE1 texTable1;
         texTable1.Init(
@@ -124,8 +122,6 @@ namespace Engine
 
         mRootSignature = MakeUnique<RootSignature>(renderContext->Device(), &rootSigDesc);
 
-        mPipelineStateProvider = MakeUnique<Render::PipelineStateProvider>(renderContext->Device());
-
         return true;
     }
 
@@ -137,10 +133,10 @@ namespace Engine
     {
         auto inputLayout = Scene::Vertex::GetInputLayout();
 
-        ComPtr<ID3DBlob> pixelShaderBlob = mShaderProvider->GetShader(Render::ShaderCreationInfo("Resources\\Shaders\\Forward.hlsl", "mainPS", "ps_5_1"));
+        auto shaderProvider = renderContext->GetShaderProvider();
+        ComPtr<ID3DBlob> pixelShaderBlob = shaderProvider->GetShader(Render::ShaderCreationInfo("Resources\\Shaders\\Forward.hlsl", "mainPS", "ps_5_1"));
 
-        ComPtr<ID3DBlob> vertexShaderBlob = mShaderProvider->GetShader(Render::ShaderCreationInfo("Resources\\Shaders\\Forward.hlsl", "mainVS", "vs_5_1"));
-
+        ComPtr<ID3DBlob> vertexShaderBlob = shaderProvider->GetShader(Render::ShaderCreationInfo("Resources\\Shaders\\Forward.hlsl", "mainVS", "vs_5_1"));
 
         Render::PipelineStateStream pipelineStateStream;
 
@@ -169,7 +165,7 @@ namespace Engine
         pipelineStateStream.rtvFormats = rtvFormats;
         pipelineStateStream.rasterizer = CD3DX12_RASTERIZER_DESC(rasterizer);
 
-        return mPipelineStateProvider->CreatePipelineState(pipelineStateStream);
+        return renderContext->GetPripelineStateProvider()->CreatePipelineState(pipelineStateStream);
     }
 
     void Game::UploadResources(Scene::SceneObject* scene, SharedPtr<RenderContext> renderContext)

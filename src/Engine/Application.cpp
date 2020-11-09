@@ -7,7 +7,7 @@
 #include <Timer.h>
 #include <Render/CommandQueue.h>
 #include <Render/UIRenderContext.h>
-#include <Render/SceneRenderer.h>
+#include <Render/MeshRenderer.h>
 #include <IO/Keyboard.h>
 
 #include <Scene/SceneObject.h>
@@ -26,7 +26,7 @@
 
 #include <Scene/Systems/WorldTransformSystem.h>
 #include <UI/Systems/UISystem.h>
-#include <Render/Systems/RenderSystem.h>
+#include <Render/Systems/MeshRenderSystem.h>
 #include <Scene/Systems/MovingSystem.h>
 
 namespace Engine
@@ -65,15 +65,13 @@ namespace Engine
 
     void Application::InitScene(UniquePtr<Scene::SceneObject> scene)
     {
-        auto renderer = MakeUnique<Render::SceneRenderer>(mRenderContext);
-
         auto& registry = scene->GetRegistry();
         auto camera = registry.view<Scene::Components::CameraComponent>()[0];
         registry.emplace<Scene::Components::MovingComponent>(camera, Scene::Components::MovingComponent());
 
         scene->AddSystem(MakeUnique<Scene::Systems::WorldTransformSystem>());
 
-        scene->AddSystem(MakeUnique<Scene::Systems::RenderSystem>(std::move(renderer)));
+        scene->AddSystem(MakeUnique<Scene::Systems::MeshRenderSystem>(MakeUnique<Render::MeshRenderer>(mRenderContext)));
 
         scene->AddSystem(MakeUnique<Scene::Systems::UISystem>(mRenderContext, mRenderContext->GetUIContext()));
 

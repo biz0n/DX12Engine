@@ -2,6 +2,7 @@
 
 #include <Scene/SceneForwards.h>
 #include <Types.h>
+#include <EngineConfig.h>
 #include <Render/RootSignature.h>
 
 #include <Memory/MemoryForwards.h>
@@ -10,8 +11,6 @@
 #include <Render/ShaderProvider.h>
 
 #include <Timer.h>
-
-#include <Render/SwapChain.h>
 
 #include <entt/fwd.hpp>
 #include <DirectXMath.h>
@@ -23,7 +22,6 @@ namespace Engine
         class PassContext;
     }
 
-    class SwapChain;
     class RenderContext;
 
     class Game
@@ -56,9 +54,6 @@ namespace Engine
 
         ComPtr<ID3D12Resource> mDepthBuffer;
         DescriptorAllocation mDepthBufferDescriptor;
-
-        UniquePtr<Render::PipelineStateProvider> mPipelineStateProvider;
-        UniquePtr<Render::ShaderProvider> mShaderProvider;
     };
 
 } // namespace Engine

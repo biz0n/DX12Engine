@@ -11,6 +11,12 @@
 
 namespace Engine
 {
+    namespace Render
+    {
+        class PipelineStateProvider;
+        class ShaderProvider;
+    }
+
     class SwapChain;
     class CommandAllocatorPool;
     class UIRenderContext;
@@ -41,6 +47,10 @@ namespace Engine
             SharedPtr<GlobalResourceStateTracker> GetGlobalResourceStateTracker() const { return mGlobalResourceStateTracker ;}
 
             SharedPtr<UIRenderContext> GetUIContext() const { return mUIRenderContext; }
+
+            Render::PipelineStateProvider* GetPripelineStateProvider() { return mPipelineStateProvider.get(); }
+
+            Render::ShaderProvider* GetShaderProvider() { return mShaderProvider.get(); }
 
             EventTracker& GetEventTracker() {return mEventTracker; }
 
@@ -80,6 +90,9 @@ namespace Engine
             SharedPtr<SwapChain> mSwapChain;
 
             SharedPtr<UIRenderContext> mUIRenderContext;
+
+            UniquePtr<Render::PipelineStateProvider> mPipelineStateProvider;
+            UniquePtr<Render::ShaderProvider> mShaderProvider;
 
             EventTracker mEventTracker;
 

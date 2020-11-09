@@ -1,4 +1,4 @@
-#include "SceneRenderer.h"
+#include "MeshRenderer.h"
 
 #include <Render/CommandQueue.h>
 
@@ -11,14 +11,14 @@ namespace Engine::Render
         usingResources.clear();
     }
 
-    SceneRenderer::SceneRenderer(SharedPtr<RenderContext> renderContext) : mRenderContext(renderContext)
+    MeshRenderer::MeshRenderer(SharedPtr<RenderContext> renderContext) : mRenderContext(renderContext)
     {
 
     }
 
-    SceneRenderer::~SceneRenderer() = default;
+    MeshRenderer::~MeshRenderer() = default;
 
-    void SceneRenderer::Initialize()
+    void MeshRenderer::Initialize()
     {
         mGame = MakeUnique<Game>();
         mGame->Initialize(mRenderContext);
@@ -31,12 +31,12 @@ namespace Engine::Render
         }
     }
 
-    void SceneRenderer::Deinitialize()
+    void MeshRenderer::Deinitialize()
     {
         mGame->Deinitialize();
     }
 
-    void SceneRenderer::Render(Scene::SceneObject* scene, const Timer& timer)
+    void MeshRenderer::Render(Scene::SceneObject* scene, const Timer& timer)
     {
         auto currentBackbufferIndex = mRenderContext->GetCurrentBackBufferIndex();
         mFrameContexts[currentBackbufferIndex].Reset();

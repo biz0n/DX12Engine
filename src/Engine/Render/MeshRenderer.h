@@ -40,11 +40,11 @@ namespace Engine::Render
         const Timer * timer;
     };
 
-    class SceneRenderer
+    class MeshRenderer
     {
     public:
-        SceneRenderer(SharedPtr<RenderContext> renderContext);
-        ~SceneRenderer();
+        MeshRenderer(SharedPtr<RenderContext> renderContext);
+        ~MeshRenderer();
 
     public:
         void Initialize();

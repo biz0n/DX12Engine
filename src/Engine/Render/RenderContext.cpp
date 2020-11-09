@@ -10,6 +10,8 @@
 #include <Render/CommandListUtils.h>
 #include <Render/CommandQueue.h>
 #include <Render/Graphics.h>
+#include <Render/PipelineStateProvider.h>
+#include <Render/ShaderProvider.h>
 
 namespace Engine
 {
@@ -50,6 +52,9 @@ namespace Engine
             Device(),
             EngineConfig::SwapChainBufferCount,
             mSwapChain->GetCurrentBackBuffer()->GetDesc().Format);
+
+            mPipelineStateProvider = MakeUnique<Render::PipelineStateProvider>(Device());
+            mShaderProvider = MakeUnique<Render::ShaderProvider>();
     }
 
     RenderContext::~RenderContext() = default;
