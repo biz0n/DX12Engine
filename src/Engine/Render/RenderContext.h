@@ -15,6 +15,7 @@ namespace Engine
     {
         class PipelineStateProvider;
         class ShaderProvider;
+        class RootSignatureProvider;
     }
 
     class SwapChain;
@@ -48,9 +49,10 @@ namespace Engine
 
             SharedPtr<UIRenderContext> GetUIContext() const { return mUIRenderContext; }
 
-            Render::PipelineStateProvider* GetPripelineStateProvider() { return mPipelineStateProvider.get(); }
+            Render::PipelineStateProvider* GetPipelineStateProvider() { return mPipelineStateProvider.get(); }
 
             Render::ShaderProvider* GetShaderProvider() { return mShaderProvider.get(); }
+            Render::RootSignatureProvider* GetRootSignatureProvider() {return mRootSignatureProvider.get(); }
 
             EventTracker& GetEventTracker() {return mEventTracker; }
 
@@ -93,6 +95,7 @@ namespace Engine
 
             UniquePtr<Render::PipelineStateProvider> mPipelineStateProvider;
             UniquePtr<Render::ShaderProvider> mShaderProvider;
+            UniquePtr<Render::RootSignatureProvider> mRootSignatureProvider;
 
             EventTracker mEventTracker;
 

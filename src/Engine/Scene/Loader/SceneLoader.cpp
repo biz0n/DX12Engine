@@ -48,14 +48,15 @@ namespace Engine::Scene::Loader
         }
         //  else
         {
-            unsigned int preprocessFlags = //aiProcess_Triangulate |
-                aiProcess_ConvertToLeftHanded |
-                //aiProcess_JoinIdenticalVertices |
-                //aiProcess_GenNormals |
-                aiProcess_CalcTangentSpace |
-                aiProcess_GenBoundingBoxes
-                // aiProcess_OptimizeMeshes |
-                // aiProcess_OptimizeGraph
+            unsigned int preprocessFlags = 0
+                //| aiProcess_Triangulate 
+                | aiProcess_ConvertToLeftHanded
+                //| aiProcess_JoinIdenticalVertices
+                //| aiProcess_GenNormals
+                | aiProcess_CalcTangentSpace
+                | aiProcess_GenBoundingBoxes 
+                //| aiProcess_OptimizeMeshes 
+                //| aiProcess_OptimizeGraph
                 ;
             if (scale.has_value())
             {
@@ -147,7 +148,8 @@ namespace Engine::Scene::Loader
 
 
         PunctualLight pointLight1;
-        pointLight1.SetColor({50.0f, 30.0f, 10.0f});
+        pointLight1.SetColor({1.0f, 0.6f, 0.2f});
+        pointLight1.SetIntensity(50);
         pointLight1.SetQuadraticAttenuation(1.0f);
         pointLight1.SetEnabled(true);
         pointLight1.SetLightType(LightType::PointLight);
@@ -155,7 +157,8 @@ namespace Engine::Scene::Loader
         addLight(pointLight1, DirectX::XMMatrixTranslation(4.0f, 5.0f, -2.0f), "Custom light 1");
 
         PunctualLight pointLight2;
-        pointLight2.SetColor({20.0f, 20.0f, 20.0f});
+        pointLight2.SetColor({1.0f, 1.0f, 1.0f});
+        pointLight2.SetIntensity(2);
         pointLight2.SetQuadraticAttenuation(1.0f);
         pointLight2.SetEnabled(true);
         pointLight2.SetLightType(LightType::PointLight);
@@ -559,8 +562,10 @@ namespace Engine::Scene::Loader
         DirectX::XMFLOAT3 direction{aLight->mDirection.x, aLight->mDirection.z, aLight->mDirection.y};
         light.SetDirection(direction);
 
-        DirectX::XMFLOAT3 color{aLight->mColorDiffuse.r, aLight->mColorDiffuse.g, aLight->mColorDiffuse.b};
+        float intensity = max(1.0f, max(aLight->mColorDiffuse.r, max(aLight->mColorDiffuse.g, aLight->mColorDiffuse.b)));
+        DirectX::XMFLOAT3 color{aLight->mColorDiffuse.r / intensity, aLight->mColorDiffuse.g / intensity, aLight->mColorDiffuse.b / intensity};
         light.SetColor(color);
+        light.SetIntensity(intensity);
 
         light.SetConstantAttenuation(aLight->mAttenuationConstant);
         light.SetLinearAttenuation(aLight->mAttenuationLinear);

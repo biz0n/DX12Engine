@@ -12,6 +12,7 @@
 #include <Render/Graphics.h>
 #include <Render/PipelineStateProvider.h>
 #include <Render/ShaderProvider.h>
+#include <Render/RootSignatureProvider.h>
 
 namespace Engine
 {
@@ -53,8 +54,10 @@ namespace Engine
             EngineConfig::SwapChainBufferCount,
             mSwapChain->GetCurrentBackBuffer()->GetDesc().Format);
 
-            mPipelineStateProvider = MakeUnique<Render::PipelineStateProvider>(Device());
-            mShaderProvider = MakeUnique<Render::ShaderProvider>();
+        mShaderProvider = MakeUnique<Render::ShaderProvider>();
+        mRootSignatureProvider = MakeUnique<Render::RootSignatureProvider>(Device());
+        mPipelineStateProvider = MakeUnique<Render::PipelineStateProvider>(Device(), mShaderProvider.get(), mRootSignatureProvider.get());
+        
     }
 
     RenderContext::~RenderContext() = default;

@@ -21,7 +21,6 @@ namespace Engine::Render
     void MeshRenderer::Initialize()
     {
         mGame = MakeUnique<Game>();
-        mGame->Initialize(mRenderContext);
 
         auto cbvSrvUavDescriptorSize = mRenderContext->Device()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         for (Size i = 0; i < std::size(mFrameContexts); ++i)
@@ -33,7 +32,6 @@ namespace Engine::Render
 
     void MeshRenderer::Deinitialize()
     {
-        mGame->Deinitialize();
     }
 
     void MeshRenderer::Render(Scene::SceneObject* scene, const Timer& timer)
@@ -41,7 +39,7 @@ namespace Engine::Render
         auto currentBackbufferIndex = mRenderContext->GetCurrentBackBufferIndex();
         mFrameContexts[currentBackbufferIndex].Reset();
 
-        mGame->UploadResources(scene, mRenderContext);
+        mGame->UploadResources(scene, mRenderContext, mFrameContexts[currentBackbufferIndex].uploadBuffer);
 
         auto commandList = mRenderContext->CreateGraphicsCommandList();
 
@@ -53,6 +51,9 @@ namespace Engine::Render
         passContext.scene = scene;
         passContext.timer = &timer;
         passContext.resourceStateTracker = MakeShared<ResourceStateTracker>(mRenderContext->GetGlobalResourceStateTracker());
+
+        mGame->CreateRootSignatures(mRenderContext->GetRootSignatureProvider());
+        mGame->CreatePipelineStates(mRenderContext->GetPipelineStateProvider());
 
         mGame->Draw(passContext);
 

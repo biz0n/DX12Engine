@@ -1,0 +1,111 @@
+#include "RootSignatureBuilder.h"
+
+namespace Engine::Render
+{
+    RootSignatureBuilder::RootSignatureBuilder()
+    {
+
+    }
+
+    RootSignatureBuilder::~RootSignatureBuilder() = default;
+
+    template <typename TConstantsType>
+    RootSignatureBuilder& RootSignatureBuilder::AddConstantsParameter(uint32 registerIndex, uint32 registerSpace, D3D12_SHADER_VISIBILITY visibility)
+    {
+        CD3DX12_ROOT_PARAMETER1 parameter;
+        auto num32BitValues = static_cast<uint32>(sizeof(TConstantsType) / 4);
+        parameter.InitAsConstants(num32BitValues, registerIndex, registerSpace, visibility);
+
+        mParameters.push_back({parameter, std::nullopt});
+
+        return *this;
+    }
+
+    RootSignatureBuilder& RootSignatureBuilder::AddCBVParameter(uint32 registerIndex, uint32 registerSpace, D3D12_SHADER_VISIBILITY visibility)
+    {
+        CD3DX12_ROOT_PARAMETER1 parameter;
+        parameter.InitAsConstantBufferView(registerIndex, registerSpace, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, visibility);
+
+        mParameters.push_back({parameter, std::nullopt});
+
+        return *this;
+    }
+
+    RootSignatureBuilder& RootSignatureBuilder::AddSRVParameter(uint32 registerIndex, uint32 registerSpace, D3D12_SHADER_VISIBILITY visibility)
+    {
+        CD3DX12_ROOT_PARAMETER1 parameter;
+        parameter.InitAsShaderResourceView(registerIndex, registerSpace, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, visibility);
+
+        mParameters.push_back({parameter, std::nullopt});
+
+        return *this;
+    }
+
+    RootSignatureBuilder& RootSignatureBuilder::AddUAVParameter(uint32 registerIndex, uint32 registerSpace, D3D12_SHADER_VISIBILITY visibility)
+    {
+        CD3DX12_ROOT_PARAMETER1 parameter;
+        parameter.InitAsUnorderedAccessView(registerIndex, registerSpace, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, visibility);
+
+        mParameters.push_back({parameter, std::nullopt});
+
+        return *this;
+    }
+
+    RootSignatureBuilder& RootSignatureBuilder::AddSRVDescriptorTableParameter(uint32 registerIndex, uint32 registerSpace, D3D12_SHADER_VISIBILITY visibility, uint32 numDescriptors)
+    {
+        CD3DX12_DESCRIPTOR_RANGE1 table;
+        table.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, numDescriptors, registerIndex, registerSpace);
+
+        CD3DX12_ROOT_PARAMETER1 parameter;
+        parameter.InitAsDescriptorTable(1, &table, visibility);
+        mParameters.push_back({parameter, table});
+
+        return *this;
+    }
+
+    RootSignatureBuilder& RootSignatureBuilder::AddUAVDescriptorTableParameter(uint32 registerIndex, uint32 registerSpace, D3D12_SHADER_VISIBILITY visibility, uint32 numDescriptors)
+    {
+        CD3DX12_DESCRIPTOR_RANGE1 table;
+        table.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, numDescriptors, registerIndex, registerSpace);
+
+        CD3DX12_ROOT_PARAMETER1 parameter;
+        parameter.InitAsDescriptorTable(1, &table, visibility);
+        mParameters.push_back({parameter, table});
+
+        return *this;
+    }
+
+    UniquePtr<RootSignature> RootSignatureBuilder::Build(ComPtr<ID3D12Device2> device)
+    {
+        D3D12_STATIC_SAMPLER_DESC sampler = CD3DX12_STATIC_SAMPLER_DESC(
+            0,                               // shaderRegister
+            D3D12_FILTER_ANISOTROPIC,        // filter
+            D3D12_TEXTURE_ADDRESS_MODE_WRAP, // addressU
+            D3D12_TEXTURE_ADDRESS_MODE_WRAP, // addressV
+            D3D12_TEXTURE_ADDRESS_MODE_WRAP);
+
+        std::vector<CD3DX12_ROOT_PARAMETER1> parameters;
+        parameters.reserve(mParameters.size());
+
+        for (auto &p : mParameters)
+        {
+            auto& parameter = std::get<0>(p);
+            if (parameter.ParameterType == D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE)
+            {
+                auto& range = std::get<1>(p);
+                parameter.DescriptorTable.NumDescriptorRanges = 1;
+                parameter.DescriptorTable.pDescriptorRanges = &range.value();
+            }
+
+            parameters.push_back(parameter);
+        }
+
+        CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSigDesc;
+        rootSigDesc.Init_1_1(static_cast<uint32>(parameters.size()), parameters.data(), 1, &sampler,
+                             D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+
+        mParameters.clear();
+
+        return MakeUnique<RootSignature>(device, &rootSigDesc);
+    }
+}

@@ -13,6 +13,7 @@
 #include <UI/ComponentRenderers./StateComponentsRenderer.h>
 #include <UI/ComponentRenderers/WorldTransformComponentRenderer.h>
 #include <UI/ComponentRenderers/MeshComponentRenderer.h>
+#include <UI/ComponentRenderers/LightComponentRenderer.h>
 
 #include <imgui/imgui.h>
 #include <entt/entt.hpp>
@@ -25,6 +26,7 @@ namespace Engine::Scene::Systems
         mComponentRenderers.push_back(MakeUnique<UI::ComponentRenderers::StateComponentsRenderer>());
         mComponentRenderers.push_back(MakeUnique<UI::ComponentRenderers::WorldTransformComponentRenderer>());
         mComponentRenderers.push_back(MakeUnique<UI::ComponentRenderers::MeshComponentRenderer>(renderContext, uiRenderContext));
+        mComponentRenderers.push_back(MakeUnique<UI::ComponentRenderers::LightComponentRenderer>());
     }
 
     UISystem::~UISystem() = default;

@@ -2,21 +2,12 @@
 
 #include <Types.h>
 #include <Hash.h>
+#include <Render/DirectXHashes.h>
 #include <d3d12.h>
 #include <vector>
 
 #include <compare>
 #include <tuple>
-
-
-
-inline bool operator<(const D3D_SHADER_MACRO &left, const D3D_SHADER_MACRO &right)
-{
-    auto tl = std::tie(left.Name, left.Definition);
-    auto tr = std::tie(right.Name, right.Definition);
-
-    return tl < tr;
-}
 
 namespace Engine::Render
 {
@@ -53,18 +44,6 @@ namespace Engine::Render
 
 namespace std
 {
-    template <>
-    struct hash<D3D_SHADER_MACRO>
-    {
-        size_t operator()(const D3D_SHADER_MACRO &key) const
-        {
-            std::string name = key.Name;
-            std::string definition = key.Definition;
-            return std::hash_combine(
-                std::hash<std::string>{}(name),
-                std::hash<std::string>{}(definition));
-        }
-    };
 
     template <>
     struct hash<Engine::Render::ShaderCreationInfo>

@@ -20,6 +20,7 @@ namespace Engine::Scene
          : mLightType(LightType::DirectionalLight)
          , mEnabled(false)
          , mColor({0.0f, 0.0f, 0.0f})
+         , mIntensity(1)
          , mDirection({0.0f, -1.0f, 0.0f})
          , mConstantAttenuation(0)
          , mLinearAttenuation(0)
@@ -39,6 +40,9 @@ namespace Engine::Scene
 
         void SetColor(const DirectX::XMFLOAT3& color) { mColor = color; }
         const DirectX::XMFLOAT3& GetColor() const { return mColor; }
+
+        void SetIntensity(float intensity) { mIntensity = intensity; }
+        float GetIntensity() const { return mIntensity; }
 
         void SetConstantAttenuation(float attenuation) { mConstantAttenuation = attenuation; }
         float GetConstantAttenuation() const { return mConstantAttenuation; }
@@ -60,6 +64,7 @@ namespace Engine::Scene
         bool mEnabled;
         DirectX::XMFLOAT3 mDirection;
         DirectX::XMFLOAT3 mColor;
+        float mIntensity;
         float mConstantAttenuation;
         float mLinearAttenuation;
         float mQuadraticAttenuation;
