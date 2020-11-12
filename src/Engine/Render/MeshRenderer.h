@@ -10,6 +10,7 @@
 #include <Scene/SceneForwards.h>
 #include <Render/RenderContext.h>
 #include <Render/Game.h>
+#include <Render/FrameResourceProvider.h>
 
 #include <d3d12.h>
 #include <vector>
@@ -33,6 +34,8 @@ namespace Engine::Render
         ComPtr<ID3D12GraphicsCommandList> commandList;
         SharedPtr<RenderContext> renderContext;
 
+        const FrameResourceProvider* frameResourceProvider;
+
         FrameTransientContext  * frameContext;
 
         Scene::SceneObject * scene;
@@ -51,11 +54,15 @@ namespace Engine::Render
         void Deinitialize();
 
         void Render(Scene::SceneObject* scene, const Timer& timer);
+
+    private:
+        void UploadResources(Scene::SceneObject *scene, SharedPtr<RenderContext> renderContext, SharedPtr<UploadBuffer> uploadBuffer);
     private:
         FrameTransientContext mFrameContexts[EngineConfig::SwapChainBufferCount];
 
     private:
         SharedPtr<RenderContext> mRenderContext;
         UniquePtr<Game> mGame;
+        UniquePtr<FrameResourceProvider> mFrameResourceProvider;
     };
 } // namespace Engine::Render

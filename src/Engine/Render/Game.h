@@ -11,6 +11,7 @@
 #include <Render/ShaderProvider.h>
 #include <Render/PipelineStateProvider.h>
 #include <Render/RootSignatureProvider.h>
+#include <Render/ResourcePlanner.h>
 
 #include <Timer.h>
 
@@ -32,7 +33,7 @@ namespace Engine
         Game();
         ~Game();
 
-        void UploadResources(Scene::SceneObject* scene, SharedPtr<RenderContext> renderContext, SharedPtr<UploadBuffer> uploadBuffer);
+        void PrepareResources(Render::ResourcePlanner* planner);
 
         void CreateRootSignatures(Render::RootSignatureProvider* rootSignatureProvider);
 
@@ -42,13 +43,7 @@ namespace Engine
 
     private:
 
-        void CreateDepthBuffer(int32 width, int32 height, SharedPtr<RenderContext> renderContext);
-
         void Draw(ComPtr<ID3D12GraphicsCommandList> commandList, const Scene::Mesh& node, const dx::XMMATRIX& world, Render::PassContext& passContext);
-
-    private:
-        ComPtr<ID3D12Resource> mDepthBuffer;
-        DescriptorAllocation mDepthBufferDescriptor;
     };
 
 } // namespace Engine

@@ -5,9 +5,6 @@
 
 #include <Render/SwapChain.h>
 #include <Memory/UploadBuffer.h>
-#include <Memory/DynamicDescriptorHeap.h>
-#include <Memory/DescriptorAllocation.h>
-#include <Memory/DescriptorAllocator.h>
 #include <Render/ResourceStateTracker.h>
 #include <Render/RenderContext.h>
 
@@ -17,10 +14,9 @@
 #include <Scene/SceneObject.h>
 #include <Scene/Mesh.h>
 #include <Scene/Material.h>
-#include <Scene/Texture.h>
-#include <Scene/Vertex.h>
 #include <Scene/Camera.h>
 #include <Scene/PunctualLight.h>
+#include <Scene/Vertex.h>
 
 #include <Scene/Components/MeshComponent.h>
 #include <Scene/Components/WorldTransformComponent.h>
@@ -29,8 +25,10 @@
 #include <Scene/Components/AABBComponent.h>
 #include <Scene/Components/IsDisabledComponent.h>
 #include <Render/MeshRenderer.h>
+#include <Render/Texture.h>
 
 #include <Render/RootSignature.h>
+#include <Render/TextureCreationInfo.h>
 
 #include <entt/entt.hpp>
 
@@ -87,61 +85,17 @@ namespace Engine
         pipelineStateProvider->CreatePipelineState("ForwardPipeline::CullModeNone", pipelineStateCullModeNone);
     }
 
-    void Game::UploadResources(Scene::SceneObject *scene, SharedPtr<RenderContext> renderContext, SharedPtr<UploadBuffer> uploadBuffer)
+    void Game::PrepareResources(Render::ResourcePlanner* planner)
     {
-        const auto &view = scene->GetRegistry().view<Scene::Components::MeshComponent>();
+        D3D12_CLEAR_VALUE optimizedClearValue = {};
+        optimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
+        optimizedClearValue.DepthStencil = {1.0f, 0};
 
-        auto stateTracker = MakeShared<ResourceStateTracker>(renderContext->GetGlobalResourceStateTracker());
-
-        auto commandList = renderContext->CreateCopyCommandList();
-
-        commandList->SetName(L"Uploading resources List");
-
-        uploadBuffer->Reset();
-        bool anythingToLoad = false;
-
-        for (auto &&[entity, meshComponent] : view.proxy())
-        {
-            auto mesh = meshComponent.mesh;
-            if (!mesh.vertexBuffer->GetD3D12Resource())
-            {
-                anythingToLoad = anythingToLoad || true;
-                CommandListUtils::UploadVertexBuffer(renderContext, commandList, stateTracker, *mesh.vertexBuffer, uploadBuffer);
-            }
-            if (!mesh.indexBuffer->GetD3D12Resource())
-            {
-                anythingToLoad = anythingToLoad || true;
-                CommandListUtils::UploadIndexBuffer(renderContext, commandList, stateTracker, *mesh.indexBuffer, uploadBuffer);
-            }
-            anythingToLoad = CommandListUtils::UploadMaterialTextures(renderContext, commandList, stateTracker, mesh.material, uploadBuffer) || anythingToLoad;
-        }
-
-        std::vector<ID3D12CommandList *> commandLists;
-
-        auto barriersCommandList = renderContext->CreateCopyCommandList();
-
-        auto barriers = stateTracker->FlushPendingBarriers(barriersCommandList);
-        stateTracker->CommitFinalResourceStates();
-
-        barriersCommandList->Close();
-        commandList->Close();
-
-        if (barriers > 0)
-        {
-            commandLists.push_back(barriersCommandList.Get());
-        }
-
-        if (anythingToLoad)
-        {
-            commandLists.push_back(commandList.Get());
-        }
-
-        if (commandLists.size() > 0)
-        {
-            uint64 fenceValue = renderContext->GetCopyCommandQueue()->ExecuteCommandLists(commandLists.size(), commandLists.data());
-
-            renderContext->GetGraphicsCommandQueue()->InsertWaitForQueue(renderContext->GetCopyCommandQueue(), fenceValue);
-        }
+        Render::TextureCreationInfo rtTexture = {
+            .description = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, 0, 0, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
+            .clearValue = optimizedClearValue
+        };
+        planner->NewDepthStencil("ForwardRT", rtTexture);
     }
 
     void Game::Draw(ComPtr<ID3D12GraphicsCommandList> commandList, const Scene::Mesh &mesh, const dx::XMMATRIX &world, Render::PassContext &passContext)
@@ -198,9 +152,10 @@ namespace Engine
         auto width = canvas->GetWidth();
         auto height = canvas->GetHeight();
 
-        
-        CreateDepthBuffer(width, height, renderContext);
-        passContext.frameContext->usingResources.push_back(mDepthBuffer);
+        Render::Texture* texture = passContext.frameResourceProvider->GetTexture("ForwardRT");
+        CommandListUtils::TransitionBarrier(resourceStateTracker, texture->D3D12Resource(), D3D12_RESOURCE_STATE_DEPTH_WRITE);
+
+        passContext.frameContext->usingResources.push_back(texture->D3D12Resource());
 
         auto backBuffer = canvas->GetCurrentBackBuffer();
 
@@ -216,9 +171,11 @@ namespace Engine
 
         FLOAT clearColor[] = {0.4f, 0.6f, 0.9f, 1.0f};
         commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
-        commandList->ClearDepthStencilView(mDepthBufferDescriptor.GetDescriptor(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
-        commandList->OMSetRenderTargets(1, &rtv, false, &mDepthBufferDescriptor.GetDescriptor());
+        auto descriptor = texture->GetDSDescriptor(renderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_DSV).get());
+        commandList->ClearDepthStencilView(descriptor, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+
+        commandList->OMSetRenderTargets(1, &rtv, false, &descriptor);
 
         auto rootSignature = renderContext->GetRootSignatureProvider()->GetRootSignature("ForwardRootSignature");
         commandList->SetGraphicsRootSignature(rootSignature->GetD3D12RootSignature().Get());
@@ -254,7 +211,6 @@ namespace Engine
 
         commandList->SetGraphicsRootShaderResourceView(3, lightsAllocation.GPU);
 
-
         const auto &meshsView = registry.view<Scene::Components::MeshComponent, Scene::Components::WorldTransformComponent>(entt::exclude<Scene::Components::IsDisabledComponent>);
         for (auto &&[entity, meshComponent, transformComponent] : meshsView.proxy())
         {
@@ -262,40 +218,6 @@ namespace Engine
         }
 
         renderContext->GetEventTracker().EndGPUEvent(commandList);
-    }
-
-    void Game::CreateDepthBuffer(int32 width, int32 height, SharedPtr<RenderContext> renderContext)
-    {
-        if (mDepthBuffer != nullptr && mDepthBuffer->GetDesc().Width == width && mDepthBuffer->GetDesc().Height == height)
-        {
-            return;
-        }
-
-        D3D12_CLEAR_VALUE optimizedClearValue = {};
-        optimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
-        optimizedClearValue.DepthStencil = {1.0f, 0};
-
-        ThrowIfFailed(renderContext->Device()->CreateCommittedResource(
-            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-            D3D12_HEAP_FLAG_NONE,
-            &CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, width, height, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE),
-            D3D12_RESOURCE_STATE_DEPTH_WRITE,
-            &optimizedClearValue,
-            IID_PPV_ARGS(&mDepthBuffer)));
-
-        D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
-        dsv.Format = DXGI_FORMAT_D32_FLOAT;
-        dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-        dsv.Texture2D.MipSlice = 0;
-        dsv.Flags = D3D12_DSV_FLAG_NONE;
-
-        mDepthBufferDescriptor = renderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_DSV)->Allocate();
-        renderContext->Device()->CreateDepthStencilView(
-            mDepthBuffer.Get(),
-            &dsv,
-            mDepthBufferDescriptor.GetDescriptor());
-
-        mDepthBuffer->SetName(L"Depth buffer");
     }
 
 } // namespace Engine

@@ -146,31 +146,31 @@ namespace Engine::CommandListUtils
         bool anythingToLoad = false;
         if (material->HasBaseColorTexture() && !material->GetBaseColorTexture()->GetD3D12Resource())
         {
-            anythingToLoad = anythingToLoad || true;
+            anythingToLoad = true;
             UploadTexture(renderContext, commandList, stateTracker, material->GetBaseColorTexture().get(), uploadBuffer);
         }
 
         if (material->HasMetallicRoughnessTexture() && !material->GetMetallicRoughnessTexture()->GetD3D12Resource())
         {
-            anythingToLoad = anythingToLoad || true;
+            anythingToLoad = true;
             UploadTexture(renderContext, commandList, stateTracker, material->GetMetallicRoughnessTexture().get(), uploadBuffer);
         }
 
         if (material->HasNormalTexture() && !material->GetNormalTexture()->GetD3D12Resource())
         {
-            anythingToLoad = anythingToLoad || true;
+            anythingToLoad = true;
             UploadTexture(renderContext, commandList, stateTracker, material->GetNormalTexture().get(), uploadBuffer);
         }
 
         if (material->HasEmissiveTexture() && !material->GetEmissiveTexture()->GetD3D12Resource())
         {
-            anythingToLoad = anythingToLoad || true;
+            anythingToLoad = true;
             UploadTexture(renderContext, commandList, stateTracker, material->GetEmissiveTexture().get(), uploadBuffer);
         }
 
         if (material->HasAmbientOcclusionTexture() && !material->GetAmbientOcclusionTexture()->GetD3D12Resource())
         {
-            anythingToLoad = anythingToLoad || true;
+            anythingToLoad = true;
             UploadTexture(renderContext, commandList, stateTracker, material->GetAmbientOcclusionTexture().get(), uploadBuffer);
         }
 

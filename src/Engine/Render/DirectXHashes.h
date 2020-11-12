@@ -225,4 +225,201 @@ namespace std
                 std::hash<std::string>{}(definition));
         }
     };
+
+    
+
+    template <>
+    struct hash<DXGI_SAMPLE_DESC>
+    {
+        size_t operator()(const DXGI_SAMPLE_DESC &key) const
+        {
+            return std::hash_combine(
+                key.Count,
+                key.Quality);
+        }
+    };
+
+    template <>
+    struct hash<D3D12_RESOURCE_DESC>
+    {
+        size_t operator()(const D3D12_RESOURCE_DESC &key) const
+        {
+            return std::hash_combine(
+                key.Alignment,
+                key.DepthOrArraySize,
+                key.Dimension,
+                key.Flags,
+                key.Format,
+                key.Height,
+                key.Layout,
+                key.MipLevels,
+                key.SampleDesc,
+                key.Width);
+        }
+    };
+
+    template <>
+    struct hash<D3D12_DEPTH_STENCIL_VALUE>
+    {
+        size_t operator()(const D3D12_DEPTH_STENCIL_VALUE &key) const
+        {
+            return std::hash_combine(
+                key.Depth,
+                key.Stencil);
+        }
+    };
+
+    template <>
+    struct hash<D3D12_CLEAR_VALUE>
+    {
+        size_t operator()(const D3D12_CLEAR_VALUE &key) const
+        {
+            return std::hash_combine(
+                std::hash_combine(key.Color),
+                key.DepthStencil,
+                key.Format);
+        }
+    };
+
+    template<>
+    struct hash<D3D12_SHADER_RESOURCE_VIEW_DESC>
+    {
+        std::size_t operator()(const D3D12_SHADER_RESOURCE_VIEW_DESC& srvDesc) const noexcept
+        {
+            std::size_t seed = 0;
+
+            seed = hash_combine_impl(seed, 
+                srvDesc.Format,
+                srvDesc.ViewDimension,
+                srvDesc.Shader4ComponentMapping);
+
+            switch (srvDesc.ViewDimension)
+            {
+            case D3D12_SRV_DIMENSION_BUFFER:
+                seed = hash_combine_impl(seed, 
+                    srvDesc.Buffer.FirstElement,
+                    srvDesc.Buffer.NumElements,
+                    srvDesc.Buffer.StructureByteStride,
+                    srvDesc.Buffer.Flags);
+                break;
+            case D3D12_SRV_DIMENSION_TEXTURE1D:
+                seed = hash_combine_impl(seed, 
+                    srvDesc.Texture1D.MostDetailedMip,
+                    srvDesc.Texture1D.MipLevels,
+                    srvDesc.Texture1D.ResourceMinLODClamp);
+                break;
+            case D3D12_SRV_DIMENSION_TEXTURE1DARRAY:
+                seed = hash_combine_impl(seed, 
+                    srvDesc.Texture1DArray.MostDetailedMip,
+                    srvDesc.Texture1DArray.MipLevels,
+                    srvDesc.Texture1DArray.FirstArraySlice,
+                    srvDesc.Texture1DArray.ArraySize,
+                    srvDesc.Texture1DArray.ResourceMinLODClamp);
+                break;
+            case D3D12_SRV_DIMENSION_TEXTURE2D:
+                seed = hash_combine_impl(seed, 
+                    srvDesc.Texture2D.MostDetailedMip,
+                    srvDesc.Texture2D.MipLevels,
+                    srvDesc.Texture2D.PlaneSlice,
+                    srvDesc.Texture2D.ResourceMinLODClamp);
+                break;
+            case D3D12_SRV_DIMENSION_TEXTURE2DARRAY:
+                seed = hash_combine_impl(seed, 
+                    srvDesc.Texture2DArray.MostDetailedMip,
+                    srvDesc.Texture2DArray.MipLevels,
+                    srvDesc.Texture2DArray.FirstArraySlice,
+                    srvDesc.Texture2DArray.ArraySize,
+                    srvDesc.Texture2DArray.PlaneSlice,
+                    srvDesc.Texture2DArray.ResourceMinLODClamp);
+                break;
+            case D3D12_SRV_DIMENSION_TEXTURE2DMS:
+//                hash_combine(seed, srvDesc.Texture2DMS.UnusedField_NothingToDefine);
+                break;
+            case D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY:
+                seed = hash_combine_impl(seed, 
+                    srvDesc.Texture2DMSArray.FirstArraySlice,
+                    srvDesc.Texture2DMSArray.ArraySize);
+                break;
+            case D3D12_SRV_DIMENSION_TEXTURE3D:
+                seed = hash_combine_impl(seed, 
+                    srvDesc.Texture3D.MostDetailedMip,
+                    srvDesc.Texture3D.MipLevels,
+                    srvDesc.Texture3D.ResourceMinLODClamp);
+                break;
+            case D3D12_SRV_DIMENSION_TEXTURECUBE:
+                seed = hash_combine_impl(seed, 
+                    srvDesc.TextureCube.MostDetailedMip,
+                    srvDesc.TextureCube.MipLevels,
+                    srvDesc.TextureCube.ResourceMinLODClamp);
+                break;
+            case D3D12_SRV_DIMENSION_TEXTURECUBEARRAY:
+                seed = hash_combine_impl(seed, 
+                    srvDesc.TextureCubeArray.MostDetailedMip,
+                    srvDesc.TextureCubeArray.MipLevels,
+                    srvDesc.TextureCubeArray.First2DArrayFace,
+                    srvDesc.TextureCubeArray.NumCubes,
+                    srvDesc.TextureCubeArray.ResourceMinLODClamp);
+                break;
+            case D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE:
+                hash_combine_impl(seed, srvDesc.RaytracingAccelerationStructure.Location);
+                break;
+            }
+
+            return seed;
+        }
+    };
+
+    template<>
+    struct hash<D3D12_UNORDERED_ACCESS_VIEW_DESC>
+    {
+        std::size_t operator()(const D3D12_UNORDERED_ACCESS_VIEW_DESC& uavDesc) const noexcept
+        {
+            std::size_t seed = 0;
+
+            seed = hash_combine_impl(seed, 
+                uavDesc.Format, 
+                uavDesc.ViewDimension);
+
+            switch (uavDesc.ViewDimension)
+            {
+            case D3D12_UAV_DIMENSION_BUFFER:
+                seed = hash_combine_impl(seed, 
+                    uavDesc.Buffer.FirstElement,
+                    uavDesc.Buffer.NumElements,
+                    uavDesc.Buffer.StructureByteStride,
+                    uavDesc.Buffer.CounterOffsetInBytes,
+                    uavDesc.Buffer.Flags);
+                break;
+            case D3D12_UAV_DIMENSION_TEXTURE1D:
+                seed = hash_combine_impl(seed, uavDesc.Texture1D.MipSlice);
+                break;
+            case D3D12_UAV_DIMENSION_TEXTURE1DARRAY:
+                seed = hash_combine_impl(seed, 
+                    uavDesc.Texture1DArray.MipSlice,
+                    uavDesc.Texture1DArray.FirstArraySlice,
+                    uavDesc.Texture1DArray.ArraySize);
+                break;
+            case D3D12_UAV_DIMENSION_TEXTURE2D:
+                seed = hash_combine_impl(seed, 
+                    uavDesc.Texture2D.MipSlice,
+                    uavDesc.Texture2D.PlaneSlice);
+                break;
+            case D3D12_UAV_DIMENSION_TEXTURE2DARRAY:
+                seed = hash_combine_impl(seed, 
+                    uavDesc.Texture2DArray.MipSlice,
+                    uavDesc.Texture2DArray.FirstArraySlice,
+                    uavDesc.Texture2DArray.ArraySize,
+                    uavDesc.Texture2DArray.PlaneSlice);
+                break;
+            case D3D12_UAV_DIMENSION_TEXTURE3D:
+                seed = hash_combine(seed, 
+                    uavDesc.Texture3D.MipSlice,
+                    uavDesc.Texture3D.FirstWSlice,
+                    uavDesc.Texture3D.WSize);
+                break;
+            }
+
+            return seed;
+        }
+    };
 } // namespace std

@@ -59,7 +59,7 @@ namespace Engine
     {
         if (fenceValue > mFenceValue)
         {
-            mFenceValue = max(mFenceValue, mFence->GetCompletedValue());
+            mFenceValue = std::max(mFenceValue, mFence->GetCompletedValue());
         }
 
         return fenceValue <= mFenceValue;

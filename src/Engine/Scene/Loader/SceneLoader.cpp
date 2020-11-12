@@ -179,13 +179,11 @@ namespace Engine::Scene::Loader
 		auto s = DirectX::XMMatrixScaling(scaling.x, scaling.y, scaling.z);
 		auto r = DirectX::XMMatrixRotationQuaternion(DirectX::XMVectorSet(rotation.x, rotation.y, rotation.z, rotation.w));
 
-		DirectX::XMFLOAT4X4 transform;
         DirectX::XMMATRIX srt = s * r * t;
-		DirectX::XMStoreFloat4x4(&transform, s * r * t);
 
 		if (IsMeshNode(aNode, context))
 		{
-            context.registry->emplace<Components::NameComponent>(entity, aNode->mName.C_Str());
+            context.registry->emplace<Components::NameComponent>(entity, "Mesh_" + std::string(aNode->mName.C_Str()));
             context.registry->emplace<Scene::Components::LocalTransformComponent>(entity, srt);
 
             CreateMeshNode(aNode, context, entity, relationship);
@@ -562,7 +560,7 @@ namespace Engine::Scene::Loader
         DirectX::XMFLOAT3 direction{aLight->mDirection.x, aLight->mDirection.z, aLight->mDirection.y};
         light.SetDirection(direction);
 
-        float intensity = max(1.0f, max(aLight->mColorDiffuse.r, max(aLight->mColorDiffuse.g, aLight->mColorDiffuse.b)));
+        float intensity = std::max(1.0f, std::max(aLight->mColorDiffuse.r, std::max(aLight->mColorDiffuse.g, aLight->mColorDiffuse.b)));
         DirectX::XMFLOAT3 color{aLight->mColorDiffuse.r / intensity, aLight->mColorDiffuse.g / intensity, aLight->mColorDiffuse.b / intensity};
         light.SetColor(color);
         light.SetIntensity(intensity);

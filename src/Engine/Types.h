@@ -8,6 +8,14 @@
 #include <tchar.h>
 #include <wrl.h>
 
+#if defined(min)
+#undef min
+#endif
+
+#if defined(max)
+#undef max
+#endif
+
 namespace DirectX{}
 
 namespace dx = DirectX;
