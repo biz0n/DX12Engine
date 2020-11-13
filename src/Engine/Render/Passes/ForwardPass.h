@@ -13,6 +13,8 @@
 #include <Render/RootSignatureProvider.h>
 #include <Render/ResourcePlanner.h>
 
+#include <Render/RenderPassBase.h>
+
 #include <Timer.h>
 
 #include <entt/fwd.hpp>
@@ -24,22 +26,24 @@ namespace Engine
     {
         class PassContext;
     }
-
     class RenderContext;
+}
 
-    class Game
+namespace Engine::Render::Passes
+{
+    class ForwardPass : public RenderPassBase
     {
     public:
-        Game();
-        ~Game();
+        ForwardPass();
+        virtual ~ForwardPass();
 
-        void PrepareResources(Render::ResourcePlanner* planner);
+        void PrepareResources(Render::ResourcePlanner* planner) override;
 
-        void CreateRootSignatures(Render::RootSignatureProvider* rootSignatureProvider);
+        void CreateRootSignatures(Render::RootSignatureProvider* rootSignatureProvider) override;
 
-        void CreatePipelineStates(Render::PipelineStateProvider* pipelineStateProvider);
+        void CreatePipelineStates(Render::PipelineStateProvider* pipelineStateProvider) override;
 
-        void Draw(Render::PassContext& passContext);
+        void Render(Render::PassContext& passContext) override;
 
     private:
 

@@ -1,4 +1,4 @@
-#include "Game.h"
+#include "ForwardPass.h"
 
 #include <stdlib.h>
 #include <ShaderTypes.h>
@@ -24,8 +24,10 @@
 #include <Scene/Components/LightComponent.h>
 #include <Scene/Components/AABBComponent.h>
 #include <Scene/Components/IsDisabledComponent.h>
-#include <Render/MeshRenderer.h>
+#include <Render/PassContext.h>
 #include <Render/Texture.h>
+#include <Render/RenderContext.h>
+#include <Render/PipelineStateProvider.h>
 
 #include <Render/RootSignature.h>
 #include <Render/TextureCreationInfo.h>
@@ -36,13 +38,15 @@
 #include <DirectXMath.h>
 #include <d3d12.h>
 
-namespace Engine
+namespace Engine::Render::Passes
 {
-    Game::Game() = default;
+    ForwardPass::ForwardPass() : Render::RenderPassBase("Forward Pass")
+    {
+    }
 
-    Game::~Game() = default;
+    ForwardPass::~ForwardPass() = default;
 
-    void Game::CreateRootSignatures(Render::RootSignatureProvider *rootSignatureProvider)
+    void ForwardPass::CreateRootSignatures(Render::RootSignatureProvider *rootSignatureProvider)
     {
         Render::RootSignatureBuilder builder = {};
         builder
@@ -59,7 +63,7 @@ namespace Engine
         rootSignatureProvider->BuildRootSignature("ForwardRootSignature", builder);
     }
 
-    void Game::CreatePipelineStates(Render::PipelineStateProvider *pipelineStateProvider)
+    void ForwardPass::CreatePipelineStates(Render::PipelineStateProvider *pipelineStateProvider)
     {
         CD3DX12_RASTERIZER_DESC rasterizer = {};
         rasterizer.FillMode = D3D12_FILL_MODE_SOLID;
@@ -85,20 +89,27 @@ namespace Engine
         pipelineStateProvider->CreatePipelineState("ForwardPipeline::CullModeNone", pipelineStateCullModeNone);
     }
 
-    void Game::PrepareResources(Render::ResourcePlanner* planner)
+    void ForwardPass::PrepareResources(Render::ResourcePlanner* planner)
     {
         D3D12_CLEAR_VALUE optimizedClearValue = {};
         optimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
         optimizedClearValue.DepthStencil = {1.0f, 0};
 
-        Render::TextureCreationInfo rtTexture = {
+        Render::TextureCreationInfo dsTexture = {
             .description = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, 0, 0, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
             .clearValue = optimizedClearValue
+        };
+        planner->NewDepthStencil("ForwardDS", dsTexture);
+
+        float clear[4] = {0};
+        Render::TextureCreationInfo rtTexture = {
+            .description = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, 0, 0, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET),
+            .clearValue = CD3DX12_CLEAR_VALUE(DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, clear)
         };
         planner->NewDepthStencil("ForwardRT", rtTexture);
     }
 
-    void Game::Draw(ComPtr<ID3D12GraphicsCommandList> commandList, const Scene::Mesh &mesh, const dx::XMMATRIX &world, Render::PassContext &passContext)
+    void ForwardPass::Draw(ComPtr<ID3D12GraphicsCommandList> commandList, const Scene::Mesh &mesh, const dx::XMMATRIX &world, Render::PassContext &passContext)
     {
         auto renderContext = passContext.renderContext;
 
@@ -137,7 +148,7 @@ namespace Engine
         commandList->DrawIndexedInstanced(static_cast<uint32>(mesh.indexBuffer->GetElementsCount()), 1, 0, 0, 0);
     }
 
-    void Game::Draw(Render::PassContext &passContext)
+    void ForwardPass::Render(Render::PassContext &passContext)
     {
         auto renderContext = passContext.renderContext;
         auto canvas = renderContext->GetSwapChain();
@@ -152,16 +163,17 @@ namespace Engine
         auto width = canvas->GetWidth();
         auto height = canvas->GetHeight();
 
-        Render::Texture* texture = passContext.frameResourceProvider->GetTexture("ForwardRT");
+        Render::Texture* rtTexture = passContext.frameResourceProvider->GetTexture("ForwardRT");
+        Render::Texture* texture = passContext.frameResourceProvider->GetTexture("ForwardDS");
         CommandListUtils::TransitionBarrier(resourceStateTracker, texture->D3D12Resource(), D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
         passContext.frameContext->usingResources.push_back(texture->D3D12Resource());
 
-        auto backBuffer = canvas->GetCurrentBackBuffer();
+        auto backBuffer = rtTexture->D3D12ResourceCom();// canvas->GetCurrentBackBuffer();
 
-        auto rtv = canvas->GetCurrentRenderTargetView();
+        auto rtv = rtTexture->GetRTDescriptor(renderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_RTV).get());// canvas->GetCurrentRenderTargetView();
 
-        CommandListUtils::TransitionBarrier(resourceStateTracker, canvas->GetCurrentBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET);
+        CommandListUtils::TransitionBarrier(resourceStateTracker, backBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
         auto screenViewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float32>(width), static_cast<float32>(height));
         auto scissorRect = CD3DX12_RECT(0, 0, width, height);

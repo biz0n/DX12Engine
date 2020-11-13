@@ -3,11 +3,10 @@
 #include <View.h>
 #include <Render/RenderContext.h>
 #include <Render/SwapChain.h>
-#include <Render/Game.h>
 #include <Timer.h>
 #include <Render/CommandQueue.h>
 #include <Render/UIRenderContext.h>
-#include <Render/MeshRenderer.h>
+#include <Render/Renderer.h>
 #include <IO/Keyboard.h>
 
 #include <Scene/SceneObject.h>
@@ -26,7 +25,7 @@
 
 #include <Scene/Systems/WorldTransformSystem.h>
 #include <UI/Systems/UISystem.h>
-#include <Render/Systems/MeshRenderSystem.h>
+#include <Render/Systems/RenderSystem.h>
 #include <Scene/Systems/MovingSystem.h>
 
 namespace Engine
@@ -71,7 +70,7 @@ namespace Engine
 
         scene->AddSystem(MakeUnique<Scene::Systems::WorldTransformSystem>());
 
-        scene->AddSystem(MakeUnique<Scene::Systems::MeshRenderSystem>(MakeUnique<Render::MeshRenderer>(mRenderContext)));
+        scene->AddSystem(MakeUnique<Scene::Systems::RenderSystem>(MakeUnique<Render::Renderer>(mRenderContext)));
 
         scene->AddSystem(MakeUnique<Scene::Systems::UISystem>(mRenderContext, mRenderContext->GetUIContext()));
 
