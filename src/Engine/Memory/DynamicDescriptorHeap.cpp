@@ -68,9 +68,13 @@ namespace Engine
             mCurrentGpuHandle = mCurrentDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
             mNumFreeHandles = mDescriptorsPerHeap;
 
-            ID3D12DescriptorHeap *heaps[] = {mCurrentDescriptorHeap.Get()};
-            commandList->SetDescriptorHeaps(1, heaps);
+            
+            //commandList->SetDescriptorHeaps(1, heaps);
         }
+
+        /// TODO: this solution not optimize but for now it's ok
+        ID3D12DescriptorHeap *heaps[] = {mCurrentDescriptorHeap.Get()};
+        commandList->SetDescriptorHeaps(1, heaps);
 
         DWORD index;
         while (_BitScanForward(&index, mStaleDescriptorsTableBitMask))

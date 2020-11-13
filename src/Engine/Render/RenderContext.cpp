@@ -131,6 +131,7 @@ namespace Engine
 
         auto uiCommandList = CreateGraphicsCommandList();
         uiCommandList->SetName(L"UI Render List");
+        mEventTracker.StartGPUEvent("Render UI", uiCommandList);
 
         CommandListUtils::TransitionBarrier(resourceStateTracker, mSwapChain->GetCurrentBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET);
 
@@ -141,13 +142,17 @@ namespace Engine
         mUIRenderContext->Draw(uiCommandList);
 
         resourceStateTracker->FlushBarriers(uiCommandList);
+        mEventTracker.EndGPUEvent(uiCommandList);
         uiCommandList->Close();
 
         auto prePassCommandList = CreateGraphicsCommandList();
+        prePassCommandList->SetName(L"PrePass: UI Render List");
+        mEventTracker.StartGPUEvent("PrePass: Render UI", prePassCommandList);
 
         auto barriers = resourceStateTracker->FlushPendingBarriers(prePassCommandList);
         resourceStateTracker->CommitFinalResourceStates();
 
+        mEventTracker.EndGPUEvent(prePassCommandList);
         prePassCommandList->Close();
         
 
@@ -160,9 +165,12 @@ namespace Engine
         commandLists.push_back(uiCommandList.Get());
 
         auto postPassCommandList = CreateGraphicsCommandList();
+        postPassCommandList->SetName(L"Transition BackBuffer");
+        mEventTracker.StartGPUEvent("Transition BackBuffer", postPassCommandList);
         CommandListUtils::TransitionBarrier(resourceStateTracker, mSwapChain->GetCurrentBackBuffer(), D3D12_RESOURCE_STATE_PRESENT);
         resourceStateTracker->FlushPendingBarriers(postPassCommandList);
         resourceStateTracker->CommitFinalResourceStates();
+        mEventTracker.EndGPUEvent(postPassCommandList);
         postPassCommandList->Close();
 
         commandLists.push_back(postPassCommandList.Get());

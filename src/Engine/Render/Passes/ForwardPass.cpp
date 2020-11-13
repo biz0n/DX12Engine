@@ -77,7 +77,7 @@ namespace Engine::Render::Passes
             .pixelShaderName = "Resources\\Shaders\\Forward.hlsl",
             .dsvFormat = DXGI_FORMAT_D32_FLOAT,
             .rtvFormats = {
-                DXGI_FORMAT_R8G8B8A8_UNORM
+                DXGI_FORMAT_R16G16B16A16_FLOAT
             },
             .rasterizer = rasterizer,
             .depthStencil = CD3DX12_DEPTH_STENCIL_DESC{D3D12_DEFAULT}};
@@ -103,8 +103,8 @@ namespace Engine::Render::Passes
 
         float clear[4] = {0};
         Render::TextureCreationInfo rtTexture = {
-            .description = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, 0, 0, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET),
-            .clearValue = CD3DX12_CLEAR_VALUE(DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, clear)
+            .description = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R16G16B16A16_FLOAT, 0, 0, 1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET),
+            .clearValue = CD3DX12_CLEAR_VALUE(DXGI_FORMAT_R16G16B16A16_FLOAT, clear)
         };
         planner->NewDepthStencil("ForwardRT", rtTexture);
     }
@@ -154,9 +154,6 @@ namespace Engine::Render::Passes
         auto canvas = renderContext->GetSwapChain();
 
         auto commandList = passContext.commandList;
-        commandList->SetName(L"Render scene List");
-
-        renderContext->GetEventTracker().StartGPUEvent("Render scene list", commandList);
 
         auto resourceStateTracker = passContext.resourceStateTracker;
 
@@ -181,7 +178,7 @@ namespace Engine::Render::Passes
         commandList->RSSetViewports(1, &screenViewport);
         commandList->RSSetScissorRects(1, &scissorRect);
 
-        FLOAT clearColor[] = {0.4f, 0.6f, 0.9f, 1.0f};
+        FLOAT clearColor[] = {0};
         commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
 
         auto descriptor = texture->GetDSDescriptor(renderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_DSV).get());
@@ -228,8 +225,6 @@ namespace Engine::Render::Passes
         {
             Draw(commandList, meshComponent.mesh, transformComponent.transform, passContext);
         }
-
-        renderContext->GetEventTracker().EndGPUEvent(commandList);
     }
 
 } // namespace Engine

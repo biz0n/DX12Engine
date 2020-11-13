@@ -150,10 +150,6 @@ PixelShaderOutput mainPS(VertexShaderOutput IN)
 
     float3 ambient = 0.03 * baseColor.rgb * occlusion.r;
     float3 color = emissiveFactor.rgb + ambient + directLuminance;
-	
-    color = color / (color + 1.0f);
-    color = pow(color, 1.0/2.2);  
-     
  
     float4 finalColor = float4(color, baseColor.a);
  

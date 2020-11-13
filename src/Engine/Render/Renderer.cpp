@@ -1,5 +1,6 @@
 #include "Renderer.h"
 
+#include <StringUtils.h>
 #include <Render/CommandQueue.h>
 
 #include <Render/CommandListUtils.h>
@@ -21,8 +22,6 @@ namespace Engine::Render
 
     void Renderer::Initialize()
     {
-        mGame = MakeUnique<Passes::ForwardPass>();
-
         auto cbvSrvUavDescriptorSize = mRenderContext->Device()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         for (Size i = 0; i < std::size(mFrameContexts); ++i)
         {
@@ -37,6 +36,11 @@ namespace Engine::Render
     {
     }
 
+    void Renderer::RegisterRenderPass(UniquePtr<RenderPassBase> renderPass)
+    {
+        mRenderPasses.push_back(std::move(renderPass));
+    }
+
     void Renderer::Render(Scene::SceneObject* scene, const Timer& timer)
     {
         auto currentBackbufferIndex = mRenderContext->GetCurrentBackBufferIndex();
@@ -44,7 +48,49 @@ namespace Engine::Render
 
         UploadResources(scene, mRenderContext, mFrameContexts[currentBackbufferIndex].uploadBuffer);
 
+        PrepareFrame();
+
+        RenderPasses(scene, timer);
+    }
+
+    void Renderer::PrepareFrame()
+    {
+        for (auto& pass : mRenderPasses)
+        {
+            ResourcePlanner planner;
+
+            pass->PrepareResources(&planner);
+
+            for (auto resource : planner.GetPlannedResources())
+            {
+                auto& creationInfo = resource.creationInfo;
+                creationInfo.description.Width = mRenderContext->GetSwapChain()->GetWidth();
+                creationInfo.description.Height = mRenderContext->GetSwapChain()->GetHeight();
+
+                mFrameResourceProvider->CreateResource(resource.name, resource.creationInfo);
+            }
+
+            pass->CreateRootSignatures(mRenderContext->GetRootSignatureProvider());
+            pass->CreatePipelineStates(mRenderContext->GetPipelineStateProvider());
+        }
+    }
+
+    void Renderer::RenderPasses(Scene::SceneObject* scene, const Timer& timer)
+    {
+        for (auto& pass : mRenderPasses)
+        {
+            RenderPass(pass.get(), scene, timer);
+        }
+    }
+
+    void Renderer::RenderPass(RenderPassBase* pass, Scene::SceneObject* scene, const Timer& timer)
+    {
+        auto currentBackbufferIndex = mRenderContext->GetCurrentBackBufferIndex();
+
         auto commandList = mRenderContext->CreateGraphicsCommandList();
+        commandList->SetName(StringToWString(pass->GetName() + " CL").c_str());
+        
+        mRenderContext->GetEventTracker().StartGPUEvent(pass->GetName(), commandList);
 
         PassContext passContext = {};
 
@@ -56,30 +102,23 @@ namespace Engine::Render
         passContext.timer = &timer;
         passContext.resourceStateTracker = MakeShared<ResourceStateTracker>(mRenderContext->GetGlobalResourceStateTracker());
 
-        ResourcePlanner planner;
-
-        mGame->PrepareResources(&planner);
-
-        for (auto resource : planner.GetPlannedResources())
-        {
-            auto& creationInfo = resource.creationInfo;
-            creationInfo.description.Width = mRenderContext->GetSwapChain()->GetWidth();
-            creationInfo.description.Height = mRenderContext->GetSwapChain()->GetHeight();
-
-            mFrameResourceProvider->CreateResource(resource.name, resource.creationInfo);
-        }
-
-        mGame->CreateRootSignatures(mRenderContext->GetRootSignatureProvider());
-        mGame->CreatePipelineStates(mRenderContext->GetPipelineStateProvider());
-
-        mGame->Render(passContext);
+        pass->Render(passContext);
 
         passContext.resourceStateTracker->FlushBarriers(commandList);
+
+        mRenderContext->GetEventTracker().EndGPUEvent(commandList);
+        
         commandList->Close();
 
         auto prePassCommandList = mRenderContext->CreateGraphicsCommandList();
+        prePassCommandList->SetName(StringToWString(pass->GetName() + " PrePass CL").c_str());
+        mRenderContext->GetEventTracker().StartGPUEvent("PrePass: " + pass->GetName(), prePassCommandList);
+
         auto barriers = passContext.resourceStateTracker->FlushPendingBarriers(prePassCommandList);
         passContext.resourceStateTracker->CommitFinalResourceStates();
+        passContext.resourceStateTracker->FlushBarriers(prePassCommandList);
+
+        mRenderContext->GetEventTracker().EndGPUEvent(prePassCommandList);
         prePassCommandList->Close();
 
         std::vector<ID3D12CommandList*> commandLists;
@@ -91,7 +130,6 @@ namespace Engine::Render
         
         commandLists.push_back(commandList.Get());
         
-
         mRenderContext->GetGraphicsCommandQueue()->ExecuteCommandLists(commandLists.size(), commandLists.data());
     }
 

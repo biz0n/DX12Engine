@@ -17,6 +17,9 @@
 #include <future>
 #include <thread>
 
+#include <Render/Passes/ForwardPass.h>
+#include <Render/Passes/ToneMappingPass.h>
+
 #include <Scene/Components/RelationshipComponent.h>
 #include <Scene/Components/LocalTransformComponent.h>
 #include <Scene/Components/NameComponent.h>
@@ -64,13 +67,17 @@ namespace Engine
 
     void Application::InitScene(UniquePtr<Scene::SceneObject> scene)
     {
+        auto renderer = MakeUnique<Render::Renderer>(mRenderContext);
+        renderer->RegisterRenderPass(MakeUnique<Render::Passes::ForwardPass>());
+        renderer->RegisterRenderPass(MakeUnique<Render::Passes::ToneMappingPass>());
+
         auto& registry = scene->GetRegistry();
         auto camera = registry.view<Scene::Components::CameraComponent>()[0];
         registry.emplace<Scene::Components::MovingComponent>(camera, Scene::Components::MovingComponent());
 
         scene->AddSystem(MakeUnique<Scene::Systems::WorldTransformSystem>());
 
-        scene->AddSystem(MakeUnique<Scene::Systems::RenderSystem>(MakeUnique<Render::Renderer>(mRenderContext)));
+        scene->AddSystem(MakeUnique<Scene::Systems::RenderSystem>(std::move(renderer)));
 
         scene->AddSystem(MakeUnique<Scene::Systems::UISystem>(mRenderContext, mRenderContext->GetUIContext()));
 
