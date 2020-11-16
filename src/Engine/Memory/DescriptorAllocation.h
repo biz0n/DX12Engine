@@ -4,7 +4,7 @@
 
 #include <d3d12.h>
 
-namespace Engine
+namespace Engine::Memory
 {
     class DescriptorAllocatorPage;
 
@@ -39,4 +39,4 @@ namespace Engine
         uint32 mIncrementalDescriptorSize;
         SharedPtr<DescriptorAllocatorPage> mPage;
     };
-} // namespace Engine
+} // namespace Engine::Memory

@@ -1,6 +1,6 @@
 #include "Resource.h"
 
-namespace Engine
+namespace Engine::Memory
 {
     Resource::Resource(const std::wstring &name) : mResource(nullptr)
     {
@@ -38,4 +38,4 @@ namespace Engine
         mResourceName = name;
     }
 
-} // namespace Engine
+} // namespace Engine::Memory

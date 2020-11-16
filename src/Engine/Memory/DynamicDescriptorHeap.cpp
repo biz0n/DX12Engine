@@ -4,7 +4,7 @@
 
 #include <stdexcept>
 
-namespace Engine
+namespace Engine::Memory
 {
     DynamicDescriptorHeap::DynamicDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE heapType, uint32 descriptorHandleIncrementSize, uint32 descriptorsPerHeap)
         : mDescriptorHeapType(heapType), mDescriptorHandleIncrementSize(descriptorHandleIncrementSize), mDescriptorsPerHeap(descriptorsPerHeap)
@@ -68,8 +68,7 @@ namespace Engine
             mCurrentGpuHandle = mCurrentDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
             mNumFreeHandles = mDescriptorsPerHeap;
 
-            
-            //commandList->SetDescriptorHeaps(1, heaps);
+                        //commandList->SetDescriptorHeaps(1, heaps);
         }
 
         /// TODO: this solution not optimize but for now it's ok
@@ -162,4 +161,4 @@ namespace Engine
         return staleDescriptorsCount;
     }
 
-} // namespace Engine
+} // namespace Engine::Memory

@@ -5,7 +5,7 @@
 
 #include <vector>
 
-namespace Engine
+namespace Engine::Memory
 {
     class UploadBuffer
     {
@@ -24,7 +24,7 @@ namespace Engine
             }
 
             template <typename T>
-            void CopyTo(const std::vector<T>& v)
+            void CopyTo(const std::vector<T> &v)
             {
                 memcpy(CPU, v.data(), sizeof(T) * v.size());
             }
@@ -41,7 +41,7 @@ namespace Engine
             mOffset = 0;
         }
 
-        ID3D12Resource* GetD3D12Resource() const { return mBuffer.Get(); }
+        ID3D12Resource *GetD3D12Resource() const { return mBuffer.Get(); }
 
     private:
         ComPtr<ID3D12Resource> mBuffer;
@@ -51,4 +51,4 @@ namespace Engine
         Size mOffset;
     };
 
-} // namespace Engine
+} // namespace Engine::Memory

@@ -13,7 +13,7 @@ namespace Engine
         View view,
         const Graphics* graphics,
         SharedPtr<GlobalResourceStateTracker> resourceStateTracker,
-        SharedPtr<DescriptorAllocator> rtvDescriptorAllocator,
+        SharedPtr<Memory::DescriptorAllocator> rtvDescriptorAllocator,
         ID3D12CommandQueue* commandQueue)
         : mView(view)
         , mWidth(view.width)

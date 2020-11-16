@@ -3,7 +3,7 @@
 #include <Types.h>
 #include <d3d12.h>
 
-namespace Engine
+namespace Engine::Memory
 {
     class Resource
     {
@@ -27,4 +27,4 @@ namespace Engine
         std::wstring mResourceName;
     };
 
-} // namespace Engine
+} // namespace Engine::Memory

@@ -4,6 +4,8 @@
 #include <Exceptions.h>
 #include <Render/DirectXHashes.h>
 
+#include <Memory/DescriptorAllocator.h>
+
 namespace Engine::Render
 {
     Texture::Texture(ComPtr<ID3D12Device> device, std::string name, const TextureCreationInfo &creationInfo) : 
@@ -23,7 +25,7 @@ namespace Engine::Render
 
     Texture::~Texture() = default;
 
-    D3D12_CPU_DESCRIPTOR_HANDLE Texture::GetRTDescriptor(DescriptorAllocator *allocator)
+    D3D12_CPU_DESCRIPTOR_HANDLE Texture::GetRTDescriptor(Memory::DescriptorAllocator *allocator)
     {
         if (mRTDescriptor.IsNull())
         {
@@ -34,7 +36,7 @@ namespace Engine::Render
         return mRTDescriptor.GetDescriptor();
     }
 
-    D3D12_CPU_DESCRIPTOR_HANDLE Texture::GetDSDescriptor(DescriptorAllocator *allocator)
+    D3D12_CPU_DESCRIPTOR_HANDLE Texture::GetDSDescriptor(Memory::DescriptorAllocator *allocator)
     {
         if (mDSDescriptor.IsNull())
         {
@@ -45,7 +47,7 @@ namespace Engine::Render
         return mDSDescriptor.GetDescriptor();
     }
 
-    D3D12_CPU_DESCRIPTOR_HANDLE Texture::GetSRDescriptor(DescriptorAllocator *allocator, const D3D12_SHADER_RESOURCE_VIEW_DESC *desc)
+    D3D12_CPU_DESCRIPTOR_HANDLE Texture::GetSRDescriptor(Memory::DescriptorAllocator *allocator, const D3D12_SHADER_RESOURCE_VIEW_DESC *desc)
     {
         size_t hash = 0;
         if (desc)
@@ -65,7 +67,7 @@ namespace Engine::Render
         return iter->second.GetDescriptor();
     }
 
-    D3D12_CPU_DESCRIPTOR_HANDLE Texture::GetUADescriptor(DescriptorAllocator *allocator, const D3D12_UNORDERED_ACCESS_VIEW_DESC *desc)
+    D3D12_CPU_DESCRIPTOR_HANDLE Texture::GetUADescriptor(Memory::DescriptorAllocator *allocator, const D3D12_UNORDERED_ACCESS_VIEW_DESC *desc)
     {
         size_t hash = 0;
         if (desc)

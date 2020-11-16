@@ -3,13 +3,11 @@
 #include <Types.h>
 #include <Exceptions.h>
 
-
-
 #include <cassert>
 #include <d3d12.h>
 #include <vector>
 
-namespace Engine
+namespace Engine::Memory
 {
     class DescriptorAllocatorPage;
     class DescriptorAllocation;
@@ -28,4 +26,4 @@ namespace Engine
         SharedPtr<DescriptorAllocatorPage> mPage;
     };
 
-} // namespace Engine
+} // namespace Engine::Memory

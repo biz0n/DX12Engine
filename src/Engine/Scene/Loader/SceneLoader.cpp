@@ -28,6 +28,9 @@
 #include <Scene/Components/AABBComponent.h>
 #include <Scene/Components/CubeMapComponent.h>
 
+#include <Memory/IndexBuffer.h>
+#include <Memory/VertexBuffer.h>
+
 #include <filesystem>
 
 #include <entt/entt.hpp>
@@ -244,8 +247,8 @@ namespace Engine::Scene::Loader
     std::tuple<String, Mesh, dx::BoundingBox> SceneLoader::ParseMesh(const aiMesh *aMesh, const LoadingContext &context)
     {
         Mesh mesh;
-        mesh.indexBuffer = MakeShared<IndexBuffer>();
-        mesh.vertexBuffer = MakeShared<VertexBuffer>();
+        mesh.indexBuffer = MakeShared<Memory::IndexBuffer>();
+        mesh.vertexBuffer = MakeShared<Memory::VertexBuffer>();
         std::vector<Vertex> vertices;
         vertices.reserve(aMesh->mNumVertices);
 
@@ -654,8 +657,8 @@ namespace Engine::Scene::Loader
         cubeMap.texture = texture;
         cubeMap.primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
-        cubeMap.indexBuffer = MakeShared<IndexBuffer>(L"CubeMap Indices");
-        cubeMap.vertexBuffer = MakeShared<VertexBuffer>(L"CubeMap Vertices");
+        cubeMap.indexBuffer = MakeShared<Memory::IndexBuffer>(L"CubeMap Indices");
+        cubeMap.vertexBuffer = MakeShared<Memory::VertexBuffer>(L"CubeMap Vertices");
 
         std::vector<Vertex> vertices = {};
         vertices.reserve(24);

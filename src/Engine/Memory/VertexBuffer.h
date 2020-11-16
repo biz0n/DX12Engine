@@ -4,7 +4,7 @@
 #include <Memory/Buffer.h>
 #include <d3d12.h>
 
-namespace Engine
+namespace Engine::Memory
 {
     class VertexBuffer : public Buffer
     {
@@ -18,4 +18,4 @@ namespace Engine
         D3D12_VERTEX_BUFFER_VIEW mVertexBufferView;
     };
 
-} // namespace Engine
+} // namespace Engine::Memory

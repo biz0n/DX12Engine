@@ -2,7 +2,7 @@
 
 #include <Exceptions.h>
 
-namespace Engine
+namespace Engine::Memory
 {
     CommandAllocatorPool::CommandAllocatorPool(ComPtr<ID3D12Device> device, Size initialSize) : mDevice(device)
     {

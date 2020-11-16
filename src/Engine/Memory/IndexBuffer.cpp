@@ -2,7 +2,7 @@
 
 #include <cassert>
 
-namespace Engine
+namespace Engine::Memory
 {
     IndexBuffer::IndexBuffer(const std::wstring &name)
         : Buffer(name), mIndexBufferView{0}
@@ -33,4 +33,4 @@ namespace Engine
         return mIndexBufferView;
     }
 
-} // namespace Engine
+} // namespace Engine::Memory

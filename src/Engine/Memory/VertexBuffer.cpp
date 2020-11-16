@@ -1,6 +1,6 @@
 #include "VertexBuffer.h"
 
-namespace Engine
+namespace Engine::Memory
 {
     VertexBuffer::VertexBuffer(const std::wstring &name)
         : Buffer(name), mVertexBufferView{0}
@@ -28,4 +28,4 @@ namespace Engine
         return mVertexBufferView;
     }
 
-} // namespace Engine
+} // namespace Engine::Memory

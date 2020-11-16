@@ -7,6 +7,8 @@
 #include <Memory/DescriptorAllocator.h>
 #include <Memory/DescriptorAllocation.h>
 #include <Memory/DynamicDescriptorHeap.h>
+#include <Memory/IndexBuffer.h>
+#include <Memory/VertexBuffer.h>
 #include <Render/RenderContext.h>
 
 #include <Scene/Loader/SceneLoader.h>
@@ -16,6 +18,7 @@
 #include <Memory/UploadBuffer.h>
 #include <Scene/PunctualLight.h>
 #include <Scene/Camera.h>
+#include <Scene/Texture.h>
 
 #include <DirectXTex.h>
 #include <DirectXMath.h>
@@ -25,17 +28,17 @@
 
 namespace Engine::CommandListUtils
 {
-    void UploadVertexBuffer(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, VertexBuffer &vertexBuffer, SharedPtr<Engine::UploadBuffer> uploadBuffer)
+    void UploadVertexBuffer(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, Memory::VertexBuffer &vertexBuffer, SharedPtr<Memory::UploadBuffer> uploadBuffer)
     {
         UploadBuffer(renderContext, commandList, stateTracker, vertexBuffer, uploadBuffer);
     }
 
-    void UploadIndexBuffer(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, IndexBuffer &indexBuffer, SharedPtr<Engine::UploadBuffer> uploadBuffer)
+    void UploadIndexBuffer(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, Memory::IndexBuffer &indexBuffer, SharedPtr<Memory::UploadBuffer> uploadBuffer)
     {
         UploadBuffer(renderContext, commandList, stateTracker, indexBuffer, uploadBuffer);
     }
 
-    void UploadBuffer(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, Buffer &buffer, SharedPtr<Engine::UploadBuffer> uploadBuffer, D3D12_RESOURCE_FLAGS flags)
+    void UploadBuffer(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, Memory::Buffer &buffer, SharedPtr<Memory::UploadBuffer> uploadBuffer, D3D12_RESOURCE_FLAGS flags)
     {
         auto device = renderContext->Device();
         auto resourceTracker = stateTracker;
@@ -68,7 +71,7 @@ namespace Engine::CommandListUtils
         buffer.SetD3D12Resource(destinationResource);
     }
 
-    void UploadTexture(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, Scene::Texture *texture, SharedPtr<Engine::UploadBuffer> uploadBuffer)
+    void UploadTexture(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, Scene::Texture *texture, SharedPtr<Memory::UploadBuffer> uploadBuffer)
     {
         if (texture->GetD3D12Resource() != nullptr)
         {
@@ -143,7 +146,7 @@ namespace Engine::CommandListUtils
         texture->SetD3D12Resource(textureResource);
     }
 
-    bool UploadMaterialTextures(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, SharedPtr<Scene::Material> material, SharedPtr<Engine::UploadBuffer> uploadBuffer)
+    bool UploadMaterialTextures(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, SharedPtr<Scene::Material> material, SharedPtr<Memory::UploadBuffer> uploadBuffer)
     {
         bool anythingToLoad = false;
         if (material->HasBaseColorTexture() && !material->GetBaseColorTexture()->GetD3D12Resource())
@@ -179,7 +182,7 @@ namespace Engine::CommandListUtils
         return anythingToLoad;
     }
 
-    void BindVertexBuffer(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, VertexBuffer &vertexBuffer)
+    void BindVertexBuffer(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, Memory::VertexBuffer &vertexBuffer)
     {
         TransitionBarrier(stateTracker, vertexBuffer.GetD3D12Resource(), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
@@ -187,7 +190,7 @@ namespace Engine::CommandListUtils
         commandList->IASetVertexBuffers(0, 1, &vbv);
     }
 
-    void BindIndexBuffer(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, IndexBuffer &indexBuffer)
+    void BindIndexBuffer(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, Memory::IndexBuffer &indexBuffer)
     {
         TransitionBarrier(stateTracker, indexBuffer.GetD3D12Resource(), D3D12_RESOURCE_STATE_INDEX_BUFFER);
 
@@ -290,7 +293,7 @@ namespace Engine::CommandListUtils
         return cb;
     }
 
-    void BindMaterial(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, SharedPtr<::Engine::UploadBuffer> buffer, SharedPtr<DynamicDescriptorHeap> dynamicDescriptorHeap, SharedPtr<Scene::Material> material)
+    void BindMaterial(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, SharedPtr<Memory::UploadBuffer> buffer, SharedPtr<Memory::DynamicDescriptorHeap> dynamicDescriptorHeap, SharedPtr<Scene::Material> material)
     {
         auto device = renderContext->Device();
         auto descriptorAllocator = renderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);

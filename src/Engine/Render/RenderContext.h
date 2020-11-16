@@ -19,7 +19,6 @@ namespace Engine
     }
 
     class SwapChain;
-    class CommandAllocatorPool;
     class UIRenderContext;
     class Graphics;
     class CommandQueue;
@@ -39,7 +38,7 @@ namespace Engine
 
             SharedPtr<CommandQueue> GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) const;
 
-            SharedPtr<DescriptorAllocator> GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE type) const { return mDescriptorAllocators[type]; }
+            SharedPtr<Memory::DescriptorAllocator> GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE type) const { return mDescriptorAllocators[type]; }
 
             ComPtr<ID3D12GraphicsCommandList> CreateCommandList(D3D12_COMMAND_LIST_TYPE type);
 
@@ -79,7 +78,7 @@ namespace Engine
 
             SharedPtr<GlobalResourceStateTracker> mGlobalResourceStateTracker;
 
-            SharedPtr<DescriptorAllocator> mDescriptorAllocators[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES];
+            SharedPtr<Memory::DescriptorAllocator> mDescriptorAllocators[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES];
 
             UniquePtr<Graphics> mGraphics;
 
@@ -87,7 +86,7 @@ namespace Engine
             SharedPtr<CommandQueue> mComputeCommandQueue;
             SharedPtr<CommandQueue> mCopyCommandQueue;
 
-            UniquePtr<CommandAllocatorPool> mCommandAllocators[EngineConfig::SwapChainBufferCount];
+            UniquePtr<Memory::CommandAllocatorPool> mCommandAllocators[EngineConfig::SwapChainBufferCount];
 
             SharedPtr<SwapChain> mSwapChain;
 

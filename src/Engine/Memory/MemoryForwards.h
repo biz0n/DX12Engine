@@ -1,13 +1,18 @@
 #pragma once
 
-namespace Engine
+namespace Engine::Memory
 {
-    class DescriptorAllocation;
-    class DynamicDescriptorHeap;
+    class Buffer;
+    class CommandAllocatorPool;
+    class IndexBuffer;
+    class Resource;
+    class UploadBuffer;
+    class VertexBuffer;
     
+    class DynamicDescriptorHeap;
+
     class DescriptorAllocatorPage;
     class DescriptorAllocator;
-    class DescriptorAllocation;
 
     class UploadBuffer;
-}
+} // namespace Engine::Memory

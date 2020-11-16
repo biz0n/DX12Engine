@@ -3,7 +3,7 @@
 #include <Memory/DescriptorAllocatorPage.h>
 #include <Memory/DescriptorAllocation.h>
 
-namespace Engine
+namespace Engine::Memory
 {
 	DescriptorAllocator::DescriptorAllocator(ComPtr<ID3D12Device> device, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 numDescriptorsPerPage)
 	{
@@ -20,4 +20,4 @@ namespace Engine
 		mPage->ReleaseStaleDescriptors(frameNumber);
 		mPage->SetCurrentFrame(frameNumber);
 	}
-} // namespace Engine
+} // namespace Engine::Memory

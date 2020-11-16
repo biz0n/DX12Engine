@@ -3,7 +3,7 @@
 #include <Types.h>
 #include <Memory/Buffer.h>
 
-namespace Engine
+namespace Engine::Memory
 {
     class IndexBuffer : public Buffer
     {
@@ -17,4 +17,4 @@ namespace Engine
         D3D12_INDEX_BUFFER_VIEW mIndexBufferView;
     };
 
-} // namespace Engine
+} // namespace Engine::Memory

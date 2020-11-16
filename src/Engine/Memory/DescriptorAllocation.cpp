@@ -3,7 +3,7 @@
 #include <Exceptions.h>
 #include <Memory/DescriptorAllocatorPage.h>
 
-namespace Engine
+namespace Engine::Memory
 {
     DescriptorAllocation::DescriptorAllocation()
         : mDescriptor{0}, mNumDescriptors(0), mIncrementalDescriptorSize(0), mPage(nullptr)
@@ -62,14 +62,14 @@ namespace Engine
 
     void DescriptorAllocation::Free()
     {
-        if ( !IsNull() && mPage )
+        if (!IsNull() && mPage)
         {
-            mPage->Free( std::move( *this ) );
-            
+            mPage->Free(std::move(*this));
+
             mDescriptor.ptr = 0;
             mNumDescriptors = 0;
             mIncrementalDescriptorSize = 0;
             mPage.reset();
         }
     }
-} // namespace Engine
+} // namespace Engine::Memory

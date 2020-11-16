@@ -6,6 +6,9 @@
 #include <Render/CommandListUtils.h>
 #include <Memory/IndexBuffer.h>
 
+#include <Memory/DynamicDescriptorHeap.h>
+#include <Memory/UploadBuffer.h>
+
 namespace Engine::Render::Passes
 {
     ToneMappingPass::ToneMappingPass() : RenderPassBase("Tone Mapping Pass")

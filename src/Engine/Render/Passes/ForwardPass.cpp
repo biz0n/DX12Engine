@@ -32,6 +32,8 @@
 
 #include <Memory/MemoryForwards.h>
 #include <Memory/DescriptorAllocation.h>
+#include <Memory/IndexBuffer.h>
+#include <Memory/DynamicDescriptorHeap.h>
 #include <Render/PipelineStateProvider.h>
 #include <Render/ShaderProvider.h>
 #include <Render/PipelineStateProvider.h>

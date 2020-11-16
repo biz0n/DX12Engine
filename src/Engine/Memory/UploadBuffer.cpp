@@ -3,15 +3,17 @@
 #include <d3dx12.h>
 #include <new>
 
-namespace Engine
+namespace Engine::Memory
 {
     UploadBuffer::UploadBuffer(ID3D12Device *device, Size size)
         : mOffset(0), mSize(size)
     {
+        CD3DX12_HEAP_PROPERTIES properties {D3D12_HEAP_TYPE_UPLOAD};
+        D3D12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(size);
         ThrowIfFailed(device->CreateCommittedResource(
-            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+            &properties,
             D3D12_HEAP_FLAG_NONE,
-            &CD3DX12_RESOURCE_DESC::Buffer(size),
+            &bufferDesc,
             D3D12_RESOURCE_STATE_GENERIC_READ,
             nullptr,
             IID_PPV_ARGS(&mBuffer)));
@@ -52,4 +54,4 @@ namespace Engine
         return allocation;
     }
 
-} // namespace Engine
+} // namespace Engine::Memory

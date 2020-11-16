@@ -15,6 +15,9 @@
 #include <Render/Passes/ForwardPass.h>
 
 #include <Memory/UploadBuffer.h>
+#include <Memory/IndexBuffer.h>
+#include <Memory/VertexBuffer.h>
+#include <Memory/DynamicDescriptorHeap.h>
 
 #include <entt/entt.hpp>
 
@@ -32,8 +35,8 @@ namespace Engine::Render
         auto cbvSrvUavDescriptorSize = mRenderContext->Device()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         for (Size i = 0; i < std::size(mFrameContexts); ++i)
         {
-            mFrameContexts[i].uploadBuffer = MakeShared<UploadBuffer>(mRenderContext->Device().Get(), 500 * 1024 * 1024);
-            mFrameContexts[i].dynamicDescriptorHeap = MakeShared<DynamicDescriptorHeap>(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, cbvSrvUavDescriptorSize);
+            mFrameContexts[i].uploadBuffer = MakeShared<Memory::UploadBuffer>(mRenderContext->Device().Get(), 500 * 1024 * 1024);
+            mFrameContexts[i].dynamicDescriptorHeap = MakeShared<Memory::DynamicDescriptorHeap>(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, cbvSrvUavDescriptorSize);
         }
 
         mFrameResourceProvider = MakeUnique<FrameResourceProvider>(mRenderContext->Device(), mRenderContext->GetGlobalResourceStateTracker().get());
@@ -143,7 +146,7 @@ namespace Engine::Render
 
     /// TODO: find better solution for uploading scene resources to GPU memory
     /// Let's stay this logic here for now.
-    void Renderer::UploadResources(Scene::SceneObject *scene, SharedPtr<RenderContext> renderContext, SharedPtr<UploadBuffer> uploadBuffer)
+    void Renderer::UploadResources(Scene::SceneObject *scene, SharedPtr<RenderContext> renderContext, SharedPtr<Memory::UploadBuffer> uploadBuffer)
     {
         const auto &meshView = scene->GetRegistry().view<Scene::Components::MeshComponent>();
         const auto &cubeMapView = scene->GetRegistry().view<Scene::Components::CubeMapComponent>();

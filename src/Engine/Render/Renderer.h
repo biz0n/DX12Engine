@@ -4,8 +4,7 @@
 #include <EngineConfig.h>
 #include <Timer.h>
 
-#include <Memory/DynamicDescriptorHeap.h>
-#include <Memory/UploadBuffer.h>
+#include <Memory/MemoryForwards.h>
 #include <Render/ResourceStateTracker.h>
 #include <Scene/SceneForwards.h>
 #include <Render/RenderContext.h>
@@ -38,7 +37,7 @@ namespace Engine::Render
         void PrepareFrame();
         void RenderPasses(Scene::SceneObject* scene, const Timer& timer);
         void RenderPass(RenderPassBase* pass, Scene::SceneObject* scene, const Timer& timer);
-        void UploadResources(Scene::SceneObject *scene, SharedPtr<RenderContext> renderContext, SharedPtr<UploadBuffer> uploadBuffer);
+        void UploadResources(Scene::SceneObject *scene, SharedPtr<RenderContext> renderContext, SharedPtr<Memory::UploadBuffer> uploadBuffer);
     private:
         FrameTransientContext mFrameContexts[EngineConfig::SwapChainBufferCount];
 

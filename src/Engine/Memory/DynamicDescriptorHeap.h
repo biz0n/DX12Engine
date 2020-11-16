@@ -7,7 +7,7 @@
 #include <d3d12.h>
 #include <queue>
 
-namespace Engine
+namespace Engine::Memory
 {
     class DynamicDescriptorHeap
     {
@@ -65,4 +65,4 @@ namespace Engine
         uint32 mNumFreeHandles;
     };
 
-} // namespace Engine
+} // namespace Engine::Memory

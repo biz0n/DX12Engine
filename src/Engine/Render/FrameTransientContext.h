@@ -1,8 +1,7 @@
 #pragma once 
 
 #include <Types.h>
-#include <Memory/DynamicDescriptorHeap.h>
-#include <Memory/UploadBuffer.h>
+#include <Memory/MemoryForwards.h>
 
 #include <d3d12.h>
 #include <vector>
@@ -12,16 +11,11 @@ namespace Engine::Render
     class FrameTransientContext
     {
     public:
-        SharedPtr<DynamicDescriptorHeap> dynamicDescriptorHeap;
-        SharedPtr<UploadBuffer> uploadBuffer;
+        SharedPtr<Memory::DynamicDescriptorHeap> dynamicDescriptorHeap;
+        SharedPtr<Memory::UploadBuffer> uploadBuffer;
         std::vector<ComPtr<ID3D12Resource>> usingResources;
 
-        void Reset()
-        {
-            uploadBuffer->Reset();
-            dynamicDescriptorHeap->Reset();
-            usingResources.clear();
-        }
+        void Reset();
     };
     
 } // namespace Engine::Render

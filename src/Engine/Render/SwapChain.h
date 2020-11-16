@@ -6,6 +6,7 @@
 #include <EngineConfig.h>
 #include <d3d12.h>
 #include <dxgi1_6.h>
+#include <Memory/MemoryForwards.h>
 #include <Memory/DescriptorAllocation.h>
 
 namespace Engine
@@ -14,12 +15,11 @@ namespace Engine
     struct View;
     class GlobalResourceStateTracker;
 
-    class DescriptorAllocator;
 
     class SwapChain
     {
     public:
-        SwapChain(View view, const Graphics* graphis, SharedPtr<GlobalResourceStateTracker> resourceStateTracker, SharedPtr<DescriptorAllocator> rtvDescriptorAllocator, ID3D12CommandQueue* commandQueue);
+        SwapChain(View view, const Graphics* graphis, SharedPtr<GlobalResourceStateTracker> resourceStateTracker, SharedPtr<Memory::DescriptorAllocator> rtvDescriptorAllocator, ID3D12CommandQueue* commandQueue);
         ~SwapChain();
 
         uint32 GetCurrentBackBufferIndex() const;
@@ -42,14 +42,14 @@ namespace Engine
         bool mIsTearingSupported;
         ComPtr<IDXGISwapChain4> mSwapChain;
         ComPtr<ID3D12Resource> mBackBuffers[EngineConfig::SwapChainBufferCount];
-        DescriptorAllocation mBackBufferAllocation;
+        Memory::DescriptorAllocation mBackBufferAllocation;
 
         SharedPtr<GlobalResourceStateTracker> mResourceStateTracker;
 
         uint32 mCurrentBackBufferIndex;
 
         const Graphics* mGraphics;
-        SharedPtr<DescriptorAllocator> mRTVDescriptorAllocator;
+        SharedPtr<Memory::DescriptorAllocator> mRTVDescriptorAllocator;
 
         uint32 mWidth;
         uint32 mHeight;

@@ -8,7 +8,7 @@
 #include <map>
 #include <queue>
 
-namespace Engine
+namespace Engine::Memory
 {
     class DescriptorAllocation;
 
@@ -24,10 +24,12 @@ namespace Engine
         void Free(DescriptorAllocation &&descriptorHandle);
 
         void ReleaseStaleDescriptors(uint64 frameNumber);
+
     private:
         void AddNewBlock(Index offset, Size size);
         void FreeBlock(Index offset, Size size);
-        Index CalculateOffset(const D3D12_CPU_DESCRIPTOR_HANDLE& handle);
+        Index CalculateOffset(const D3D12_CPU_DESCRIPTOR_HANDLE &handle);
+
     private:
         D3D12_DESCRIPTOR_HEAP_TYPE mHeapType;
         uint32 mNumDescriptorsPerPage;
@@ -75,4 +77,4 @@ namespace Engine
         FreeBlockBySizeMap mFreeBlockBySizeMap;
         Size mFreeSize;
     };
-} // namespace Engine
+} // namespace Engine::Memory

@@ -24,7 +24,7 @@ namespace Engine
         {
             D3D12_DESCRIPTOR_HEAP_TYPE type = (D3D12_DESCRIPTOR_HEAP_TYPE)i;
             uint32 incrementalSize = Device()->GetDescriptorHandleIncrementSize(type);
-            mDescriptorAllocators[i] = MakeShared<DescriptorAllocator>(Device(), type);
+            mDescriptorAllocators[i] = MakeShared<Memory::DescriptorAllocator>(Device(), type);
         }
 
         mDirrectCommandQueue = MakeShared<CommandQueue>(Device(), D3D12_COMMAND_LIST_TYPE_DIRECT);
@@ -45,7 +45,7 @@ namespace Engine
 
         for (auto frameIndex = 0; frameIndex < EngineConfig::SwapChainBufferCount; ++frameIndex)
         {
-            mCommandAllocators[frameIndex] = MakeUnique<CommandAllocatorPool>(Device(), 0);
+            mCommandAllocators[frameIndex] = MakeUnique<Memory::CommandAllocatorPool>(Device(), 0);
         }
 
         mUIRenderContext = MakeShared<UIRenderContext>(

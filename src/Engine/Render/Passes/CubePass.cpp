@@ -6,12 +6,15 @@
 #include <Render/PipelineStateStream.h>
 
 #include <Render/CommandListUtils.h>
-#include <Memory/IndexBuffer.h>
 #include <Scene/Vertex.h>
 #include <Scene/Texture.h>
 #include <Scene/SceneObject.h>
 #include <Scene/CubeMap.h>
 #include <Scene/Camera.h>
+
+#include <Memory/IndexBuffer.h>
+#include <Memory/UploadBuffer.h>
+#include <Memory/DynamicDescriptorHeap.h>
 
 #include <Scene/Components/CameraComponent.h>
 #include <Scene/Components/WorldTransformComponent.h>

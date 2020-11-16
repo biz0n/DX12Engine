@@ -5,7 +5,7 @@
 
 #include <vector>
 
-namespace Engine
+namespace Engine::Memory
 {
     class Buffer : public Resource
     {
@@ -40,4 +40,4 @@ namespace Engine
         std::vector<Byte> mBuffer;
     };
 
-} // namespace Engine
+} // namespace Engine::Memory

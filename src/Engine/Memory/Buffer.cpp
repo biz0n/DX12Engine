@@ -1,6 +1,6 @@
 #include "Buffer.h"
 
-namespace Engine
+namespace Engine::Memory
 {
     Buffer::Buffer(const std::wstring &name)
         : Resource(name)
@@ -20,4 +20,4 @@ namespace Engine
         mBuffer = std::move(data);
     }
 
-} // namespace Engine
+} // namespace Engine::Memory
