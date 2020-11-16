@@ -1,9 +1,10 @@
 #pragma once
 
 #include <Types.h>
-#include <Render/ShaderCreationInfo.h>
+#include <Render/RenderForwards.h>
 #include <unordered_map>
 
+#include <d3d12.h>
 
 namespace Engine::Render
 {

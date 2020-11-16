@@ -10,6 +10,7 @@
 #include <Memory/IndexBuffer.h>
 #include <Memory/VertexBuffer.h>
 #include <Render/RenderContext.h>
+#include <Render/ResourceStateTracker.h>
 
 #include <Scene/Loader/SceneLoader.h>
 #include <Scene/Image.h>
@@ -26,7 +27,7 @@
 #include <filesystem>
 #include <map>
 
-namespace Engine::CommandListUtils
+namespace Engine::Render::CommandListUtils
 {
     void UploadVertexBuffer(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, Memory::VertexBuffer &vertexBuffer, SharedPtr<Memory::UploadBuffer> uploadBuffer)
     {

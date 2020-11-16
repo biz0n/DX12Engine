@@ -1,9 +1,19 @@
 #include "ToneMappingPass.h"
 
-#include <Render/RootSignatureBuilder.h>
-#include <Render/PipelineStateStream.h>
-
 #include <Render/CommandListUtils.h>
+#include <Render/RootSignatureBuilder.h>
+#include <Render/CommandListUtils.h>
+#include <Render/Texture.h>
+#include <Render/TextureCreationInfo.h>
+#include <Render/ResourcePlanner.h>
+#include <Render/RootSignatureProvider.h>
+#include <Render/PassContext.h>
+#include <Render/PipelineStateStream.h>
+#include <Render/PipelineStateProvider.h>
+#include <Render/SwapChain.h>
+#include <Render/RenderContext.h>
+#include <Render/FrameResourceProvider.h>
+#include <Render/FrameTransientContext.h>
 #include <Memory/IndexBuffer.h>
 
 #include <Memory/DynamicDescriptorHeap.h>

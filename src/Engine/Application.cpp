@@ -47,7 +47,7 @@ namespace Engine
         timer.Reset();
 
         mKeyboard = MakeShared<Keyboard>();
-        mRenderContext = MakeShared<RenderContext>(view);
+        mRenderContext = MakeShared<Render::RenderContext>(view);
 
         mSceneLoadingInfo = MakeShared<Scene::SceneLoadingInfo>();
         mSceneLoadingInfo->scenes = {

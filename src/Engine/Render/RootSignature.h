@@ -5,12 +5,13 @@
 
 #include <d3dx12.h>
 
-namespace Engine
+namespace Engine::Render
 {
     class RootSignature
     {
     public:
         RootSignature(ComPtr<ID3D12Device> device, const CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC *description);
+        ~RootSignature();
 
         ComPtr<ID3D12RootSignature> GetD3D12RootSignature() const { return mRootSignature; }
 
@@ -30,4 +31,4 @@ namespace Engine
         uint32 mSamplerTableBitMask;
     };
 
-} // namespace Engine
+} // namespace Engine::Render

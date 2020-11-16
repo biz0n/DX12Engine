@@ -5,28 +5,23 @@
 #include <Scene/Systems/System.h>
 #include <UI/ComponentRenderers/ComponentRenderer.h>
 
+#include <Render/RenderForwards.h>
+
 #include <vector>
-
-
-namespace Engine
-{
-    class UIRenderContext;
-    class RenderContext;
-}
 
 namespace Engine::Scene::Systems
 {
     class UISystem : public System
     {
         public:
-            UISystem(SharedPtr<RenderContext> renderContext, SharedPtr<UIRenderContext> uiRenderContext);
+            UISystem(SharedPtr<Render::RenderContext> renderContext, SharedPtr<Render::UIRenderContext> uiRenderContext);
             ~UISystem() override;
         public:
             void Process(SceneObject *scene, const Timer& timer) override;
 
         private:
-            SharedPtr<UIRenderContext> mUIRenderContext;
-            SharedPtr<RenderContext> mRenderContext;
+            SharedPtr<Render::UIRenderContext> mUIRenderContext;
+            SharedPtr<Render::RenderContext> mRenderContext;
 
             std::vector<UniquePtr<Engine::UI::ComponentRenderers::ComponentRendererBase>> mComponentRenderers;
     };

@@ -21,10 +21,10 @@ namespace Engine::UI::ComponentRenderers
     class MeshComponentRenderer : public ComponentRenderer<Engine::Scene::Components::MeshComponent>
     {
         private:
-            SharedPtr<RenderContext> mRenderContext;
-            SharedPtr<UIRenderContext> mUIRenderContext;
+            SharedPtr<Render::RenderContext> mRenderContext;
+            SharedPtr<Render::UIRenderContext> mUIRenderContext;
         public:
-            MeshComponentRenderer(SharedPtr<RenderContext> renderContext, SharedPtr<UIRenderContext> uiRenderContext)
+            MeshComponentRenderer(SharedPtr<Render::RenderContext> renderContext, SharedPtr<Render::UIRenderContext> uiRenderContext)
                 : ComponentRenderer("Mesh Component"), mRenderContext(renderContext), mUIRenderContext(uiRenderContext)
              {}
             ~MeshComponentRenderer() {}

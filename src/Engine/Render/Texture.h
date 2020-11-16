@@ -2,7 +2,7 @@
 
 #include <Types.h>
 
-#include <Render/TextureCreationInfo.h>
+#include <Render/RenderForwards.h>
 #include <Memory/MemoryForwards.h>
 #include <Memory/DescriptorAllocation.h>
 

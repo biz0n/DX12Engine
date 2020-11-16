@@ -16,7 +16,7 @@ namespace Engine::Memory
 
         void StageDescriptor(uint32 rootParameterIndex, uint32 offset, uint32 numDescriptors, const D3D12_CPU_DESCRIPTOR_HANDLE descriptor);
 
-        void ParseRootSignature(const RootSignature *rootSignature);
+        void ParseRootSignature(const Render::RootSignature *rootSignature);
 
         void CommitStagedDescriptors(ComPtr<ID3D12Device> device, ComPtr<ID3D12GraphicsCommandList> commandList);
 
@@ -47,7 +47,7 @@ namespace Engine::Memory
         };
 
         UniquePtr<D3D12_CPU_DESCRIPTOR_HANDLE[]> mDescriptorHandlesCache;
-        DescriptorTableCache mDescriptoTableCache[RootSignature::MaxDescriptorTables];
+        DescriptorTableCache mDescriptoTableCache[Render::RootSignature::MaxDescriptorTables];
 
         D3D12_DESCRIPTOR_HEAP_TYPE mDescriptorHeapType;
         uint32 mDescriptorHandleIncrementSize;

@@ -1,7 +1,7 @@
 #include "Graphics.h"
 #include <Exceptions.h>
 
-namespace Engine
+namespace Engine::Render
 {
     Graphics::Graphics()
     {
@@ -9,8 +9,8 @@ namespace Engine
         ComPtr<ID3D12Debug3> debugController;
         ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)));
         debugController->EnableDebugLayer();
-        debugController->SetEnableGPUBasedValidation(TRUE);
-        debugController->SetEnableSynchronizedCommandQueueValidation(FALSE);
+        //debugController->SetEnableGPUBasedValidation(TRUE);
+        //debugController->SetEnableSynchronizedCommandQueueValidation(FALSE);
 #endif
         UINT createFactoryFlags = 0;
 #if defined(DEBUG) || defined(_DEBUG)
@@ -75,4 +75,4 @@ namespace Engine
     Graphics::~Graphics()
     {
     }
-} // namespace Engine
+} // namespace Engine::Render

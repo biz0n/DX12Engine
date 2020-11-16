@@ -4,19 +4,13 @@
 #include <IO/KeyEvent.h>
 #include <Timer.h>
 
+#include <Scene/SceneForwards.h>
+#include <Render/RenderForwards.h>
+
 namespace Engine
 {
-    class RenderContext;
-    class App;
-    class SwapChain;
     class Keyboard;
     struct View;
-
-    namespace Scene
-    {
-        class SceneObject;
-        struct SceneLoadingInfo;
-    }
 
     class Application
     {
@@ -37,7 +31,7 @@ namespace Engine
         void InitScene(UniquePtr<Scene::SceneObject> scene);
 
     private:
-        SharedPtr<RenderContext> mRenderContext;
+        SharedPtr<Render::RenderContext> mRenderContext;
         SharedPtr<Keyboard> mKeyboard;
         SharedPtr<Scene::SceneLoadingInfo> mSceneLoadingInfo;
 

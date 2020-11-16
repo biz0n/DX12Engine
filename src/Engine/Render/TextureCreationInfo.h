@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Render/DirectXHashes.h>
+#include <DirectXHashes.h>
 #include <d3d12.h>
 
 #include <compare>

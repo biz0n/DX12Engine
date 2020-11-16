@@ -2,7 +2,7 @@
 
 #include <Exceptions.h>
 
-namespace Engine
+namespace Engine::Render
 {
     RootSignature::RootSignature(ComPtr<ID3D12Device> device, const CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC *description)
         : mDescriptorTableBitMask(0), mSamplerTableBitMask(0), mNumDescriptorsPerTable{0}
@@ -52,6 +52,8 @@ namespace Engine
             IID_PPV_ARGS(&mRootSignature)));
     }
 
+    RootSignature::~RootSignature() = default;
+
     uint32 RootSignature::GetDescriptorsBitMask(D3D12_DESCRIPTOR_HEAP_TYPE type) const
     {
         switch (type)
@@ -69,4 +71,4 @@ namespace Engine
         return mNumDescriptorsPerTable[index];
     }
 
-} // namespace Engine
+} // namespace Engine::Render

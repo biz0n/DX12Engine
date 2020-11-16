@@ -3,9 +3,19 @@
 #include <ShaderTypes.h>
 
 #include <Render/RootSignatureBuilder.h>
-#include <Render/PipelineStateStream.h>
-
 #include <Render/CommandListUtils.h>
+#include <Render/Texture.h>
+#include <Render/TextureCreationInfo.h>
+#include <Render/ResourcePlanner.h>
+#include <Render/RootSignatureProvider.h>
+#include <Render/PassContext.h>
+#include <Render/PipelineStateStream.h>
+#include <Render/PipelineStateProvider.h>
+#include <Render/SwapChain.h>
+#include <Render/RenderContext.h>
+#include <Render/FrameResourceProvider.h>
+#include <Render/FrameTransientContext.h>
+
 #include <Scene/Vertex.h>
 #include <Scene/Texture.h>
 #include <Scene/SceneObject.h>
@@ -21,6 +31,7 @@
 #include <Scene/Components/CubeMapComponent.h>
 
 #include <entt/entt.hpp>
+#include <d3d12.h>
 
 namespace Engine::Render::Passes
 {

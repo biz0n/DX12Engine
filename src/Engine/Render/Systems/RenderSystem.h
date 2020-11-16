@@ -2,13 +2,11 @@
 
 #include <Types.h>
 #include <Scene/SceneForwards.h>
+#include <Render/RenderForwards.h>
 #include <Scene/Systems/System.h>
 #include <Timer.h>
 
-namespace Engine::Render
-{
-    class Renderer;
-}
+
 
 namespace Engine::Scene::Systems
 {

@@ -7,7 +7,7 @@
 #include <vector>
 #include <cassert>
 
-namespace Engine
+namespace Engine::Render
 {
     class GlobalResourceStateTracker
     {
@@ -49,4 +49,4 @@ namespace Engine
         std::unordered_map<ID3D12Resource *, D3D12_RESOURCE_STATES> mFinalStates;
     };
 
-} // namespace Engine
+} // namespace Engine::Render

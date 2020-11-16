@@ -1,5 +1,11 @@
 #include "FrameResourceProvider.h"
 
+#include <DirectXHashes.h>
+
+#include <Render/ResourceStateTracker.h>
+#include <Render/Texture.h>
+#include <Render/TextureCreationInfo.h>
+
 #include <tuple>
 
 namespace Engine::Render

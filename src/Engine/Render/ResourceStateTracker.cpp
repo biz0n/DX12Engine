@@ -1,14 +1,13 @@
 #include "ResourceStateTracker.h"
 
-namespace Engine
+namespace Engine::Render
 {
 
     GlobalResourceStateTracker::GlobalResourceStateTracker()
     {
-
     }
 
-    void GlobalResourceStateTracker::TrackResource(ID3D12Resource* resource, D3D12_RESOURCE_STATES state)
+    void GlobalResourceStateTracker::TrackResource(ID3D12Resource *resource, D3D12_RESOURCE_STATES state)
     {
         if (resource)
         {
@@ -16,7 +15,7 @@ namespace Engine
         }
     }
 
-    void GlobalResourceStateTracker::UntrackResource(ID3D12Resource* resource)
+    void GlobalResourceStateTracker::UntrackResource(ID3D12Resource *resource)
     {
         if (resource)
         {
@@ -24,7 +23,7 @@ namespace Engine
         }
     }
 
-    D3D12_RESOURCE_STATES GlobalResourceStateTracker::GetLastState(ID3D12Resource* resource)
+    D3D12_RESOURCE_STATES GlobalResourceStateTracker::GetLastState(ID3D12Resource *resource)
     {
         auto iter = mStates.find(resource);
         if (iter != mStates.end())
@@ -38,14 +37,13 @@ namespace Engine
 
     ResourceStateTracker::ResourceStateTracker(SharedPtr<GlobalResourceStateTracker> globalResourceTracker) : mGlobalReourceTracker(globalResourceTracker)
     {
-
     }
 
-    void ResourceStateTracker::ResourceBarrier(const D3D12_RESOURCE_BARRIER& barrier)
+    void ResourceStateTracker::ResourceBarrier(const D3D12_RESOURCE_BARRIER &barrier)
     {
         if (barrier.Type == D3D12_RESOURCE_BARRIER_TYPE_TRANSITION)
         {
-            const D3D12_RESOURCE_TRANSITION_BARRIER& transitionBarrier = barrier.Transition;
+            const D3D12_RESOURCE_TRANSITION_BARRIER &transitionBarrier = barrier.Transition;
 
             auto resource = transitionBarrier.pResource;
             auto iter = mFinalStates.find(resource);
@@ -56,7 +54,7 @@ namespace Engine
                 {
                     D3D12_RESOURCE_BARRIER newBarrier = barrier;
                     newBarrier.Transition.StateBefore = finalState;
-                    mBarriers.emplace_back(newBarrier);	
+                    mBarriers.emplace_back(newBarrier);
                 }
             }
             else
@@ -87,10 +85,10 @@ namespace Engine
         std::vector<D3D12_RESOURCE_BARRIER> resourceBarriers;
         resourceBarriers.reserve(mPendingBarriers.size());
 
-        for (auto& barrier : mPendingBarriers)
+        for (auto &barrier : mPendingBarriers)
         {
-            auto* resource = barrier.Transition.pResource;
-            auto& stateAfter = barrier.Transition.StateAfter;
+            auto *resource = barrier.Transition.pResource;
+            auto &stateAfter = barrier.Transition.StateAfter;
 
             auto globalState = mGlobalReourceTracker->GetLastState(resource);
 
@@ -115,7 +113,7 @@ namespace Engine
 
     void ResourceStateTracker::CommitFinalResourceStates()
     {
-        for (auto& iter : mFinalStates)
+        for (auto &iter : mFinalStates)
         {
             mGlobalReourceTracker->TrackResource(iter.first, iter.second);
         }
@@ -123,14 +121,14 @@ namespace Engine
         mFinalStates.clear();
     }
 
-    void ResourceStateTracker::TrackResource(ID3D12Resource* resource, D3D12_RESOURCE_STATES state)
+    void ResourceStateTracker::TrackResource(ID3D12Resource *resource, D3D12_RESOURCE_STATES state)
     {
         mGlobalReourceTracker->TrackResource(resource, state);
     }
 
-    void ResourceStateTracker::UntrackResource(ID3D12Resource* resource)
+    void ResourceStateTracker::UntrackResource(ID3D12Resource *resource)
     {
         mGlobalReourceTracker->UntrackResource(resource);
     }
 
-}
+} // namespace Engine::Render

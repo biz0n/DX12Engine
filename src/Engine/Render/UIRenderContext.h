@@ -11,8 +11,12 @@
 
 namespace Engine
 {
-    class ImGuiDescriptorAllocator;
     struct View;
+}
+
+namespace Engine::Render
+{
+    class ImGuiDescriptorAllocator;
 
     class UIRenderContext
     {
@@ -62,4 +66,4 @@ namespace Engine
         std::vector<uint32> mOffsets;
     };
 
-} // namespace Engine
+} // namespace Engine::Render

@@ -13,8 +13,9 @@
 #include <Render/PipelineStateProvider.h>
 #include <Render/ShaderProvider.h>
 #include <Render/RootSignatureProvider.h>
+#include <Render/ResourceStateTracker.h>
 
-namespace Engine
+namespace Engine::Render
 {
     RenderContext::RenderContext(View view) : mFrameCount(0), mEventTracker{}
     {
@@ -57,7 +58,6 @@ namespace Engine
         mShaderProvider = MakeUnique<Render::ShaderProvider>();
         mRootSignatureProvider = MakeUnique<Render::RootSignatureProvider>(Device());
         mPipelineStateProvider = MakeUnique<Render::PipelineStateProvider>(Device(), mShaderProvider.get(), mRootSignatureProvider.get());
-        
     }
 
     RenderContext::~RenderContext() = default;
@@ -72,16 +72,21 @@ namespace Engine
         return mGraphics->GetGIFactory();
     }
 
+    uint32 RenderContext::GetCurrentBackBufferIndex() const 
+    { 
+        return mSwapChain->GetCurrentBackBufferIndex(); 
+    }
+
     SharedPtr<CommandQueue> RenderContext::GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) const
     {
         switch (type)
         {
-            case D3D12_COMMAND_LIST_TYPE_DIRECT:
-                return mDirrectCommandQueue;
-            case D3D12_COMMAND_LIST_TYPE_COMPUTE:
-                return mComputeCommandQueue;
-            case D3D12_COMMAND_LIST_TYPE_COPY:
-                return mCopyCommandQueue;
+        case D3D12_COMMAND_LIST_TYPE_DIRECT:
+            return mDirrectCommandQueue;
+        case D3D12_COMMAND_LIST_TYPE_COMPUTE:
+            return mComputeCommandQueue;
+        case D3D12_COMMAND_LIST_TYPE_COPY:
+            return mCopyCommandQueue;
         }
 
         assert(false && "Invalid command queue type.");
@@ -125,7 +130,7 @@ namespace Engine
     }
 
     void RenderContext::EndFrame()
-    {       
+    {
         auto currentBackBufferIndex = mSwapChain->GetCurrentBackBufferIndex();
         auto resourceStateTracker = MakeShared<ResourceStateTracker>(mGlobalResourceStateTracker);
 
@@ -154,9 +159,8 @@ namespace Engine
 
         mEventTracker.EndGPUEvent(prePassCommandList);
         prePassCommandList->Close();
-        
 
-        std::vector<ID3D12CommandList*> commandLists;
+        std::vector<ID3D12CommandList *> commandLists;
 
         if (barriers > 0)
         {
@@ -175,7 +179,6 @@ namespace Engine
 
         commandLists.push_back(postPassCommandList.Get());
 
-
         mFenceValues[currentBackBufferIndex] = GetGraphicsCommandQueue()->ExecuteCommandLists(commandLists.size(), commandLists.data());
         mFrameValues[currentBackBufferIndex] = GetFrameCount();
 
@@ -188,4 +191,4 @@ namespace Engine
         GetCopyCommandQueue()->Flush();
         GetGraphicsCommandQueue()->Flush();
     }
-}
+} // namespace Engine::Render

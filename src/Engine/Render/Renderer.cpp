@@ -9,6 +9,10 @@
 #include <Scene/CubeMap.h>
 #include <Scene/Texture.h>
 #include <Scene/SceneObject.h>
+#include <Render/SwapChain.h>
+#include <Render/ResourceStateTracker.h>
+#include <Render/TextureCreationInfo.h>
+#include <Render/FrameResourceProvider.h>
 #include <Render/ResourcePlanner.h>
 #include <Render/PassContext.h>
 #include <Render/RenderContext.h>
@@ -20,6 +24,7 @@
 #include <Memory/DynamicDescriptorHeap.h>
 
 #include <entt/entt.hpp>
+#include <d3d12.h>
 
 namespace Engine::Render
 {

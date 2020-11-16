@@ -3,6 +3,8 @@
 #include <ShaderCompiler.h>
 #include <StringUtils.h>
 
+#include <Render/ShaderCreationInfo.h>
+
 namespace Engine::Render
 {
     ShaderProvider::ShaderProvider() = default;

@@ -2,7 +2,7 @@
 
 #include <Types.h>
 #include <Hash.h>
-#include <Render/DirectXHashes.h>
+#include <DirectXHashes.h>
 #include <d3d12.h>
 #include <vector>
 

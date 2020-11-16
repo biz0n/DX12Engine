@@ -1,10 +1,7 @@
 #pragma once
 
 #include <Types.h>
-#include <Render/ResourceStateTracker.h>
-#include <Render/RenderContext.h>
-#include <Render/FrameResourceProvider.h>
-#include <Render/FrameTransientContext.h>
+#include <Render/RenderForwards.h>
 
 #include <Scene/SceneForwards.h>
 #include <Timer.h>

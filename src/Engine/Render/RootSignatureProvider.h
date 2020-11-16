@@ -2,8 +2,7 @@
 
 #include <Types.h>
 #include <Name.h>
-#include <Render/RootSignature.h>
-#include <Render/RootSignatureBuilder.h>
+#include <Render/RenderForwards.h>
 
 #include <d3d12.h>
 #include <unordered_map>

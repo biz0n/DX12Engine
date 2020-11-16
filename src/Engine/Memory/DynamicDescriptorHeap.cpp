@@ -14,7 +14,7 @@ namespace Engine::Memory
 
     void DynamicDescriptorHeap::StageDescriptor(uint32 rootParameterIndex, uint32 offset, uint32 numDescriptors, const D3D12_CPU_DESCRIPTOR_HANDLE descriptor)
     {
-        if (numDescriptors > mDescriptorsPerHeap || rootParameterIndex > RootSignature::MaxDescriptorTables)
+        if (numDescriptors > mDescriptorsPerHeap || rootParameterIndex > Render::RootSignature::MaxDescriptorTables)
         {
             throw std::bad_alloc();
         }
@@ -36,7 +36,7 @@ namespace Engine::Memory
         mStaleDescriptorsTableBitMask |= (1 << rootParameterIndex);
     }
 
-    void DynamicDescriptorHeap::ParseRootSignature(const RootSignature *rootSignature)
+    void DynamicDescriptorHeap::ParseRootSignature(const Render::RootSignature *rootSignature)
     {
         mStaleDescriptorsTableBitMask = 0;
 

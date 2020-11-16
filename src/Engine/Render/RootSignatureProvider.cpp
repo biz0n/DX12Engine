@@ -1,5 +1,7 @@
 #include "RootSignatureProvider.h"
 
+#include <Render/RootSignatureBuilder.h>
+
 namespace Engine::Render
 {
 

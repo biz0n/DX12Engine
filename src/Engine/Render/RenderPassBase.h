@@ -2,10 +2,7 @@
 
 #include <Types.h>
 
-#include <Render/ResourcePlanner.h>
-#include <Render/RootSignatureProvider.h>
-#include <Render/PipelineStateProvider.h>
-#include <Render/PassContext.h>
+#include <Render/RenderForwards.h>
 
 namespace Engine::Render
 {

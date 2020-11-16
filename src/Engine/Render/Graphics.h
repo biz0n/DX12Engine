@@ -7,7 +7,7 @@
 #include <dxgi1_6.h>
 #include <Types.h>
 
-namespace Engine
+namespace Engine::Render
 {
     class Graphics
     {
@@ -26,4 +26,4 @@ namespace Engine
         Microsoft::WRL::ComPtr<IDXGIFactory4> dxgiFactory;
     };
 
-} // namespace Engine
+} // namespace Engine::Render

@@ -5,16 +5,12 @@
 #include <Timer.h>
 
 #include <Memory/MemoryForwards.h>
-#include <Render/ResourceStateTracker.h>
+#include <Render/RenderForwards.h>
 #include <Scene/SceneForwards.h>
-#include <Render/RenderContext.h>
 
-#include <Render/FrameResourceProvider.h>
-#include <Render/PassContext.h>
 #include <Render/FrameTransientContext.h>
-#include <Render/RenderPassBase.h>
 
-#include <d3d12.h>
+
 #include <vector>
 
 namespace Engine::Render

@@ -3,10 +3,7 @@
 #include <Types.h>
 
 #include <Name.h>
-#include <Render/PipelineStateStream.h>
-#include <Render/ShaderProvider.h>
-#include <Render/RootSignature.h>
-#include <Render/RootSignatureProvider.h>
+#include <Render/RenderForwards.h>
 
 #include <d3d12.h>
 #include <unordered_map>

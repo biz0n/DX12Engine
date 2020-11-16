@@ -2,9 +2,12 @@
 
 #include <StringUtils.h>
 #include <Exceptions.h>
-#include <Render/DirectXHashes.h>
+#include <DirectXHashes.h>
 
 #include <Memory/DescriptorAllocator.h>
+#include <Render/TextureCreationInfo.h>
+
+#include <d3dx12.h>
 
 namespace Engine::Render
 {

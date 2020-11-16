@@ -9,7 +9,7 @@
 #include <cassert>
 #include <d3dx12.h>
 
-namespace Engine
+namespace Engine::Render
 {
     UIRenderContext::UIRenderContext(View view, ComPtr<ID3D12Device> device, uint32 numFramesInFlight, DXGI_FORMAT rtvFormat)
         : mDevice(device), mNumFramesInFlight(numFramesInFlight), mCurrentFrameIndex(0)
@@ -126,4 +126,4 @@ namespace Engine
         mOffsets[frameIndex] = 0;
     }
 
-} // namespace Engine
+} // namespace Engine::Render

@@ -24,12 +24,20 @@
 #include <Scene/Components/LightComponent.h>
 #include <Scene/Components/AABBComponent.h>
 #include <Scene/Components/IsDisabledComponent.h>
-#include <Render/PassContext.h>
-#include <Render/Texture.h>
-#include <Render/RenderContext.h>
-#include <Render/PipelineStateProvider.h>
-#include <Render/RootSignature.h>
 
+#include <Render/RootSignatureBuilder.h>
+#include <Render/CommandListUtils.h>
+#include <Render/Texture.h>
+#include <Render/TextureCreationInfo.h>
+#include <Render/ResourcePlanner.h>
+#include <Render/RootSignatureProvider.h>
+#include <Render/PassContext.h>
+#include <Render/PipelineStateStream.h>
+#include <Render/PipelineStateProvider.h>
+#include <Render/SwapChain.h>
+#include <Render/RenderContext.h>
+#include <Render/FrameResourceProvider.h>
+#include <Render/FrameTransientContext.h>
 #include <Memory/MemoryForwards.h>
 #include <Memory/DescriptorAllocation.h>
 #include <Memory/IndexBuffer.h>

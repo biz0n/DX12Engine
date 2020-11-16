@@ -1,6 +1,6 @@
 #include "Texture.h"
 
-#include <Render/DirectXHashes.h>
+#include <DirectXHashes.h>
 #include <Memory/DescriptorAllocator.h>
 #include <Memory/DescriptorAllocation.h>
 

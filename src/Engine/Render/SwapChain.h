@@ -9,13 +9,15 @@
 #include <Memory/MemoryForwards.h>
 #include <Memory/DescriptorAllocation.h>
 
+#include <Render/RenderForwards.h>
+
 namespace Engine
 {
-    class Graphics;
     struct View;
-    class GlobalResourceStateTracker;
+}
 
-
+namespace Engine::Render
+{
     class SwapChain
     {
     public:
@@ -55,4 +57,4 @@ namespace Engine
         uint32 mHeight;
         View mView;
     };
-} // namespace Engine
+} // namespace Engine::Render

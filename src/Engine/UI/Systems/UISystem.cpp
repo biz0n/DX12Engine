@@ -20,7 +20,7 @@
 
 namespace Engine::Scene::Systems
 {
-    UISystem::UISystem(SharedPtr<RenderContext> renderContext, SharedPtr<UIRenderContext> uiRenderContext)
+    UISystem::UISystem(SharedPtr<Render::RenderContext> renderContext, SharedPtr<Render::UIRenderContext> uiRenderContext)
         : System(), mUIRenderContext(uiRenderContext), mRenderContext(renderContext)
     {
         mComponentRenderers.push_back(MakeUnique<UI::ComponentRenderers::StateComponentsRenderer>());

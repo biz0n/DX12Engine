@@ -4,7 +4,7 @@
 
 #include <d3d12.h>
 
-namespace Engine
+namespace Engine::Render
 {
     class CommandQueue
     {
@@ -13,7 +13,7 @@ namespace Engine
         ~CommandQueue();
 
     public:
-        ID3D12CommandQueue* D3D12CommandQueue() const { return mCommandQueue.Get(); }
+        ID3D12CommandQueue *D3D12CommandQueue() const { return mCommandQueue.Get(); }
 
         uint64 ExecuteCommandList(ID3D12GraphicsCommandList *commandList);
 
@@ -44,4 +44,4 @@ namespace Engine
         uint64 mFenceNextValue;
     };
 
-} // namespace Engine
+} // namespace Engine::Render

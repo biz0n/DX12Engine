@@ -2,17 +2,16 @@
 
 #include <Types.h>
 #include <ShaderTypes.h>
-#include <Render/RenderContext.h>
 
 #include <Scene/SceneForwards.h>
-#include <Render/ResourceStateTracker.h>
+#include <Render/RenderForwards.h>
 #include <Memory/MemoryForwards.h>
 
 #include <DirectXMath.h>
 #include <d3d12.h>
 #include <vector>
 
-namespace Engine::CommandListUtils
+namespace Engine::Render::CommandListUtils
 {
     void UploadVertexBuffer(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, Memory::VertexBuffer &vertexBuffer, SharedPtr<Memory::UploadBuffer> uploadBuffer);
 

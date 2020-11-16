@@ -2,6 +2,12 @@
 
 #include <Exceptions.h>
 
+#include <Render/PipelineStateStream.h>
+#include <Render/RootSignatureProvider.h>
+#include <Render/ShaderProvider.h>
+#include <Render/ShaderCreationInfo.h>
+#include <Render/RootSignature.h>
+
 #include <d3dx12.h>
 
 namespace Engine::Render

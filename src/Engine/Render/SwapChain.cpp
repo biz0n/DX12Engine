@@ -7,7 +7,7 @@
 #include <Memory/DescriptorAllocation.h>
 #include <Render/ResourceStateTracker.h>
 
-namespace Engine
+namespace Engine::Render
 {
     SwapChain::SwapChain(
         View view,
@@ -141,4 +141,4 @@ namespace Engine
         return allowTearing == TRUE;
     }
 
-} // namespace Engine
+} // namespace Engine::Render

@@ -3,9 +3,7 @@
 #include <Types.h>
 #include <Name.h>
 
-#include <Render/TextureCreationInfo.h>
-#include <Render/Texture.h>
-#include <Render/ResourceStateTracker.h>
+#include <Render/RenderForwards.h>
 
 #include <d3d12.h>
 #include <unordered_map>

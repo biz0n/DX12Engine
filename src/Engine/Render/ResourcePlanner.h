@@ -3,6 +3,7 @@
 #include <Types.h>
 
 #include <Name.h>
+#include <Render/RenderForwards.h>
 #include <Render/TextureCreationInfo.h>
 
 #include <d3d12.h>
