@@ -29,7 +29,8 @@ VertexShaderOutput mainVS(VertexPosColor IN)
 {
     VertexShaderOutput OUT;
  
-    OUT.PositionH = mul(IN.PositionL, FrameCB.ViewProj);
+    float3 posW = IN.PositionL + FrameCB.EyePos;
+    OUT.PositionH = mul(float4(posW, 1.0f), FrameCB.ViewProj).xyww;
     OUT.TextureCoord = IN.PositionL;
 
     return OUT;

@@ -75,8 +75,8 @@ namespace Engine
     void Application::InitScene(UniquePtr<Scene::SceneObject> scene)
     {
         auto renderer = MakeUnique<Render::Renderer>(mRenderContext);
-        renderer->RegisterRenderPass(MakeUnique<Render::Passes::CubePass>());
         renderer->RegisterRenderPass(MakeUnique<Render::Passes::ForwardPass>());
+        renderer->RegisterRenderPass(MakeUnique<Render::Passes::CubePass>());
         renderer->RegisterRenderPass(MakeUnique<Render::Passes::ToneMappingPass>());
         
 

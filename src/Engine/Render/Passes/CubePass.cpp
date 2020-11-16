@@ -51,6 +51,8 @@ namespace Engine::Render::Passes
             .clearValue = CD3DX12_CLEAR_VALUE(DXGI_FORMAT_R16G16B16A16_FLOAT, clear)
         };
         planner->NewRenderTarget(ResourceNames::CubeOutput, rtTexture);
+
+        planner->ReadDeptStencil(ResourceNames::ForwardDepth);
     }
 
     void CubePass::CreateRootSignatures(Render::RootSignatureProvider* rootSignatureProvider)
@@ -63,8 +65,10 @@ namespace Engine::Render::Passes
 
     void CubePass::CreatePipelineStates(Render::PipelineStateProvider* pipelineStateProvider)
     {
-        CD3DX12_DEPTH_STENCIL_DESC dsDesc = {};
-        dsDesc.DepthEnable = false;
+        CD3DX12_DEPTH_STENCIL_DESC dsDesc {D3D12_DEFAULT};
+        dsDesc.DepthEnable = true;
+        dsDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+        dsDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
 
         CD3DX12_RASTERIZER_DESC rasterizer = {};
         rasterizer.FillMode = D3D12_FILL_MODE_SOLID;
@@ -102,7 +106,11 @@ namespace Engine::Render::Passes
         auto height = canvas->GetHeight();
         float aspectRatio = canvas->GetWidth() / static_cast<float>(canvas->GetHeight());
 
-        Render::Texture* rtTexture = passContext.frameResourceProvider->GetTexture(ResourceNames::CubeOutput);
+        Render::Texture* dsTexture = passContext.frameResourceProvider->GetTexture(ResourceNames::ForwardDepth);
+        CommandListUtils::TransitionBarrier(resourceStateTracker, dsTexture->D3D12Resource(), D3D12_RESOURCE_STATE_DEPTH_READ);
+        auto dsv = dsTexture->GetDSDescriptor(renderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_DSV).get());
+
+        Render::Texture* rtTexture = passContext.frameResourceProvider->GetTexture(ResourceNames::ForwardOutput);
         auto rtv = rtTexture->GetRTDescriptor(renderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_RTV).get());// canvas->GetCurrentRenderTargetView();
         auto backBuffer = rtTexture->D3D12ResourceCom();// canvas->GetCurrentBackBuffer();
 
@@ -111,8 +119,8 @@ namespace Engine::Render::Passes
         passContext.frameContext->usingResources.push_back(rtTexture->D3D12Resource());
 
 
-       FLOAT clearColor[] = {0};
-       commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
+    //   FLOAT clearColor[] = {0};
+    //   commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
 
         auto screenViewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float32>(width), static_cast<float32>(height));
         auto scissorRect = CD3DX12_RECT(0, 0, width, height);
@@ -120,7 +128,7 @@ namespace Engine::Render::Passes
         commandList->RSSetViewports(1, &screenViewport);
         commandList->RSSetScissorRects(1, &scissorRect);
 
-        commandList->OMSetRenderTargets(1, &rtv, false, nullptr);
+        commandList->OMSetRenderTargets(1, &rtv, false, &dsv);
 
         auto rootSignature = renderContext->GetRootSignatureProvider()->GetRootSignature(RootSignatureNames::Cube);
         commandList->SetGraphicsRootSignature(rootSignature->GetD3D12RootSignature().Get());

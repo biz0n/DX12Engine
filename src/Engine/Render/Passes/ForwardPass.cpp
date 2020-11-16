@@ -170,11 +170,11 @@ namespace Engine::Render::Passes
         auto width = canvas->GetWidth();
         auto height = canvas->GetHeight();
 
-        Render::Texture* rtTexture = passContext.frameResourceProvider->GetTexture(ResourceNames::CubeOutput);
-        Render::Texture* texture = passContext.frameResourceProvider->GetTexture(ResourceNames::ForwardDepth);
-        CommandListUtils::TransitionBarrier(resourceStateTracker, texture->D3D12Resource(), D3D12_RESOURCE_STATE_DEPTH_WRITE);
+        Render::Texture* rtTexture = passContext.frameResourceProvider->GetTexture(ResourceNames::ForwardOutput);
+        Render::Texture* dsTexture = passContext.frameResourceProvider->GetTexture(ResourceNames::ForwardDepth);
+        CommandListUtils::TransitionBarrier(resourceStateTracker, dsTexture->D3D12Resource(), D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
-        passContext.frameContext->usingResources.push_back(texture->D3D12Resource());
+        passContext.frameContext->usingResources.push_back(dsTexture->D3D12Resource());
 
         auto backBuffer = rtTexture->D3D12ResourceCom();// canvas->GetCurrentBackBuffer();
 
@@ -188,10 +188,10 @@ namespace Engine::Render::Passes
         commandList->RSSetViewports(1, &screenViewport);
         commandList->RSSetScissorRects(1, &scissorRect);
 
-       // FLOAT clearColor[] = {0};
-       // commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
+        FLOAT clearColor[] = {0};
+        commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
 
-        auto descriptor = texture->GetDSDescriptor(renderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_DSV).get());
+        auto descriptor = dsTexture->GetDSDescriptor(renderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_DSV).get());
         commandList->ClearDepthStencilView(descriptor, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
         commandList->OMSetRenderTargets(1, &rtv, false, &descriptor);
