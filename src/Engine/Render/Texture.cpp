@@ -9,8 +9,9 @@ namespace Engine::Render
     Texture::Texture(ComPtr<ID3D12Device> device, std::string name, const TextureCreationInfo &creationInfo) : 
         mDevice{device}
     {
+        CD3DX12_HEAP_PROPERTIES heapProperties{D3D12_HEAP_TYPE_DEFAULT};
         ThrowIfFailed(mDevice->CreateCommittedResource(
-            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+            &heapProperties,
             D3D12_HEAP_FLAG_NONE,
             &creationInfo.description,
             D3D12_RESOURCE_STATE_COMMON,

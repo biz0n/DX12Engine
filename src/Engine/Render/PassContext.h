@@ -6,7 +6,7 @@
 #include <Render/FrameResourceProvider.h>
 #include <Render/FrameTransientContext.h>
 
-#include <Scene/SceneObject.h>
+#include <Scene/SceneForwards.h>
 #include <Timer.h>
 
 namespace Engine::Render

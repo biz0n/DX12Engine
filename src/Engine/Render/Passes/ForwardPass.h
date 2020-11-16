@@ -1,23 +1,8 @@
 #pragma once
 
 #include <Scene/SceneForwards.h>
-#include <Types.h>
-#include <EngineConfig.h>
-#include <Render/RootSignature.h>
-
-#include <Memory/MemoryForwards.h>
-#include <Memory/DescriptorAllocation.h>
-#include <Render/PipelineStateProvider.h>
-#include <Render/ShaderProvider.h>
-#include <Render/PipelineStateProvider.h>
-#include <Render/RootSignatureProvider.h>
-#include <Render/ResourcePlanner.h>
-
 #include <Render/RenderPassBase.h>
 
-#include <Timer.h>
-
-#include <entt/fwd.hpp>
 #include <DirectXMath.h>
 
 namespace Engine

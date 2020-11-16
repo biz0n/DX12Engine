@@ -2,7 +2,11 @@
 
 #include <entt/entt.hpp>
 #include <Scene/SceneObject.h>
+#include <Scene/Components/LocalTransformComponent.h>
+#include <Scene/Components/RelationshipComponent.h>
+#include <Scene/Components/WorldTransformComponent.h>
 
+#include <entt/entt.hpp>
 #include <DirectXMath.h>
 #include <queue>
 

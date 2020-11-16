@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Scene/SceneForwards.h>
+
 #include <map>
 #include <string>
 #include <future>
@@ -7,12 +9,10 @@
 #include <vector>
 
 #include <imgui/imgui.h>
-#include <UI./ImGuiEx.h>
+#include <UI/ImGuiEx.h>
 
 namespace Engine::Scene
 {
-    class SceneObject;
-
     struct SceneLoadingInfo
     {
         bool loadScene;

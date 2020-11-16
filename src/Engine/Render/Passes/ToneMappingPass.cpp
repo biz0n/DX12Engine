@@ -84,7 +84,7 @@ namespace Engine::Render::Passes
 
         passContext.frameContext->dynamicDescriptorHeap->ParseRootSignature(rootSignature);
 
-        auto* color = passContext.frameResourceProvider->GetTexture("ForwardRT");
+        auto* color = passContext.frameResourceProvider->GetTexture("CubeRT");
         auto colorSRV = color->GetSRDescriptor(renderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV).get());
 
         CommandListUtils::TransitionBarrier(passContext.resourceStateTracker, color->D3D12ResourceCom(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);

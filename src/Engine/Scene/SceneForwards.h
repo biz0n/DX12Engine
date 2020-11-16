@@ -7,12 +7,17 @@ namespace Engine::Scene::Loader
 
 namespace Engine::Scene
 {
+    class Camera;
+    class CubeMap;
     class SceneObject;
     class Material;
     class Mesh;
+    class PunctualLight;
     class Texture;
     class Image;
+    class Texture;
 
+    struct SceneLoadingInfo;
     struct Vertex;
     struct TextureInfo;
     struct NormalTextureInfo;

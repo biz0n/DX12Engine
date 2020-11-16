@@ -3,6 +3,7 @@
 #include <Types.h>
 
 #include <Scene/SceneForwards.h>
+#include <Scene/Components/ComponentsForwards.h>
 
 #include <d3d12.h>
 #include <DirectXMath.h>
@@ -12,7 +13,6 @@
 #include <unordered_map>
 
 #include <entt/fwd.hpp>
-#include <Scene/Components/RelationshipComponent.h>
 
 struct aiScene;
 struct aiNode;
@@ -64,6 +64,8 @@ namespace Engine::Scene::Loader
 
     public:
         UniquePtr<SceneObject> LoadScene(String path, Optional<float32> scale = {});
+
+        void AddCubeMapToScene(SceneObject* scene, String texturePath);
 
     private:
         void ParseNode(const aiScene* aScene, const aiNode* aNode, const LoadingContext& context, entt::entity entity, Engine::Scene::Components::RelationshipComponent* relationship);

@@ -96,7 +96,7 @@ namespace Engine::Scene
             throw std::bad_alloc();
         }
 
-        if (generateMips)
+        if (generateMips && scratch->GetMetadata().mipLevels == 1)
         {
             UniquePtr<DirectX::ScratchImage> mipChain = MakeUnique<DirectX::ScratchImage>();
             GenerateMipMaps(

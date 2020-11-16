@@ -28,8 +28,16 @@
 #include <Render/Texture.h>
 #include <Render/RenderContext.h>
 #include <Render/PipelineStateProvider.h>
-
 #include <Render/RootSignature.h>
+
+#include <Memory/MemoryForwards.h>
+#include <Memory/DescriptorAllocation.h>
+#include <Render/PipelineStateProvider.h>
+#include <Render/ShaderProvider.h>
+#include <Render/PipelineStateProvider.h>
+#include <Render/RootSignatureProvider.h>
+#include <Render/ResourcePlanner.h>
+
 #include <Render/TextureCreationInfo.h>
 
 #include <entt/entt.hpp>
@@ -160,7 +168,7 @@ namespace Engine::Render::Passes
         auto width = canvas->GetWidth();
         auto height = canvas->GetHeight();
 
-        Render::Texture* rtTexture = passContext.frameResourceProvider->GetTexture("ForwardRT");
+        Render::Texture* rtTexture = passContext.frameResourceProvider->GetTexture("CubeRT");
         Render::Texture* texture = passContext.frameResourceProvider->GetTexture("ForwardDS");
         CommandListUtils::TransitionBarrier(resourceStateTracker, texture->D3D12Resource(), D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
@@ -178,8 +186,8 @@ namespace Engine::Render::Passes
         commandList->RSSetViewports(1, &screenViewport);
         commandList->RSSetScissorRects(1, &scissorRect);
 
-        FLOAT clearColor[] = {0};
-        commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
+       // FLOAT clearColor[] = {0};
+       // commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
 
         auto descriptor = texture->GetDSDescriptor(renderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_DSV).get());
         commandList->ClearDepthStencilView(descriptor, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);

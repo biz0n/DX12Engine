@@ -2,9 +2,8 @@
 
 #include <Types.h>
 #include <Timer.h>
-#include <Scene/Systems/System.h>
-#include <Scene/Components/LocalTransformComponent.h>
 #include <Scene/SceneForwards.h>
+#include <Scene/Systems/System.h>
 #include <IO/Keyboard.h>
 
 #include <entt/fwd.hpp>

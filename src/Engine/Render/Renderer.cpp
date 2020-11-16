@@ -5,11 +5,18 @@
 
 #include <Render/CommandListUtils.h>
 #include <Scene/Components/MeshComponent.h>
+#include <Scene/Components/CubeMapComponent.h>
+#include <Scene/CubeMap.h>
+#include <Scene/Texture.h>
 #include <Scene/SceneObject.h>
 #include <Render/ResourcePlanner.h>
 #include <Render/PassContext.h>
 #include <Render/RenderContext.h>
 #include <Render/Passes/ForwardPass.h>
+
+#include <Memory/UploadBuffer.h>
+
+#include <entt/entt.hpp>
 
 namespace Engine::Render
 {
@@ -138,7 +145,8 @@ namespace Engine::Render
     /// Let's stay this logic here for now.
     void Renderer::UploadResources(Scene::SceneObject *scene, SharedPtr<RenderContext> renderContext, SharedPtr<UploadBuffer> uploadBuffer)
     {
-        const auto &view = scene->GetRegistry().view<Scene::Components::MeshComponent>();
+        const auto &meshView = scene->GetRegistry().view<Scene::Components::MeshComponent>();
+        const auto &cubeMapView = scene->GetRegistry().view<Scene::Components::CubeMapComponent>();
 
         auto stateTracker = MakeShared<ResourceStateTracker>(renderContext->GetGlobalResourceStateTracker());
 
@@ -149,7 +157,7 @@ namespace Engine::Render
         uploadBuffer->Reset();
         bool anythingToLoad = false;
 
-        for (auto &&[entity, meshComponent] : view.proxy())
+        for (auto &&[entity, meshComponent] : meshView.proxy())
         {
             auto mesh = meshComponent.mesh;
             if (!mesh.vertexBuffer->GetD3D12Resource())
@@ -163,6 +171,25 @@ namespace Engine::Render
                 CommandListUtils::UploadIndexBuffer(renderContext, commandList, stateTracker, *mesh.indexBuffer, uploadBuffer);
             }
             anythingToLoad = CommandListUtils::UploadMaterialTextures(renderContext, commandList, stateTracker, mesh.material, uploadBuffer) || anythingToLoad;
+        }
+
+        for (auto &&[entity, cubeComponent] : cubeMapView.proxy())
+        {
+            if (!cubeComponent.cubeMap.vertexBuffer->GetD3D12Resource())
+            {
+                anythingToLoad = true;
+                CommandListUtils::UploadVertexBuffer(renderContext, commandList, stateTracker, *cubeComponent.cubeMap.vertexBuffer, uploadBuffer);
+            }
+            if (!cubeComponent.cubeMap.indexBuffer->GetD3D12Resource())
+            {
+                anythingToLoad = true;
+                CommandListUtils::UploadIndexBuffer(renderContext, commandList, stateTracker, *cubeComponent.cubeMap.indexBuffer, uploadBuffer);
+            }
+            if (!cubeComponent.cubeMap.texture->GetD3D12Resource())
+            {
+                anythingToLoad = true;
+                CommandListUtils::UploadTexture(renderContext, commandList, stateTracker, cubeComponent.cubeMap.texture.get(), uploadBuffer);
+            }
         }
 
         std::vector<ID3D12CommandList *> commandLists;

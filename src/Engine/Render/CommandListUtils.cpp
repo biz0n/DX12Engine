@@ -44,10 +44,12 @@ namespace Engine::CommandListUtils
         ComPtr<ID3D12Resource> destinationResource;
 
         auto allocation = uploadBuffer->Allocate(bufferSize, 1U);
+        CD3DX12_HEAP_PROPERTIES props{D3D12_HEAP_TYPE_DEFAULT};
+        auto bufferSesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize, flags);
         ThrowIfFailed(device->CreateCommittedResource(
-            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+            &props,
             D3D12_HEAP_FLAG_NONE,
-            &CD3DX12_RESOURCE_DESC::Buffer(bufferSize, flags),
+            &bufferSesc,
             D3D12_RESOURCE_STATE_COMMON,
             nullptr,
             IID_PPV_ARGS(&destinationResource)));
@@ -102,9 +104,9 @@ namespace Engine::CommandListUtils
         desc.Flags = D3D12_RESOURCE_FLAG_NONE;
         desc.SampleDesc.Count = 1;
         desc.Dimension = static_cast<D3D12_RESOURCE_DIMENSION>(metadata.dimension);
-
+        CD3DX12_HEAP_PROPERTIES props{D3D12_HEAP_TYPE_DEFAULT};
         ThrowIfFailed(device->CreateCommittedResource(
-            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+            &props,
             D3D12_HEAP_FLAG_NONE,
             &desc,
             D3D12_RESOURCE_STATE_COMMON,
@@ -181,14 +183,16 @@ namespace Engine::CommandListUtils
     {
         TransitionBarrier(stateTracker, vertexBuffer.GetD3D12Resource(), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
-        commandList->IASetVertexBuffers(0, 1, &vertexBuffer.GetVertexBufferView());
+        auto vbv = vertexBuffer.GetVertexBufferView();
+        commandList->IASetVertexBuffers(0, 1, &vbv);
     }
 
     void BindIndexBuffer(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, IndexBuffer &indexBuffer)
     {
         TransitionBarrier(stateTracker, indexBuffer.GetD3D12Resource(), D3D12_RESOURCE_STATE_INDEX_BUFFER);
 
-        commandList->IASetIndexBuffer(&indexBuffer.GetIndexBufferView());
+        auto ibv = indexBuffer.GetIndexBufferView();
+        commandList->IASetIndexBuffer(&ibv);
     }
 
     LightUniform GetLightUniform(const Scene::PunctualLight& lightNode, const DirectX::XMMATRIX& world)

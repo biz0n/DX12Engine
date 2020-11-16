@@ -4,8 +4,10 @@
 #include <Memory/DescriptorAllocator.h>
 #include <Memory/DescriptorAllocation.h>
 #include <Scene/SceneForwards.h>
+#include <Render/DirectXHashes.h>
 
 #include <vector>
+#include <unordered_map>
 
 namespace Engine::Scene
 {
@@ -25,20 +27,29 @@ namespace Engine::Scene
         inline bool IsSRGB() const { return isSRGB; }
         inline void SetSRGB(bool srgb) { isSRGB = srgb; }
 
-        D3D12_CPU_DESCRIPTOR_HANDLE GetShaderResourceView(ComPtr<ID3D12Device> device, SharedPtr<DescriptorAllocator> allocator)
+        D3D12_CPU_DESCRIPTOR_HANDLE GetShaderResourceView(ComPtr<ID3D12Device> device, SharedPtr<DescriptorAllocator> allocator, const D3D12_SHADER_RESOURCE_VIEW_DESC *desc = nullptr)
         {
-            if (mAllocaion.GetNumDescsriptors() == 0)
+            size_t hash = 0;
+            if (desc)
             {
-                auto allocation = allocator->Allocate();
-                device->CreateShaderResourceView(GetD3D12Resource().Get(), nullptr, allocation.GetDescriptor());
-                mAllocaion = std::move(allocation);
+                hash = std::hash<D3D12_SHADER_RESOURCE_VIEW_DESC>{}(*desc);
             }
 
-            return mAllocaion.GetDescriptor();
+            auto iter = mSRDescriptors.find(hash);
+            if (iter == mSRDescriptors.end())
+            {
+                auto srDescriptor = allocator->Allocate();    
+                device->CreateShaderResourceView(mResource.Get(), desc, srDescriptor.GetDescriptor());
+
+                iter = mSRDescriptors.insert({hash, std::move(srDescriptor)}).first;
+            }
+
+            return iter->second.GetDescriptor();
         }
 
     private:
         DescriptorAllocation mAllocaion;
+        std::unordered_map<size_t, DescriptorAllocation> mSRDescriptors;
         bool isSRGB = false;
         SharedPtr<Scene::Image> mImage;
     };

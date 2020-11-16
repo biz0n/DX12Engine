@@ -1,11 +1,8 @@
 #pragma once
 
 #include <Timer.h>
-#include <Scene/Systems/System.h>
 #include <Scene/SceneForwards.h>
-#include <Scene/Components/RelationshipComponent.h>
-#include <Scene/Components/LocalTransformComponent.h>
-#include <Scene/Components/WorldTransformComponent.h>
+#include <Scene/Systems/System.h>
 
 #include <entt/fwd.hpp>
 

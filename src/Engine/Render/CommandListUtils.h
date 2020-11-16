@@ -11,8 +11,6 @@
 #include <Scene/SceneForwards.h>
 #include <Render/ResourceStateTracker.h>
 #include <Memory/MemoryForwards.h>
-#include <Scene/PunctualLight.h>
-#include <Scene/Camera.h>
 
 #include <DirectXMath.h>
 #include <d3d12.h>

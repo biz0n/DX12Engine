@@ -5,6 +5,7 @@
 #include <Scene/Texture.h>
 #include <Scene/Material.h>
 #include <Scene/Vertex.h>
+#include <Scene/CubeMap.h>
 
 #include <Scene/SceneObject.h>
 #include <Scene/Mesh.h>
@@ -25,6 +26,7 @@
 #include <Scene/Components/MeshComponent.h>
 #include <Scene/Components/NameComponent.h>
 #include <Scene/Components/AABBComponent.h>
+#include <Scene/Components/CubeMapComponent.h>
 
 #include <filesystem>
 
@@ -634,6 +636,110 @@ namespace Engine::Scene::Loader
         cameraComponent.camera = camera;
 
         context.registry->emplace<Components::CameraComponent>(entity, cameraComponent);
+    }
+
+    void SceneLoader::AddCubeMapToScene(SceneObject* scene, String texturePath)
+    {
+        if (!std::filesystem::exists(texturePath))
+        {
+            return;
+        }
+
+        CubeMap cubeMap;
+        auto image = Scene::Image::LoadImageFromFile(texturePath);
+        SharedPtr<Texture> texture = MakeShared<Texture>(StringToWString(image->GetName()));
+        texture->SetImage(image);
+        texture->SetSRGB(true);
+
+        cubeMap.texture = texture;
+        cubeMap.primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
+        cubeMap.indexBuffer = MakeShared<IndexBuffer>(L"CubeMap Indices");
+        cubeMap.vertexBuffer = MakeShared<VertexBuffer>(L"CubeMap Vertices");
+
+        std::vector<Vertex> vertices = {};
+        vertices.reserve(24);
+        vertices.assign(24, {});
+
+        auto* v = vertices.data();
+
+        float w = 1.0f;
+        float h = 1.0f;
+        float d = 1.0f;
+
+        // Fill in the front face vertex data.
+        v[0].Vertex = {-w, -h, -d};
+        v[1].Vertex = {-w, +h, -d};
+        v[2].Vertex = {+w, +h, -d};
+        v[3].Vertex = {+w, -h, -d};
+
+        // Fill in the back face vertex data.
+        v[4].Vertex = {-w, -h, +d};
+        v[5].Vertex = {+w, -h, +d};
+        v[6].Vertex = {+w, +h, +d};
+        v[7].Vertex = {-w, +h, +d};
+
+        // Fill in the top face vertex data.
+        v[8] .Vertex = {-w, +h, -d};
+        v[9] .Vertex = {-w, +h, +d};
+        v[10].Vertex = {+w, +h, +d};
+        v[11].Vertex = {+w, +h, -d};
+
+        // Fill in the bottom face vertex data.
+        v[12].Vertex = {-w, -h, -d};
+        v[13].Vertex = {+w, -h, -d};
+        v[14].Vertex = {+w, -h, +d};
+        v[15].Vertex = {-w, -h, +d};
+
+        // Fill in the left face vertex data.
+        v[16].Vertex = {-w, -h, +d};
+        v[17].Vertex = {-w, +h, +d};
+        v[18].Vertex = {-w, +h, -d};
+        v[19].Vertex = {-w, -h, -d};
+
+        // Fill in the right face vertex data.
+        v[20].Vertex = {+w, -h, -d};
+        v[21].Vertex = {+w, +h, -d};
+        v[22].Vertex = {+w, +h, +d};
+        v[23].Vertex = {+w, -h, +d};
+
+        std::vector<uint16> indices = {};
+        indices.reserve(36);
+        indices.assign(36, 0);
+
+        auto* i = indices.data();
+
+        // Fill in the front face index data
+        i[0] = 0; i[1] = 1; i[2] = 2;
+        i[3] = 0; i[4] = 2; i[5] = 3;
+
+        // Fill in the back face index data
+        i[6] = 4; i[7]  = 5; i[8]  = 6;
+        i[9] = 4; i[10] = 6; i[11] = 7;
+
+        // Fill in the top face index data
+        i[12] = 8; i[13] =  9; i[14] = 10;
+        i[15] = 8; i[16] = 10; i[17] = 11;
+
+        // Fill in the bottom face index data
+        i[18] = 12; i[19] = 13; i[20] = 14;
+        i[21] = 12; i[22] = 14; i[23] = 15;
+
+        // Fill in the left face index data
+        i[24] = 16; i[25] = 17; i[26] = 18;
+        i[27] = 16; i[28] = 18; i[29] = 19;
+
+        // Fill in the right face index data
+        i[30] = 20; i[31] = 21; i[32] = 22;
+        i[33] = 20; i[34] = 22; i[35] = 23;
+
+        cubeMap.vertexBuffer->SetData(vertices);
+
+        cubeMap.indexBuffer->SetData(indices);
+
+        auto cubeMapEntity = scene->GetRegistry().create();
+
+        scene->GetRegistry().emplace<Components::CubeMapComponent>(cubeMapEntity, cubeMap);
     }
 
 } // namespace Engine::Scene::Loader

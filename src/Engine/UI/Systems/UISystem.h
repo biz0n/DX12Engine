@@ -1,8 +1,8 @@
 #pragma once
 
 #include <Types.h>
-#include <Scene/Systems/System.h>
 #include <Scene/SceneForwards.h>
+#include <Scene/Systems/System.h>
 #include <UI/ComponentRenderers/ComponentRenderer.h>
 
 #include <vector>

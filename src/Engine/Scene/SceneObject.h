@@ -6,35 +6,22 @@
 
 #include <Scene/Systems/System.h>
 #include <vector>
-#include <entt/fwd.hpp>
-
-#include <Scene/Components/RelationshipComponent.h>
-#include <Scene/Components/LocalTransformComponent.h>
+#include <entt/entt.hpp>
 
 namespace Engine::Scene
 {
     class SceneObject
     {
     public:
-        SceneObject()
-        {
-        }
+        SceneObject();
+
+        ~SceneObject();
     public:
-        entt::registry& GetRegistry() { return registry; }
+        entt::registry& GetRegistry();
 
-        void AddSystem(UniquePtr<Systems::System> system)
-        {
-            system->Init(this);
-            mSystems.push_back(std::move(system));
-        }
+        void AddSystem(UniquePtr<Systems::System> system);
 
-        void Process(const Timer& timer)
-        {
-            for (int i = 0; i < mSystems.size(); ++i)
-            {
-                mSystems[i]->Process(this, timer);
-            }
-        }
+        void Process(const Timer& timer);
 
     private:
         entt::registry registry;

@@ -19,6 +19,7 @@
 
 #include <Render/Passes/ForwardPass.h>
 #include <Render/Passes/ToneMappingPass.h>
+#include <Render/Passes/CubePass.h>
 
 #include <Scene/Components/RelationshipComponent.h>
 #include <Scene/Components/LocalTransformComponent.h>
@@ -68,8 +69,10 @@ namespace Engine
     void Application::InitScene(UniquePtr<Scene::SceneObject> scene)
     {
         auto renderer = MakeUnique<Render::Renderer>(mRenderContext);
+        renderer->RegisterRenderPass(MakeUnique<Render::Passes::CubePass>());
         renderer->RegisterRenderPass(MakeUnique<Render::Passes::ForwardPass>());
         renderer->RegisterRenderPass(MakeUnique<Render::Passes::ToneMappingPass>());
+        
 
         auto& registry = scene->GetRegistry();
         auto camera = registry.view<Scene::Components::CameraComponent>()[0];
@@ -112,7 +115,11 @@ namespace Engine
                 {    
                     CoInitialize(nullptr);
                     Scene::Loader::SceneLoader loader;
-                    return loader.LoadScene(mSceneLoadingInfo->scenePath);
+                    auto scene = loader.LoadScene(mSceneLoadingInfo->scenePath);
+
+                    loader.AddCubeMapToScene(scene.get(), "Resources\\Scenes\\cubemaps\\snowcube1024.dds");
+
+                    return std::move(scene);
                 });
             }
 
