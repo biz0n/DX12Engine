@@ -7,10 +7,10 @@
 namespace Engine::Scene::Systems
 {
     RenderSystem::RenderSystem(UniquePtr<Render::Renderer> renderer)
-     : mRenderer(std::move(renderer))
-     {
-     }
-    
+        : mRenderer(std::move(renderer))
+    {
+    }
+
     RenderSystem::~RenderSystem() = default;
 
     void RenderSystem::Init(SceneObject *scene)
@@ -18,8 +18,8 @@ namespace Engine::Scene::Systems
         mRenderer->Initialize();
     }
 
-    void RenderSystem::Process(SceneObject *scene, const Timer& timer)
-    {   
+    void RenderSystem::Process(SceneObject *scene, const Timer &timer)
+    {
         mRenderer->Render(scene, timer);
     }
-}
+} // namespace Engine::Scene::Systems
