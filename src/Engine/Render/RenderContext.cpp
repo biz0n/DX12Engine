@@ -2,10 +2,12 @@
 
 #include <Exceptions.h>
 #include <EventTracker.h>
+
 #include <Memory/DescriptorAllocator.h>
 #include <Memory/DescriptorAllocation.h>
-#include <Render/SwapChain.h>
 #include <Memory/CommandAllocatorPool.h>
+
+#include <Render/SwapChain.h>
 #include <Render/UIRenderContext.h>
 #include <Render/CommandListUtils.h>
 #include <Render/CommandQueue.h>

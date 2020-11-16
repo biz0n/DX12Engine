@@ -1,14 +1,16 @@
 #include "Renderer.h"
 
 #include <StringUtils.h>
-#include <Render/CommandQueue.h>
 
-#include <Render/CommandListUtils.h>
-#include <Scene/Components/MeshComponent.h>
-#include <Scene/Components/CubeMapComponent.h>
 #include <Scene/CubeMap.h>
 #include <Scene/Texture.h>
 #include <Scene/SceneObject.h>
+#include <Scene/Components/MeshComponent.h>
+#include <Scene/Components/CubeMapComponent.h>
+
+
+#include <Render/CommandQueue.h>
+#include <Render/CommandListUtils.h>
 #include <Render/SwapChain.h>
 #include <Render/ResourceStateTracker.h>
 #include <Render/TextureCreationInfo.h>
@@ -16,7 +18,7 @@
 #include <Render/ResourcePlanner.h>
 #include <Render/PassContext.h>
 #include <Render/RenderContext.h>
-#include <Render/Passes/ForwardPass.h>
+#include <Render/RenderPassBase.h>
 
 #include <Memory/UploadBuffer.h>
 #include <Memory/IndexBuffer.h>

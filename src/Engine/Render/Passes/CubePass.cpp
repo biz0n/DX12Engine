@@ -22,13 +22,13 @@
 #include <Scene/CubeMap.h>
 #include <Scene/Camera.h>
 
-#include <Memory/IndexBuffer.h>
-#include <Memory/UploadBuffer.h>
-#include <Memory/DynamicDescriptorHeap.h>
-
 #include <Scene/Components/CameraComponent.h>
 #include <Scene/Components/WorldTransformComponent.h>
 #include <Scene/Components/CubeMapComponent.h>
+
+#include <Memory/IndexBuffer.h>
+#include <Memory/UploadBuffer.h>
+#include <Memory/DynamicDescriptorHeap.h>
 
 #include <entt/entt.hpp>
 #include <d3d12.h>

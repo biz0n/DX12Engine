@@ -1,25 +1,31 @@
 #include "Application.h"
 
 #include <View.h>
-#include <Render/RenderContext.h>
-#include <Render/SwapChain.h>
+
 #include <Timer.h>
-#include <Render/CommandQueue.h>
-#include <Render/UIRenderContext.h>
-#include <Render/Renderer.h>
+
+
 #include <IO/Keyboard.h>
 
-#include <Scene/SceneObject.h>
-#include <Scene/Loader/SceneLoader.h>
-#include <Scene/SceneLoadingInfo.h>
+
 #include <Types.h>
 
 #include <future>
 #include <thread>
 
+#include <Render/RenderContext.h>
+#include <Render/SwapChain.h>
+#include <Render/CommandQueue.h>
+#include <Render/UIRenderContext.h>
+#include <Render/Renderer.h>
+
 #include <Render/Passes/ForwardPass.h>
 #include <Render/Passes/ToneMappingPass.h>
 #include <Render/Passes/CubePass.h>
+
+#include <Scene/SceneObject.h>
+#include <Scene/SceneLoadingInfo.h>
+#include <Scene/Loader/SceneLoader.h>
 
 #include <Scene/Components/RelationshipComponent.h>
 #include <Scene/Components/LocalTransformComponent.h>

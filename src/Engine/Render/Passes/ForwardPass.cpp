@@ -3,14 +3,6 @@
 #include <stdlib.h>
 #include <ShaderTypes.h>
 
-#include <Render/SwapChain.h>
-#include <Memory/UploadBuffer.h>
-#include <Render/ResourceStateTracker.h>
-#include <Render/RenderContext.h>
-
-#include <Render/CommandListUtils.h>
-#include <Render/CommandQueue.h>
-
 #include <Scene/SceneObject.h>
 #include <Scene/Mesh.h>
 #include <Scene/Material.h>
@@ -25,30 +17,28 @@
 #include <Scene/Components/AABBComponent.h>
 #include <Scene/Components/IsDisabledComponent.h>
 
+#include <Render/SwapChain.h>
+#include <Render/ResourceStateTracker.h>
+#include <Render/CommandQueue.h>
 #include <Render/RootSignatureBuilder.h>
 #include <Render/CommandListUtils.h>
 #include <Render/Texture.h>
 #include <Render/TextureCreationInfo.h>
-#include <Render/ResourcePlanner.h>
-#include <Render/RootSignatureProvider.h>
 #include <Render/PassContext.h>
 #include <Render/PipelineStateStream.h>
-#include <Render/PipelineStateProvider.h>
-#include <Render/SwapChain.h>
 #include <Render/RenderContext.h>
 #include <Render/FrameResourceProvider.h>
 #include <Render/FrameTransientContext.h>
-#include <Memory/MemoryForwards.h>
-#include <Memory/DescriptorAllocation.h>
-#include <Memory/IndexBuffer.h>
-#include <Memory/DynamicDescriptorHeap.h>
-#include <Render/PipelineStateProvider.h>
 #include <Render/ShaderProvider.h>
 #include <Render/PipelineStateProvider.h>
 #include <Render/RootSignatureProvider.h>
 #include <Render/ResourcePlanner.h>
 
-#include <Render/TextureCreationInfo.h>
+#include <Memory/UploadBuffer.h>
+#include <Memory/MemoryForwards.h>
+#include <Memory/DescriptorAllocation.h>
+#include <Memory/IndexBuffer.h>
+#include <Memory/DynamicDescriptorHeap.h>
 
 #include <entt/entt.hpp>
 

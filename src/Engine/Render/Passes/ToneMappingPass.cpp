@@ -1,6 +1,5 @@
 #include "ToneMappingPass.h"
 
-#include <Render/CommandListUtils.h>
 #include <Render/RootSignatureBuilder.h>
 #include <Render/CommandListUtils.h>
 #include <Render/Texture.h>
@@ -14,8 +13,8 @@
 #include <Render/RenderContext.h>
 #include <Render/FrameResourceProvider.h>
 #include <Render/FrameTransientContext.h>
-#include <Memory/IndexBuffer.h>
 
+#include <Memory/IndexBuffer.h>
 #include <Memory/DynamicDescriptorHeap.h>
 #include <Memory/UploadBuffer.h>
 

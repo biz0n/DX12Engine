@@ -1,23 +1,22 @@
 #include "SceneLoader.h"
 
 #include <StringUtils.h>
-#include <Scene/Image.h>
-#include <Scene/Texture.h>
-#include <Scene/Material.h>
-#include <Scene/Vertex.h>
-#include <Scene/CubeMap.h>
-
-#include <Scene/SceneObject.h>
-#include <Scene/Mesh.h>
-
-#include <Scene/Camera.h>
-#include <Scene/PunctualLight.h>
 
 #include <assimp/Importer.hpp>
 #include <assimp/Exporter.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <assimp/pbrmaterial.h>
+
+#include <Scene/Image.h>
+#include <Scene/Texture.h>
+#include <Scene/Material.h>
+#include <Scene/Vertex.h>
+#include <Scene/CubeMap.h>
+#include <Scene/SceneObject.h>
+#include <Scene/Mesh.h>
+#include <Scene/Camera.h>
+#include <Scene/PunctualLight.h>
 
 #include <Scene/Components/RelationshipComponent.h>
 #include <Scene/Components/LocalTransformComponent.h>

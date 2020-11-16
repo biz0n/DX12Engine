@@ -3,12 +3,13 @@
 #include <Exceptions.h>
 #include <d3dx12.h>
 
-#include <Memory/UploadBuffer.h>
 #include <Memory/DescriptorAllocator.h>
 #include <Memory/DescriptorAllocation.h>
 #include <Memory/DynamicDescriptorHeap.h>
 #include <Memory/IndexBuffer.h>
 #include <Memory/VertexBuffer.h>
+#include <Memory/UploadBuffer.h>
+
 #include <Render/RenderContext.h>
 #include <Render/ResourceStateTracker.h>
 
@@ -16,7 +17,6 @@
 #include <Scene/Image.h>
 #include <Scene/Texture.h>
 #include <Scene/Material.h>
-#include <Memory/UploadBuffer.h>
 #include <Scene/PunctualLight.h>
 #include <Scene/Camera.h>
 #include <Scene/Texture.h>
