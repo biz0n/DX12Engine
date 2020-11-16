@@ -1,5 +1,7 @@
 #include "ToneMappingPass.h"
 
+#include <Render/Passes/Names.h>
+
 #include <Render/RootSignatureBuilder.h>
 #include <Render/CommandListUtils.h>
 #include <Render/Texture.h>
@@ -28,14 +30,14 @@ namespace Engine::Render::Passes
 
     void ToneMappingPass::PrepareResources(Render::ResourcePlanner* planner)
     {
-        planner->ReadRenderTarget("ForwardRT");
+        planner->ReadRenderTarget(ResourceNames::CubeOutput);
     }
 
     void ToneMappingPass::CreateRootSignatures(Render::RootSignatureProvider* rootSignatureProvider)
     {
         RootSignatureBuilder builder = {};
         builder.AddSRVDescriptorTableParameter(0, 0, D3D12_SHADER_VISIBILITY_PIXEL);
-        rootSignatureProvider->BuildRootSignature("ToneMappingRS", builder);
+        rootSignatureProvider->BuildRootSignature(RootSignatureNames::ToneMapping, builder);
     }
 
     void ToneMappingPass::CreatePipelineStates(Render::PipelineStateProvider* pipelineStateProvider)
@@ -48,11 +50,11 @@ namespace Engine::Render::Passes
         rasterizer.CullMode = D3D12_CULL_MODE_FRONT;
 
         PipelineStateProxy pipelineState = {
-            .rootSignatureName = "ToneMappingRS",
+            .rootSignatureName = RootSignatureNames::ToneMapping,
             .inputLayout = {},
             .primitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-            .vertexShaderName = "Resources\\Shaders\\ScreenVS.hlsl",
-            .pixelShaderName = "Resources\\Shaders\\TonemappingPS.hlsl",
+            .vertexShaderName = Shaders::TonemapVS,
+            .pixelShaderName = Shaders::ToneMapPS,
             .dsvFormat = DXGI_FORMAT_D32_FLOAT,
             .rtvFormats = {
                 DXGI_FORMAT_R8G8B8A8_UNORM
@@ -60,7 +62,7 @@ namespace Engine::Render::Passes
             .rasterizer = rasterizer,
             .depthStencil = dsDesc
         };
-        pipelineStateProvider->CreatePipelineState("ToneMappingPipelineState", pipelineState);
+        pipelineStateProvider->CreatePipelineState(PSONames::ToneMapping, pipelineState);
     }
 
     void ToneMappingPass::Render(Render::PassContext& passContext)
@@ -89,14 +91,14 @@ namespace Engine::Render::Passes
 
         commandList->OMSetRenderTargets(1, &rtv, false, nullptr);
 
-        auto rootSignature = renderContext->GetRootSignatureProvider()->GetRootSignature("ToneMappingRS");
+        auto rootSignature = renderContext->GetRootSignatureProvider()->GetRootSignature(RootSignatureNames::ToneMapping);
         commandList->SetGraphicsRootSignature(rootSignature->GetD3D12RootSignature().Get());
 
-        commandList->SetPipelineState(renderContext->GetPipelineStateProvider()->GetPipelineState("ToneMappingPipelineState").Get());
+        commandList->SetPipelineState(renderContext->GetPipelineStateProvider()->GetPipelineState(PSONames::ToneMapping).Get());
 
         passContext.frameContext->dynamicDescriptorHeap->ParseRootSignature(rootSignature);
 
-        auto* color = passContext.frameResourceProvider->GetTexture("CubeRT");
+        auto* color = passContext.frameResourceProvider->GetTexture(ResourceNames::CubeOutput);
         auto colorSRV = color->GetSRDescriptor(renderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV).get());
 
         CommandListUtils::TransitionBarrier(passContext.resourceStateTracker, color->D3D12ResourceCom(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);

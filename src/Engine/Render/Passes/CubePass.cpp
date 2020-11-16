@@ -2,6 +2,8 @@
 
 #include <ShaderTypes.h>
 
+#include <Render/Passes/Names.h>
+
 #include <Render/RootSignatureBuilder.h>
 #include <Render/CommandListUtils.h>
 #include <Render/Texture.h>
@@ -48,7 +50,7 @@ namespace Engine::Render::Passes
             .description = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R16G16B16A16_FLOAT, 0, 0, 1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET),
             .clearValue = CD3DX12_CLEAR_VALUE(DXGI_FORMAT_R16G16B16A16_FLOAT, clear)
         };
-        planner->NewRenderTarget("CubeRT", rtTexture);
+        planner->NewRenderTarget(ResourceNames::CubeOutput, rtTexture);
     }
 
     void CubePass::CreateRootSignatures(Render::RootSignatureProvider* rootSignatureProvider)
@@ -56,7 +58,7 @@ namespace Engine::Render::Passes
         RootSignatureBuilder builder = {};
         builder.AddCBVParameter(0, 0);
         builder.AddSRVDescriptorTableParameter(0, 0, D3D12_SHADER_VISIBILITY_PIXEL);
-        rootSignatureProvider->BuildRootSignature("CubeRS", builder);
+        rootSignatureProvider->BuildRootSignature(RootSignatureNames::Cube, builder);
     }
 
     void CubePass::CreatePipelineStates(Render::PipelineStateProvider* pipelineStateProvider)
@@ -69,11 +71,11 @@ namespace Engine::Render::Passes
         rasterizer.CullMode = D3D12_CULL_MODE_FRONT;
 
         PipelineStateProxy pipelineState = {
-            .rootSignatureName = "CubeRS",
+            .rootSignatureName = RootSignatureNames::Cube,
             .inputLayout = Scene::Vertex::GetInputLayout(),
             .primitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-            .vertexShaderName = "Resources\\Shaders\\CubeMap.hlsl",
-            .pixelShaderName = "Resources\\Shaders\\CubeMap.hlsl",
+            .vertexShaderName = Shaders::CubeVS,
+            .pixelShaderName = Shaders::CubePS,
             .dsvFormat = DXGI_FORMAT_D32_FLOAT,
             .rtvFormats = {
                 DXGI_FORMAT_R16G16B16A16_FLOAT
@@ -81,7 +83,7 @@ namespace Engine::Render::Passes
             .rasterizer = rasterizer,
             .depthStencil = dsDesc
         };
-        pipelineStateProvider->CreatePipelineState("CubeMapPipelineState", pipelineState);
+        pipelineStateProvider->CreatePipelineState(PSONames::Cube, pipelineState);
     }
 
     void CubePass::Render(Render::PassContext& passContext)
@@ -100,7 +102,7 @@ namespace Engine::Render::Passes
         auto height = canvas->GetHeight();
         float aspectRatio = canvas->GetWidth() / static_cast<float>(canvas->GetHeight());
 
-        Render::Texture* rtTexture = passContext.frameResourceProvider->GetTexture("CubeRT");
+        Render::Texture* rtTexture = passContext.frameResourceProvider->GetTexture(ResourceNames::CubeOutput);
         auto rtv = rtTexture->GetRTDescriptor(renderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_RTV).get());// canvas->GetCurrentRenderTargetView();
         auto backBuffer = rtTexture->D3D12ResourceCom();// canvas->GetCurrentBackBuffer();
 
@@ -120,10 +122,10 @@ namespace Engine::Render::Passes
 
         commandList->OMSetRenderTargets(1, &rtv, false, nullptr);
 
-        auto rootSignature = renderContext->GetRootSignatureProvider()->GetRootSignature("CubeRS");
+        auto rootSignature = renderContext->GetRootSignatureProvider()->GetRootSignature(RootSignatureNames::Cube);
         commandList->SetGraphicsRootSignature(rootSignature->GetD3D12RootSignature().Get());
 
-        commandList->SetPipelineState(renderContext->GetPipelineStateProvider()->GetPipelineState("CubeMapPipelineState").Get());
+        commandList->SetPipelineState(renderContext->GetPipelineStateProvider()->GetPipelineState(PSONames::Cube).Get());
 
         passContext.frameContext->dynamicDescriptorHeap->ParseRootSignature(rootSignature);
 

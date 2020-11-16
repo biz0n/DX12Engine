@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <ShaderTypes.h>
 
+#include <Render/Passes/Names.h>
+
 #include <Scene/SceneObject.h>
 #include <Scene/Mesh.h>
 #include <Scene/Material.h>
@@ -68,7 +70,7 @@ namespace Engine::Render::Passes
             .AddSRVDescriptorTableParameter(3, 0, D3D12_SHADER_VISIBILITY_PIXEL)
             .AddSRVDescriptorTableParameter(4, 0, D3D12_SHADER_VISIBILITY_PIXEL);
 
-        rootSignatureProvider->BuildRootSignature("ForwardRootSignature", builder);
+        rootSignatureProvider->BuildRootSignature(RootSignatureNames::Forward, builder);
     }
 
     void ForwardPass::CreatePipelineStates(Render::PipelineStateProvider *pipelineStateProvider)
@@ -78,11 +80,11 @@ namespace Engine::Render::Passes
         rasterizer.CullMode = D3D12_CULL_MODE_BACK;
 
         Render::PipelineStateProxy pipelineStateCullModeBack = {
-            .rootSignatureName = "ForwardRootSignature",
+            .rootSignatureName = RootSignatureNames::Forward,
             .inputLayout = Scene::Vertex::GetInputLayout(),
             .primitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-            .vertexShaderName = "Resources\\Shaders\\Forward.hlsl",
-            .pixelShaderName = "Resources\\Shaders\\Forward.hlsl",
+            .vertexShaderName = Shaders::ForwardVS,
+            .pixelShaderName = Shaders::ForwardPS,
             .dsvFormat = DXGI_FORMAT_D32_FLOAT,
             .rtvFormats = {
                 DXGI_FORMAT_R16G16B16A16_FLOAT
@@ -93,8 +95,8 @@ namespace Engine::Render::Passes
         Render::PipelineStateProxy pipelineStateCullModeNone = pipelineStateCullModeBack;
         pipelineStateCullModeNone.rasterizer.CullMode = D3D12_CULL_MODE_NONE;
 
-        pipelineStateProvider->CreatePipelineState("ForwardPipeline::CullModeBack", pipelineStateCullModeBack);
-        pipelineStateProvider->CreatePipelineState("ForwardPipeline::CullModeNone", pipelineStateCullModeNone);
+        pipelineStateProvider->CreatePipelineState(PSONames::ForwardCullBack, pipelineStateCullModeBack);
+        pipelineStateProvider->CreatePipelineState(PSONames::ForwardCullNone, pipelineStateCullModeNone);
     }
 
     void ForwardPass::PrepareResources(Render::ResourcePlanner* planner)
@@ -107,14 +109,14 @@ namespace Engine::Render::Passes
             .description = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, 0, 0, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
             .clearValue = optimizedClearValue
         };
-        planner->NewDepthStencil("ForwardDS", dsTexture);
+        planner->NewDepthStencil(ResourceNames::ForwardDepth, dsTexture);
 
         float clear[4] = {0};
         Render::TextureCreationInfo rtTexture = {
             .description = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R16G16B16A16_FLOAT, 0, 0, 1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET),
             .clearValue = CD3DX12_CLEAR_VALUE(DXGI_FORMAT_R16G16B16A16_FLOAT, clear)
         };
-        planner->NewDepthStencil("ForwardRT", rtTexture);
+        planner->NewDepthStencil(ResourceNames::ForwardOutput, rtTexture);
     }
 
     void ForwardPass::Draw(ComPtr<ID3D12GraphicsCommandList> commandList, const Scene::Mesh &mesh, const dx::XMMATRIX &world, Render::PassContext &passContext)
@@ -132,11 +134,11 @@ namespace Engine::Render::Passes
 
         if (mesh.material->GetProperties().doubleSided)
         {
-            commandList->SetPipelineState(renderContext->GetPipelineStateProvider()->GetPipelineState("ForwardPipeline::CullModeNone").Get());
+            commandList->SetPipelineState(renderContext->GetPipelineStateProvider()->GetPipelineState(PSONames::ForwardCullNone).Get());
         }
         else
         {
-            commandList->SetPipelineState(renderContext->GetPipelineStateProvider()->GetPipelineState("ForwardPipeline::CullModeBack").Get());
+            commandList->SetPipelineState(renderContext->GetPipelineStateProvider()->GetPipelineState(PSONames::ForwardCullBack).Get());
         }
 
         commandList->IASetPrimitiveTopology(mesh.primitiveTopology);
@@ -168,8 +170,8 @@ namespace Engine::Render::Passes
         auto width = canvas->GetWidth();
         auto height = canvas->GetHeight();
 
-        Render::Texture* rtTexture = passContext.frameResourceProvider->GetTexture("CubeRT");
-        Render::Texture* texture = passContext.frameResourceProvider->GetTexture("ForwardDS");
+        Render::Texture* rtTexture = passContext.frameResourceProvider->GetTexture(ResourceNames::CubeOutput);
+        Render::Texture* texture = passContext.frameResourceProvider->GetTexture(ResourceNames::ForwardDepth);
         CommandListUtils::TransitionBarrier(resourceStateTracker, texture->D3D12Resource(), D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
         passContext.frameContext->usingResources.push_back(texture->D3D12Resource());
@@ -194,7 +196,7 @@ namespace Engine::Render::Passes
 
         commandList->OMSetRenderTargets(1, &rtv, false, &descriptor);
 
-        auto rootSignature = renderContext->GetRootSignatureProvider()->GetRootSignature("ForwardRootSignature");
+        auto rootSignature = renderContext->GetRootSignatureProvider()->GetRootSignature(RootSignatureNames::Forward);
         commandList->SetGraphicsRootSignature(rootSignature->GetD3D12RootSignature().Get());
 
         passContext.frameContext->dynamicDescriptorHeap->ParseRootSignature(rootSignature);
