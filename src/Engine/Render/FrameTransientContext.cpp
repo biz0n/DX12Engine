@@ -9,6 +9,6 @@ namespace Engine::Render
     {
         uploadBuffer->Reset();
         dynamicDescriptorHeap->Reset();
-        usingResources.clear();
+       // usingResources.clear();
     }
 } // namespace Engine::Render

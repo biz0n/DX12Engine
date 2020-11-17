@@ -13,7 +13,7 @@ namespace Engine::Render
     public:
         SharedPtr<Memory::DynamicDescriptorHeap> dynamicDescriptorHeap;
         SharedPtr<Memory::UploadBuffer> uploadBuffer;
-        std::vector<ComPtr<ID3D12Resource>> usingResources;
+        //std::vector<ComPtr<ID3D12Resource>> usingResources;
 
         void Reset();
     };

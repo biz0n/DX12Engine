@@ -6,15 +6,6 @@
 #include <DirectXMath.h>
 #include <d3d12.h>
 
-namespace Engine
-{
-    namespace Render
-    {
-        class PassContext;
-    }
-    class RenderContext;
-}
-
 namespace Engine::Render::Passes
 {
     class ForwardPass : public RenderPassBase

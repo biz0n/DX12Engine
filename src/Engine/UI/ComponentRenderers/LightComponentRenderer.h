@@ -26,9 +26,16 @@ namespace Engine::UI::ComponentRenderers
 
                 const auto color = light.GetColor();
                 const float intensity = light.GetIntensity();
+                const float constantAttenuation = light.GetConstantAttenuation();
+                const float linearAttenuation = light.GetLinearAttenuation();
+                const float quadraticAttenuation = light.GetQuadraticAttenuation();
 
                 float normalizedColor[3] = {color.x, color.y, color.z};
                 float newIntensity = intensity;
+                
+                float newConstantAttenuation = constantAttenuation;
+                float newLinearAttenuation = linearAttenuation;
+                float newQuadraticAttenuation = quadraticAttenuation;
 
                 bool changed = false;
                 if (ImGui::SliderFloat("Intensity", &newIntensity, 0.1f, 100.0f))
@@ -41,6 +48,24 @@ namespace Engine::UI::ComponentRenderers
                 {
                     dx::XMFLOAT3 newColor = { (normalizedColor[0]), (normalizedColor[1]), (normalizedColor[2])};
                     light.SetColor(newColor);
+                    changed = true;
+                }
+
+                if (ImGui::SliderFloat("ConstantAttenuation", &newConstantAttenuation, 0.0f, 10.0f))
+                {
+                    light.SetConstantAttenuation(newConstantAttenuation);
+                    changed = true;
+                }
+
+                if (ImGui::SliderFloat("LinearAttenuation", &newLinearAttenuation, 0.0f, 10.0f))
+                {
+                    light.SetLinearAttenuation(newLinearAttenuation);
+                    changed = true;
+                }
+
+                if (ImGui::SliderFloat("QuadraticAttenuation", &newQuadraticAttenuation, 0.0f, 10.0f))
+                {
+                    light.SetQuadraticAttenuation(newQuadraticAttenuation);
                     changed = true;
                 }
 

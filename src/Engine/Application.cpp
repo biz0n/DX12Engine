@@ -1,17 +1,10 @@
 #include "Application.h"
 
 #include <View.h>
-
+#include <Types.h>
 #include <Timer.h>
 
-
 #include <IO/Keyboard.h>
-
-
-#include <Types.h>
-
-#include <future>
-#include <thread>
 
 #include <Render/RenderContext.h>
 #include <Render/SwapChain.h>
@@ -37,6 +30,9 @@
 #include <UI/Systems/UISystem.h>
 #include <Render/Systems/RenderSystem.h>
 #include <Scene/Systems/MovingSystem.h>
+
+#include <future>
+#include <thread>
 
 namespace Engine
 {

@@ -116,7 +116,7 @@ namespace Engine::Render::Passes
             .description = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R16G16B16A16_FLOAT, 0, 0, 1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET),
             .clearValue = CD3DX12_CLEAR_VALUE(DXGI_FORMAT_R16G16B16A16_FLOAT, clear)
         };
-        planner->NewDepthStencil(ResourceNames::ForwardOutput, rtTexture);
+        planner->NewRenderTarget(ResourceNames::ForwardOutput, rtTexture);
     }
 
     void ForwardPass::Draw(ComPtr<ID3D12GraphicsCommandList> commandList, const Scene::Mesh &mesh, const dx::XMMATRIX &world, Render::PassContext &passContext)
@@ -174,7 +174,7 @@ namespace Engine::Render::Passes
         Render::Texture* dsTexture = passContext.frameResourceProvider->GetTexture(ResourceNames::ForwardDepth);
         CommandListUtils::TransitionBarrier(resourceStateTracker, dsTexture->D3D12Resource(), D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
-        passContext.frameContext->usingResources.push_back(dsTexture->D3D12Resource());
+        //passContext.frameContext->usingResources.push_back(dsTexture->D3D12Resource());
 
         auto backBuffer = rtTexture->D3D12ResourceCom();// canvas->GetCurrentBackBuffer();
 

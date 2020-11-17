@@ -92,6 +92,14 @@ namespace Engine::Render::Passes
 
     void CubePass::Render(Render::PassContext& passContext)
     {
+        auto &registry = passContext.scene->GetRegistry();
+        auto view = registry.view<Scene::Components::CubeMapComponent>();
+        if (view.empty())
+        {
+            return;
+        }
+
+        
         
         auto renderContext = passContext.renderContext;
         auto canvas = renderContext->GetSwapChain();
@@ -100,7 +108,7 @@ namespace Engine::Render::Passes
 
         auto resourceStateTracker = passContext.resourceStateTracker;
 
-        auto &registry = passContext.scene->GetRegistry();
+        
 
         auto width = canvas->GetWidth();
         auto height = canvas->GetHeight();
@@ -116,7 +124,7 @@ namespace Engine::Render::Passes
 
         CommandListUtils::TransitionBarrier(resourceStateTracker, backBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-        passContext.frameContext->usingResources.push_back(rtTexture->D3D12Resource());
+     //   passContext.frameContext->usingResources.push_back(rtTexture->D3D12Resource());
 
 
     //   FLOAT clearColor[] = {0};
@@ -146,8 +154,7 @@ namespace Engine::Render::Passes
 
         commandList->SetGraphicsRootConstantBufferView(0, cbAllocation.GPU);
 
-      
-        auto cubeEntity = registry.view<Scene::Components::CubeMapComponent>().front();
+        auto cubeEntity = view.front();
         auto cubeComponent = registry.get<Scene::Components::CubeMapComponent>(cubeEntity);
 
         auto cubeTexture = cubeComponent.cubeMap.texture;
