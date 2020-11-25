@@ -5,6 +5,7 @@
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_dx12.h>
 #include <imgui/imgui_impl_win32.h>
+#include <imgui/ImGuizmo.h>
 
 #include <cassert>
 #include <d3dx12.h>
@@ -42,6 +43,10 @@ namespace Engine::Render
         ImGui_ImplDX12_NewFrame();
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
+        ImGuizmo::BeginFrame();
+
+        ImGuiIO& io = ImGui::GetIO();
+        ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
 
         mDescriptorAllocator->Reset(mCurrentFrameIndex);
     }

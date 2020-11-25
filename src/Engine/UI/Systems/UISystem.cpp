@@ -7,7 +7,7 @@
 #include <Scene/Components/NameComponent.h>
 #include <Scene/Components/RelationshipComponent.h>
 #include <Scene/Components/MeshComponent.h>
-#include <Scene/Components./WorldTransformComponent.h>
+#include <Scene/Components/WorldTransformComponent.h>
 #include <Scene/Texture.h>
 
 #include <UI/ComponentRenderers./StateComponentsRenderer.h>
