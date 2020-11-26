@@ -26,6 +26,11 @@ namespace Engine::Render
         mResource->SetName(StringToWString(name).c_str());
     }
 
+    Texture::Texture(ComPtr<ID3D12Device> device, ComPtr<ID3D12Resource> resource, std::string name) : mDevice{device}, mResource{resource}
+    {
+        mResource->SetName(StringToWString(name).c_str());
+    }
+
     Texture::~Texture() = default;
 
     D3D12_CPU_DESCRIPTOR_HANDLE Texture::GetRTDescriptor(Memory::DescriptorAllocator *allocator)

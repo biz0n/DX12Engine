@@ -15,6 +15,7 @@ namespace Engine::Render
     {
     public:
         Texture(ComPtr<ID3D12Device> device, std::string name, const TextureCreationInfo &creationInfo);
+        Texture(ComPtr<ID3D12Device> device, ComPtr<ID3D12Resource> resource, std::string name);
         ~Texture();
 
         D3D12_CPU_DESCRIPTOR_HANDLE GetRTDescriptor(Memory::DescriptorAllocator *allocator);

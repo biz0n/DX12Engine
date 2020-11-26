@@ -1,7 +1,7 @@
 ## Refactoring TODO List
 
 - [ ] Merge `Scene/Texture` and `Render/Texture`
-- [ ] Use `Texture` for backbuffer render target
+- [x] Use `Texture` for backbuffer render target
 - [ ] Camera ECS System (calculate projections, frustum, etc.)
 - [ ] Frustum culling system 
 - [ ] Systems for adding render passes

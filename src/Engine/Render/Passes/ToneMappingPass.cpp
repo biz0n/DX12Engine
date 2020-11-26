@@ -77,11 +77,12 @@ namespace Engine::Render::Passes
         auto width = canvas->GetWidth();
         auto height = canvas->GetHeight();
 
-        auto backBuffer = canvas->GetCurrentBackBuffer();
+        auto backBufferTexture = canvas->GetCurrentBackBufferTexture();
+        auto backBuffer = backBufferTexture->D3D12ResourceCom();
         CommandListUtils::TransitionBarrier(resourceStateTracker, backBuffer.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET);
 
 
-        auto rtv = canvas->GetCurrentRenderTargetView();
+        auto rtv = backBufferTexture->GetRTDescriptor(renderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_RTV).get());
 
         auto screenViewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float32>(width), static_cast<float32>(height));
         auto scissorRect = CD3DX12_RECT(0, 0, width, height);

@@ -660,8 +660,8 @@ namespace Engine::Scene::Loader
         cubeMap.vertexBuffer = MakeShared<Memory::VertexBuffer>(L"CubeMap Vertices");
 
         std::vector<Vertex> vertices = {};
-        vertices.reserve(24);
-        vertices.assign(24, {});
+        vertices.reserve(8);
+        vertices.assign(8, {});
 
         auto* v = vertices.data();
 
@@ -681,30 +681,6 @@ namespace Engine::Scene::Loader
         v[6].Vertex = {+w, +h, +d};
         v[7].Vertex = {-w, +h, +d};
 
-        // Fill in the top face vertex data.
-        v[8] .Vertex = {-w, +h, -d};
-        v[9] .Vertex = {-w, +h, +d};
-        v[10].Vertex = {+w, +h, +d};
-        v[11].Vertex = {+w, +h, -d};
-
-        // Fill in the bottom face vertex data.
-        v[12].Vertex = {-w, -h, -d};
-        v[13].Vertex = {+w, -h, -d};
-        v[14].Vertex = {+w, -h, +d};
-        v[15].Vertex = {-w, -h, +d};
-
-        // Fill in the left face vertex data.
-        v[16].Vertex = {-w, -h, +d};
-        v[17].Vertex = {-w, +h, +d};
-        v[18].Vertex = {-w, +h, -d};
-        v[19].Vertex = {-w, -h, -d};
-
-        // Fill in the right face vertex data.
-        v[20].Vertex = {+w, -h, -d};
-        v[21].Vertex = {+w, +h, -d};
-        v[22].Vertex = {+w, +h, +d};
-        v[23].Vertex = {+w, -h, +d};
-
         std::vector<uint16> indices = {};
         indices.reserve(36);
         indices.assign(36, 0);
@@ -720,20 +696,20 @@ namespace Engine::Scene::Loader
         i[9] = 4; i[10] = 6; i[11] = 7;
 
         // Fill in the top face index data
-        i[12] = 8; i[13] =  9; i[14] = 10;
-        i[15] = 8; i[16] = 10; i[17] = 11;
+        i[12] = 1; i[13] =  7; i[14] = 6;
+        i[15] = 1; i[16] = 6; i[17] = 2;
 
         // Fill in the bottom face index data
-        i[18] = 12; i[19] = 13; i[20] = 14;
-        i[21] = 12; i[22] = 14; i[23] = 15;
+        i[18] = 0;  i[19] = 3; i[20] = 5;
+        i[21] = 0;  i[22] = 5; i[23] = 4;
 
         // Fill in the left face index data
-        i[24] = 16; i[25] = 17; i[26] = 18;
-        i[27] = 16; i[28] = 18; i[29] = 19;
+        i[24] = 4; i[25] = 7; i[26] = 1;
+        i[27] = 4; i[28] = 1;  i[29] = 0;
 
         // Fill in the right face index data
-        i[30] = 20; i[31] = 21; i[32] = 22;
-        i[33] = 20; i[34] = 22; i[35] = 23;
+        i[30] = 3;  i[31] = 2;  i[32] = 6;
+        i[33] = 3;  i[34] = 6; i[35] = 5;
 
         cubeMap.vertexBuffer->SetData(vertices);
 

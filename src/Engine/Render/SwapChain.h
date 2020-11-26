@@ -7,7 +7,6 @@
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <Memory/MemoryForwards.h>
-#include <Memory/DescriptorAllocation.h>
 
 #include <Render/RenderForwards.h>
 
@@ -21,12 +20,11 @@ namespace Engine::Render
     class SwapChain
     {
     public:
-        SwapChain(View view, const Graphics* graphis, SharedPtr<GlobalResourceStateTracker> resourceStateTracker, SharedPtr<Memory::DescriptorAllocator> rtvDescriptorAllocator, ID3D12CommandQueue* commandQueue);
+        SwapChain(View view, const Graphics* graphis, SharedPtr<GlobalResourceStateTracker> resourceStateTracker, ID3D12CommandQueue* commandQueue);
         ~SwapChain();
 
         uint32 GetCurrentBackBufferIndex() const;
-        ComPtr<ID3D12Resource> GetCurrentBackBuffer();
-        D3D12_CPU_DESCRIPTOR_HANDLE GetCurrentRenderTargetView() const;
+        Texture* GetCurrentBackBufferTexture();
 
         uint32 GetWidth() const { return mWidth; }
         uint32 GetHeight() const { return mHeight; }
@@ -43,15 +41,13 @@ namespace Engine::Render
     private:
         bool mIsTearingSupported;
         ComPtr<IDXGISwapChain4> mSwapChain;
-        ComPtr<ID3D12Resource> mBackBuffers[EngineConfig::SwapChainBufferCount];
-        Memory::DescriptorAllocation mBackBufferAllocation;
+        UniquePtr<Texture> mBackBufferTextures[EngineConfig::SwapChainBufferCount];
 
         SharedPtr<GlobalResourceStateTracker> mResourceStateTracker;
 
         uint32 mCurrentBackBufferIndex;
 
         const Graphics* mGraphics;
-        SharedPtr<Memory::DescriptorAllocator> mRTVDescriptorAllocator;
 
         uint32 mWidth;
         uint32 mHeight;
