@@ -6,17 +6,17 @@
 #include <Scene/Systems/System.h>
 #include <Timer.h>
 
-namespace Engine::Scene::Systems
+namespace Engine::Render::Systems
 {
-    class RenderSystem : public System
+    class RenderSystem : public Scene::Systems::System
     {
     public:
         RenderSystem(UniquePtr<Render::Renderer> renderer);
         ~RenderSystem() override;
 
     public:
-        void Init(SceneObject *scene) override;
-        void Process(SceneObject *scene, const Timer &timer) override;
+        void Init(Scene::SceneObject *scene) override;
+        void Process(Scene::SceneObject *scene, const Timer &timer) override;
 
     private:
         UniquePtr<Render::Renderer> mRenderer;

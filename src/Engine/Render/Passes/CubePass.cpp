@@ -146,8 +146,8 @@ namespace Engine::Render::Passes
         passContext.frameContext->dynamicDescriptorHeap->ParseRootSignature(rootSignature);
 
         auto cameraEntity = registry.view<Scene::Components::CameraComponent, Scene::Components::WorldTransformComponent>().front();
-        auto [camera, cameraWT] = registry.get<Scene::Components::CameraComponent, Scene::Components::WorldTransformComponent>(cameraEntity);
-        auto cb = CommandListUtils::GetFrameUniform(camera.camera, cameraWT.transform, aspectRatio, static_cast<uint32>(0));
+        auto camera = registry.get<Scene::Components::CameraComponent>(cameraEntity);
+        auto cb = CommandListUtils::GetFrameUniform(camera.camera, camera.viewProjection, camera.eyePosition, static_cast<uint32>(0));
 
         auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(FrameUniform));
         cbAllocation.CopyTo(&cb);

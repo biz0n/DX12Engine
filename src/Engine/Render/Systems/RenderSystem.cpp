@@ -4,7 +4,7 @@
 
 #include <Scene/SceneObject.h>
 
-namespace Engine::Scene::Systems
+namespace Engine::Render::Systems
 {
     RenderSystem::RenderSystem(UniquePtr<Render::Renderer> renderer)
         : mRenderer(std::move(renderer))
@@ -13,12 +13,12 @@ namespace Engine::Scene::Systems
 
     RenderSystem::~RenderSystem() = default;
 
-    void RenderSystem::Init(SceneObject *scene)
+    void RenderSystem::Init(Scene::SceneObject *scene)
     {
         mRenderer->Initialize();
     }
 
-    void RenderSystem::Process(SceneObject *scene, const Timer &timer)
+    void RenderSystem::Process(Scene::SceneObject *scene, const Timer &timer)
     {
         mRenderer->Render(scene, timer);
     }

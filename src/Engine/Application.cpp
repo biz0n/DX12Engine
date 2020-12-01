@@ -27,9 +27,11 @@
 #include <Scene/Components/CameraComponent.h>
 
 #include <Scene/Systems/WorldTransformSystem.h>
+#include <Scene/Systems/MovingSystem.h>
+#include <Scene/Systems/CameraSystem.h>
 #include <UI/Systems/UISystem.h>
 #include <Render/Systems/RenderSystem.h>
-#include <Scene/Systems/MovingSystem.h>
+
 
 #include <future>
 #include <thread>
@@ -82,9 +84,11 @@ namespace Engine
 
         scene->AddSystem(MakeUnique<Scene::Systems::WorldTransformSystem>());
 
-        scene->AddSystem(MakeUnique<Scene::Systems::RenderSystem>(std::move(renderer)));
+        scene->AddSystem(MakeUnique<Scene::Systems::CameraSystem>(mRenderContext));
 
-        scene->AddSystem(MakeUnique<Scene::Systems::UISystem>(mRenderContext, mRenderContext->GetUIContext()));
+        scene->AddSystem(MakeUnique<Render::Systems::RenderSystem>(std::move(renderer)));
+
+        scene->AddSystem(MakeUnique<UI::Systems::UISystem>(mRenderContext, mRenderContext->GetUIContext()));
 
         scene->AddSystem(MakeUnique<Scene::Systems::MovingSystem>(mKeyboard));
 

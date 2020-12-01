@@ -9,15 +9,15 @@
 
 #include <vector>
 
-namespace Engine::Scene::Systems
+namespace Engine::UI::Systems
 {
-    class UISystem : public System
+    class UISystem : public Scene::Systems::System
     {
         public:
             UISystem(SharedPtr<Render::RenderContext> renderContext, SharedPtr<Render::UIRenderContext> uiRenderContext);
             ~UISystem() override;
         public:
-            void Process(SceneObject *scene, const Timer& timer) override;
+            void Process(Scene::SceneObject *scene, const Timer& timer) override;
 
         private:
             SharedPtr<Render::UIRenderContext> mUIRenderContext;

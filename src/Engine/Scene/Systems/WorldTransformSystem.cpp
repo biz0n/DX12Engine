@@ -5,6 +5,7 @@
 #include <Scene/Components/LocalTransformComponent.h>
 #include <Scene/Components/RelationshipComponent.h>
 #include <Scene/Components/WorldTransformComponent.h>
+#include <Scene/Components/AABBComponent.h>
 
 #include <entt/entt.hpp>
 #include <DirectXMath.h>
@@ -63,6 +64,12 @@ namespace Engine::Scene::Systems
             }
 
             registry.emplace_or_replace<Scene::Components::WorldTransformComponent>(e, worldTransform);
+
+            if (auto* aabbPtr = registry.try_get<Components::AABBComponent>(e); aabbPtr)
+            {
+                aabbPtr->boundingBox.Transform(aabbPtr->boundingBox, worldTransform);
+            }
+
             registry.remove<Scene::Components::Dirty>(e);
         }
 

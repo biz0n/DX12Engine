@@ -30,7 +30,7 @@ namespace Engine::Render::CommandListUtils
 
     LightUniform GetLightUniform(const Scene::PunctualLight& lightNode, const DirectX::XMMATRIX& world);
     MaterialUniform GetMaterialUniform(const Scene::Material& material);
-    FrameUniform GetFrameUniform(const Scene::Camera& camera, const DirectX::XMMATRIX& world, float32 aspectRatio, uint32 lightsCount);
+    FrameUniform GetFrameUniform(const Scene::Camera& camera, const DirectX::XMMATRIX& viewProj, const DirectX::XMVECTOR& eyePos, uint32 lightsCount);
     MeshUniform GetMeshUniform(const DirectX::XMMATRIX& world);
 
     void TransitionBarrier(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, ComPtr<ID3D12Resource> resource, D3D12_RESOURCE_STATES targetState, bool forceFlush = false);

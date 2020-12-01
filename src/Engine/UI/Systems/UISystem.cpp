@@ -18,7 +18,7 @@
 #include <imgui/imgui.h>
 #include <entt/entt.hpp>
 
-namespace Engine::Scene::Systems
+namespace Engine::UI::Systems
 {
     UISystem::UISystem(SharedPtr<Render::RenderContext> renderContext, SharedPtr<Render::UIRenderContext> uiRenderContext)
         : System(), mUIRenderContext(uiRenderContext), mRenderContext(renderContext)
@@ -31,7 +31,7 @@ namespace Engine::Scene::Systems
 
     UISystem::~UISystem() = default;
 
-    void UISystem::Process(SceneObject *scene, const Timer &timer)
+    void UISystem::Process(Scene::SceneObject *scene, const Timer &timer)
     {
         auto& registry = scene->GetRegistry();
         static bool show_demo_window = true;

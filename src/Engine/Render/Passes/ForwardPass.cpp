@@ -201,8 +201,6 @@ namespace Engine::Render::Passes
 
         passContext.frameContext->dynamicDescriptorHeap->ParseRootSignature(rootSignature);
 
-        float aspectRatio = canvas->GetWidth() / static_cast<float>(canvas->GetHeight());
-
         auto &registry = passContext.scene->GetRegistry();
         
         const auto &lightsView = registry.view<Scene::Components::LightComponent, Scene::Components::WorldTransformComponent>();
@@ -216,8 +214,8 @@ namespace Engine::Render::Passes
         }
 
         auto cameraEntity = registry.view<Scene::Components::CameraComponent, Scene::Components::WorldTransformComponent>().front();
-        auto [camera, cameraWT] = registry.get<Scene::Components::CameraComponent, Scene::Components::WorldTransformComponent>(cameraEntity);
-        auto cb = CommandListUtils::GetFrameUniform(camera.camera, cameraWT.transform, aspectRatio, static_cast<uint32>(lights.size()));
+        auto camera = registry.get<Scene::Components::CameraComponent>(cameraEntity);
+        auto cb = CommandListUtils::GetFrameUniform(camera.camera, camera.viewProjection, camera.eyePosition, static_cast<uint32>(lights.size()));
 
         auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(FrameUniform));
         cbAllocation.CopyTo(&cb);
@@ -230,10 +228,13 @@ namespace Engine::Render::Passes
 
         commandList->SetGraphicsRootShaderResourceView(3, lightsAllocation.GPU);
 
-        const auto &meshsView = registry.view<Scene::Components::MeshComponent, Scene::Components::WorldTransformComponent>(entt::exclude<Scene::Components::IsDisabledComponent>);
-        for (auto &&[entity, meshComponent, transformComponent] : meshsView.proxy())
+        const auto &meshsView = registry.view<Scene::Components::MeshComponent, Scene::Components::WorldTransformComponent, Scene::Components::AABBComponent>(entt::exclude<Scene::Components::IsDisabledComponent>);
+        for (auto &&[entity, meshComponent, transformComponent, aabbComponent] : meshsView.proxy())
         {
-            Draw(commandList, meshComponent.mesh, transformComponent.transform, passContext);
+            if (camera.frustum.Intersects(aabbComponent.boundingBox))
+            {
+                Draw(commandList, meshComponent.mesh, transformComponent.transform, passContext);
+            }
         }
     }
 

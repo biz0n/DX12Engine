@@ -249,32 +249,12 @@ namespace Engine::Render::CommandListUtils
         return uniform;
     }
 
-    FrameUniform GetFrameUniform(const Scene::Camera& camera, const DirectX::XMMATRIX& world, float32 aspectRatio, uint32 lightsCount)
+    FrameUniform GetFrameUniform(const Scene::Camera& camera, const DirectX::XMMATRIX& viewProj, const DirectX::XMVECTOR& eyePos, uint32 lightsCount)
     {
-        auto projectionMatrix = camera.GetProjectionMatrix(aspectRatio);
-        static const dx::XMVECTOR up = dx::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-        static const dx::XMVECTOR forward = dx::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-
-        dx::XMVECTOR sc;
-        dx::XMVECTOR rt;
-        dx::XMVECTOR tr;
-        dx::XMMatrixDecompose(&sc, &rt, &tr, world);
-
-        auto rotationMatrix = dx::XMMatrixRotationQuaternion(rt);
-        auto lookAtDirection = dx::XMVector3Transform(
-            forward,
-            dx::XMMatrixRotationQuaternion(rt));
-
-        using namespace DirectX;
-        auto viewMatrix = dx::XMMatrixLookAtLH(tr, tr + lookAtDirection, up);
-
-        DirectX::XMMATRIX mvpMatrix = DirectX::XMMatrixMultiply(viewMatrix, projectionMatrix);
-        mvpMatrix = DirectX::XMMatrixTranspose(mvpMatrix);
-
         FrameUniform cb = {};
-        DirectX::XMStoreFloat4x4(&cb.ViewProj, mvpMatrix);
+        DirectX::XMStoreFloat4x4(&cb.ViewProj, viewProj);
 
-        dx::XMStoreFloat3(&cb.EyePos, tr);
+        dx::XMStoreFloat3(&cb.EyePos, eyePos);
 
         cb.LightsCount = lightsCount;
 
