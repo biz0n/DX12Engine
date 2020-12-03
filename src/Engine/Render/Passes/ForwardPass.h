@@ -2,13 +2,22 @@
 
 #include <Scene/SceneForwards.h>
 #include <Render/RenderPassBase.h>
+#include <Render/Passes/Data/PassData.h>
 
 #include <DirectXMath.h>
 #include <d3d12.h>
+#include <vector>
 
 namespace Engine::Render::Passes
 {
-    class ForwardPass : public RenderPassBase
+    struct ForwardPassData
+    {
+        CameraData camera;
+        std::vector<MeshData> meshes;
+        std::vector<LightData> lights;
+    };
+
+    class ForwardPass : public RenderPassBaseWithData<ForwardPassData>
     {
     public:
         ForwardPass();

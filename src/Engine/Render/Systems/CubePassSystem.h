@@ -8,11 +8,11 @@
 
 namespace Engine::Render::Systems
 {
-    class RenderSystem : public Scene::Systems::System
+    class CubePassSystem : public Scene::Systems::System
     {
     public:
-        RenderSystem(SharedPtr<Render::Renderer> renderer);
-        ~RenderSystem() override;
+        CubePassSystem(SharedPtr<Render::Renderer> renderer);
+        ~CubePassSystem() override;
 
     public:
         void Init(Scene::SceneObject *scene) override;
@@ -20,5 +20,7 @@ namespace Engine::Render::Systems
 
     private:
         SharedPtr<Render::Renderer> mRenderer;
+
+        UniquePtr<Render::Passes::CubePass> mCubePass;
     };
 } // namespace Engine::Scene::Systems

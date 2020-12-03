@@ -54,9 +54,9 @@ namespace Engine::Render
     {
     }
 
-    void Renderer::RegisterRenderPass(UniquePtr<RenderPassBase> renderPass)
+    void Renderer::RegisterRenderPass(RenderPassBase* renderPass)
     {
-        mRenderPasses.push_back(std::move(renderPass));
+        mRenderPasses.push_back(renderPass);
     }
 
     void Renderer::Render(Scene::SceneObject* scene, const Timer& timer)
@@ -97,8 +97,10 @@ namespace Engine::Render
     {
         for (auto& pass : mRenderPasses)
         {
-            RenderPass(pass.get(), scene, timer);
+            RenderPass(pass, scene, timer);
         }
+
+        mRenderPasses.clear();
     }
 
     void Renderer::RenderPass(RenderPassBase* pass, Scene::SceneObject* scene, const Timer& timer)
@@ -115,7 +117,6 @@ namespace Engine::Render
         passContext.frameContext = &mFrameContexts[currentBackbufferIndex];
         passContext.commandList = commandList;
         passContext.renderContext = mRenderContext;
-        passContext.scene = scene;
         passContext.frameResourceProvider = mFrameResourceProvider.get();
         passContext.timer = &timer;
         passContext.resourceStateTracker = MakeShared<ResourceStateTracker>(mRenderContext->GetGlobalResourceStateTracker());

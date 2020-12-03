@@ -12,13 +12,6 @@
 #include <Scene/PunctualLight.h>
 #include <Scene/Vertex.h>
 
-#include <Scene/Components/MeshComponent.h>
-#include <Scene/Components/WorldTransformComponent.h>
-#include <Scene/Components/CameraComponent.h>
-#include <Scene/Components/LightComponent.h>
-#include <Scene/Components/AABBComponent.h>
-#include <Scene/Components/IsDisabledComponent.h>
-
 #include <Render/SwapChain.h>
 #include <Render/ResourceStateTracker.h>
 #include <Render/CommandQueue.h>
@@ -43,15 +36,13 @@
 #include <Memory/IndexBuffer.h>
 #include <Memory/DynamicDescriptorHeap.h>
 
-#include <entt/entt.hpp>
-
 #include <DirectXTex.h>
 #include <DirectXMath.h>
 #include <d3d12.h>
 
 namespace Engine::Render::Passes
 {
-    ForwardPass::ForwardPass() : Render::RenderPassBase("Forward Pass")
+    ForwardPass::ForwardPass() : Render::RenderPassBaseWithData<ForwardPassData>("Forward Pass")
     {
     }
 
@@ -177,20 +168,17 @@ namespace Engine::Render::Passes
 
         commandRecorder->SetRootSignature(RootSignatureNames::Forward);
 
-        auto &registry = passContext.scene->GetRegistry();
-        
-        const auto &lightsView = registry.view<Scene::Components::LightComponent, Scene::Components::WorldTransformComponent>();
+        auto& lightsData = PassData().lights;
         std::vector<LightUniform> lights;
-        lights.reserve(lightsView.size());
-        for (auto &&[entity, lightComponent, transformComponent] : lightsView.proxy())
-        {
-            LightUniform light = CommandListUtils::GetLightUniform(lightComponent.light, transformComponent.transform);
+        lights.reserve(lightsData.size());
 
+        for (auto& lightData : lightsData)
+        {
+            LightUniform light = CommandListUtils::GetLightUniform(lightData.light, lightData.worldTransform);
             lights.emplace_back(light);
         }
 
-        auto cameraEntity = registry.view<Scene::Components::CameraComponent, Scene::Components::WorldTransformComponent>().front();
-        auto camera = registry.get<Scene::Components::CameraComponent>(cameraEntity);
+        auto& camera = PassData().camera;
         auto cb = CommandListUtils::GetFrameUniform(camera.camera, camera.viewProjection, camera.eyePosition, static_cast<uint32>(lights.size()));
 
         auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(FrameUniform));
@@ -204,13 +192,10 @@ namespace Engine::Render::Passes
 
         commandList->SetGraphicsRootShaderResourceView(3, lightsAllocation.GPU);
 
-        const auto &meshsView = registry.view<Scene::Components::MeshComponent, Scene::Components::WorldTransformComponent, Scene::Components::AABBComponent>(entt::exclude<Scene::Components::IsDisabledComponent>);
-        for (auto &&[entity, meshComponent, transformComponent, aabbComponent] : meshsView.proxy())
+        auto& meshes = PassData().meshes;
+        for (auto &mesh : meshes)
         {
-            if (camera.frustum.Intersects(aabbComponent.boundingBox))
-            {
-                Draw(commandList, meshComponent.mesh, transformComponent.transform, passContext);
-            }
+            Draw(commandList, mesh.mesh, mesh.worldTransform, passContext);
         }
     }
 

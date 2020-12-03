@@ -27,7 +27,7 @@ namespace Engine::Render
 
         void Render(Scene::SceneObject* scene, const Timer& timer);
 
-        void RegisterRenderPass(UniquePtr<RenderPassBase> renderPass);
+        void RegisterRenderPass(RenderPassBase* renderPass);
 
     private:
         void PrepareFrame();
@@ -39,7 +39,7 @@ namespace Engine::Render
 
     private:
         SharedPtr<RenderContext> mRenderContext;
-        std::vector<UniquePtr<RenderPassBase>> mRenderPasses;
+        std::vector<RenderPassBase*> mRenderPasses;
         UniquePtr<FrameResourceProvider> mFrameResourceProvider;
     };
 } // namespace Engine::Render

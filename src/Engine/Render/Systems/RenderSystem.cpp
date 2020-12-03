@@ -6,7 +6,7 @@
 
 namespace Engine::Render::Systems
 {
-    RenderSystem::RenderSystem(UniquePtr<Render::Renderer> renderer)
+    RenderSystem::RenderSystem(SharedPtr<Render::Renderer> renderer)
         : mRenderer(std::move(renderer))
     {
     }

@@ -22,6 +22,7 @@ namespace Engine::Render
     class Texture;
     class FrameTransientContext;
     class RenderPassBase;
+    template <class TPassData> class RenderPassBaseWithData;
     class Renderer;
 
     struct PipelineStateProxy;
@@ -29,5 +30,10 @@ namespace Engine::Render
     struct ShaderCreationInfo;
     struct TextureCreationInfo;
 
-
+    namespace Passes
+    {
+        class ForwardPass;
+        class CubePass;
+        class ToneMappingPass;
+    }
 } // namespace Engine::Render

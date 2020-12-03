@@ -31,6 +31,9 @@
 #include <Scene/Systems/CameraSystem.h>
 #include <UI/Systems/UISystem.h>
 #include <Render/Systems/RenderSystem.h>
+#include <Render/Systems/ForwardPassSystem.h>
+#include <Render/Systems/CubePassSystem.h>
+#include <Render/Systems/ToneMappingPassSystem.h>
 
 
 #include <future>
@@ -72,11 +75,7 @@ namespace Engine
 
     void Application::InitScene(UniquePtr<Scene::SceneObject> scene)
     {
-        auto renderer = MakeUnique<Render::Renderer>(mRenderContext);
-        renderer->RegisterRenderPass(MakeUnique<Render::Passes::ForwardPass>());
-        renderer->RegisterRenderPass(MakeUnique<Render::Passes::CubePass>());
-        renderer->RegisterRenderPass(MakeUnique<Render::Passes::ToneMappingPass>());
-        
+        auto renderer = MakeShared<Render::Renderer>(mRenderContext);
 
         auto& registry = scene->GetRegistry();
         auto camera = registry.view<Scene::Components::CameraComponent>()[0];
@@ -86,7 +85,11 @@ namespace Engine
 
         scene->AddSystem(MakeUnique<Scene::Systems::CameraSystem>(mRenderContext));
 
-        scene->AddSystem(MakeUnique<Render::Systems::RenderSystem>(std::move(renderer)));
+        scene->AddSystem(MakeUnique<Render::Systems::ForwardPassSystem>(renderer));
+        scene->AddSystem(MakeUnique<Render::Systems::CubePassSystem>(renderer));
+        scene->AddSystem(MakeUnique<Render::Systems::ToneMappingPassSystem>(renderer));
+
+        scene->AddSystem(MakeUnique<Render::Systems::RenderSystem>(renderer));
 
         scene->AddSystem(MakeUnique<UI::Systems::UISystem>(mRenderContext, mRenderContext->GetUIContext()));
 

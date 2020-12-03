@@ -25,20 +25,15 @@
 #include <Scene/CubeMap.h>
 #include <Scene/Camera.h>
 
-#include <Scene/Components/CameraComponent.h>
-#include <Scene/Components/WorldTransformComponent.h>
-#include <Scene/Components/CubeMapComponent.h>
-
 #include <Memory/IndexBuffer.h>
 #include <Memory/UploadBuffer.h>
 #include <Memory/DynamicDescriptorHeap.h>
 
-#include <entt/entt.hpp>
 #include <d3d12.h>
 
 namespace Engine::Render::Passes
 {
-    CubePass::CubePass() : RenderPassBase("Cube Pass")
+    CubePass::CubePass() : RenderPassBaseWithData<CubePassData>("Cube Pass")
     {
 
     }
@@ -93,9 +88,7 @@ namespace Engine::Render::Passes
 
     void CubePass::Render(Render::PassContext& passContext)
     {
-        auto &registry = passContext.scene->GetRegistry();
-        auto view = registry.view<Scene::Components::CubeMapComponent>();
-        if (view.empty())
+        if (!PassData().hasCube)
         {
             return;
         }
@@ -114,8 +107,7 @@ namespace Engine::Render::Passes
         commandRecorder->SetRootSignature(RootSignatureNames::Cube);
         commandRecorder->SetPipelineState(PSONames::Cube);
 
-        auto cameraEntity = registry.view<Scene::Components::CameraComponent, Scene::Components::WorldTransformComponent>().front();
-        auto camera = registry.get<Scene::Components::CameraComponent>(cameraEntity);
+        auto& camera = PassData().camera;
         auto cb = CommandListUtils::GetFrameUniform(camera.camera, camera.viewProjection, camera.eyePosition, static_cast<uint32>(0));
 
         auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(FrameUniform));
@@ -123,10 +115,9 @@ namespace Engine::Render::Passes
 
         commandList->SetGraphicsRootConstantBufferView(0, cbAllocation.GPU);
 
-        auto cubeEntity = view.front();
-        auto cubeComponent = registry.get<Scene::Components::CubeMapComponent>(cubeEntity);
+        auto cubeMap = PassData().cube.cubeMap;
 
-        auto cubeTexture = cubeComponent.cubeMap.texture;
+        auto cubeTexture = cubeMap.texture;
 
         D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
         desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -139,12 +130,12 @@ namespace Engine::Render::Passes
 
         passContext.frameContext->dynamicDescriptorHeap->StageDescriptor(1, 0, 1, srv);
 
-        commandList->IASetPrimitiveTopology(cubeComponent.cubeMap.primitiveTopology);
-        CommandListUtils::BindVertexBuffer(commandList, resourceStateTracker, *cubeComponent.cubeMap.vertexBuffer);
-        CommandListUtils::BindIndexBuffer(commandList, resourceStateTracker, *cubeComponent.cubeMap.indexBuffer);
+        commandList->IASetPrimitiveTopology(cubeMap.primitiveTopology);
+        CommandListUtils::BindVertexBuffer(commandList, resourceStateTracker, *cubeMap.vertexBuffer);
+        CommandListUtils::BindIndexBuffer(commandList, resourceStateTracker, *cubeMap.indexBuffer);
 
         passContext.frameContext->dynamicDescriptorHeap->CommitStagedDescriptors(renderContext->Device(), commandList);
         
-        commandList->DrawIndexedInstanced(static_cast<uint32>(cubeComponent.cubeMap.indexBuffer->GetElementsCount()), 1, 0, 0, 0);
+        commandList->DrawIndexedInstanced(static_cast<uint32>(cubeMap.indexBuffer->GetElementsCount()), 1, 0, 0, 0);
     }
 } // namespace Engine::Render::Passes

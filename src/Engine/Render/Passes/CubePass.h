@@ -1,10 +1,18 @@
 #pragma once
 
 #include <Render/RenderPassBase.h>
+#include <Render/Passes/Data/PassData.h>
 
 namespace Engine::Render::Passes
 {
-    class CubePass : public RenderPassBase
+    struct CubePassData
+    {
+        CameraData camera;
+        CubeData cube;
+        bool hasCube;
+    };
+
+    class CubePass : public RenderPassBaseWithData<CubePassData>
     {
     public:
         CubePass();

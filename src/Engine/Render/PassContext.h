@@ -20,8 +20,6 @@ namespace Engine::Render
 
         FrameTransientContext  * frameContext;
 
-        Scene::SceneObject * scene;
-
         const Timer * timer;
     };
 } // namespace Engine::Render
