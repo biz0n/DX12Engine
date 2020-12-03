@@ -15,6 +15,7 @@
 #include <Render/RenderContext.h>
 #include <Render/FrameResourceProvider.h>
 #include <Render/FrameTransientContext.h>
+#include <Render/PassCommandRecorder.h>
 
 #include <Memory/IndexBuffer.h>
 #include <Memory/DynamicDescriptorHeap.h>
@@ -73,32 +74,15 @@ namespace Engine::Render::Passes
         auto commandList = passContext.commandList;
 
         auto resourceStateTracker = passContext.resourceStateTracker;
+        auto commandRecorder = passContext.commandRecorder;
 
-        auto width = canvas->GetWidth();
-        auto height = canvas->GetHeight();
+        commandRecorder->SetViewPort();
 
-        auto backBufferTexture = canvas->GetCurrentBackBufferTexture();
-        auto backBuffer = backBufferTexture->D3D12ResourceCom();
-        CommandListUtils::TransitionBarrier(resourceStateTracker, backBuffer.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET);
+        commandRecorder->SetBackBufferAsRenderTarget();
 
-
-        auto rtv = backBufferTexture->GetRTDescriptor(renderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_RTV).get());
-
-        auto screenViewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float32>(width), static_cast<float32>(height));
-        auto scissorRect = CD3DX12_RECT(0, 0, width, height);
-
-        commandList->RSSetViewports(1, &screenViewport);
-        commandList->RSSetScissorRects(1, &scissorRect);
-
-        commandList->OMSetRenderTargets(1, &rtv, false, nullptr);
-
-        auto rootSignature = renderContext->GetRootSignatureProvider()->GetRootSignature(RootSignatureNames::ToneMapping);
-        commandList->SetGraphicsRootSignature(rootSignature->GetD3D12RootSignature().Get());
-
-        commandList->SetPipelineState(renderContext->GetPipelineStateProvider()->GetPipelineState(PSONames::ToneMapping).Get());
-
-        passContext.frameContext->dynamicDescriptorHeap->ParseRootSignature(rootSignature);
-
+        commandRecorder->SetRootSignature(RootSignatureNames::ToneMapping);
+        commandRecorder->SetPipelineState(PSONames::ToneMapping);
+        
         auto* color = passContext.frameResourceProvider->GetTexture(ResourceNames::ForwardOutput);
         auto colorSRV = color->GetSRDescriptor(renderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV).get());
 

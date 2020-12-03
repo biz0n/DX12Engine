@@ -17,6 +17,7 @@
 #include <Render/RenderContext.h>
 #include <Render/FrameResourceProvider.h>
 #include <Render/FrameTransientContext.h>
+#include <Render/PassCommandRecorder.h>
 
 #include <Scene/Vertex.h>
 #include <Scene/Texture.h>
@@ -99,51 +100,19 @@ namespace Engine::Render::Passes
             return;
         }
 
-        
-        
         auto renderContext = passContext.renderContext;
-        auto canvas = renderContext->GetSwapChain();
 
         auto commandList = passContext.commandList;
 
         auto resourceStateTracker = passContext.resourceStateTracker;
 
-        
+        auto commandRecorder = passContext.commandRecorder;
 
-        auto width = canvas->GetWidth();
-        auto height = canvas->GetHeight();
-        float aspectRatio = canvas->GetWidth() / static_cast<float>(canvas->GetHeight());
+        commandRecorder->SetViewPort();
+        commandRecorder->SetRenderTargets({ResourceNames::ForwardOutput}, ResourceNames::ForwardDepth);
 
-        Render::Texture* dsTexture = passContext.frameResourceProvider->GetTexture(ResourceNames::ForwardDepth);
-        CommandListUtils::TransitionBarrier(resourceStateTracker, dsTexture->D3D12Resource(), D3D12_RESOURCE_STATE_DEPTH_READ);
-        auto dsv = dsTexture->GetDSDescriptor(renderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_DSV).get());
-
-        Render::Texture* rtTexture = passContext.frameResourceProvider->GetTexture(ResourceNames::ForwardOutput);
-        auto rtv = rtTexture->GetRTDescriptor(renderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_RTV).get());// canvas->GetCurrentRenderTargetView();
-        auto backBuffer = rtTexture->D3D12ResourceCom();// canvas->GetCurrentBackBuffer();
-
-        CommandListUtils::TransitionBarrier(resourceStateTracker, backBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET);
-
-     //   passContext.frameContext->usingResources.push_back(rtTexture->D3D12Resource());
-
-
-    //   FLOAT clearColor[] = {0};
-    //   commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
-
-        auto screenViewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float32>(width), static_cast<float32>(height));
-        auto scissorRect = CD3DX12_RECT(0, 0, width, height);
-
-        commandList->RSSetViewports(1, &screenViewport);
-        commandList->RSSetScissorRects(1, &scissorRect);
-
-        commandList->OMSetRenderTargets(1, &rtv, false, &dsv);
-
-        auto rootSignature = renderContext->GetRootSignatureProvider()->GetRootSignature(RootSignatureNames::Cube);
-        commandList->SetGraphicsRootSignature(rootSignature->GetD3D12RootSignature().Get());
-
-        commandList->SetPipelineState(renderContext->GetPipelineStateProvider()->GetPipelineState(PSONames::Cube).Get());
-
-        passContext.frameContext->dynamicDescriptorHeap->ParseRootSignature(rootSignature);
+        commandRecorder->SetRootSignature(RootSignatureNames::Cube);
+        commandRecorder->SetPipelineState(PSONames::Cube);
 
         auto cameraEntity = registry.view<Scene::Components::CameraComponent, Scene::Components::WorldTransformComponent>().front();
         auto camera = registry.get<Scene::Components::CameraComponent>(cameraEntity);

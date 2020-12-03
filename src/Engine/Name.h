@@ -23,6 +23,8 @@ namespace Engine
 
         uint32 id() const { return mId; }
 
+        bool isValid() const;
+
         const String &string() const;
 
         auto operator<=>(const Name &other) const = default;

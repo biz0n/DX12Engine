@@ -40,6 +40,11 @@ namespace Engine
         return *this;
     }
 
+    bool Name::isValid() const
+    {
+        return mId != NameRegistry::INVALID_ID;
+    }
+
     const String& Name::string() const
     {
         return NameRegistry::Instance().GetName(mId);

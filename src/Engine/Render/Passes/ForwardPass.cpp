@@ -35,6 +35,7 @@
 #include <Render/PipelineStateProvider.h>
 #include <Render/RootSignatureProvider.h>
 #include <Render/ResourcePlanner.h>
+#include <Render/PassCommandRecorder.h>
 
 #include <Memory/UploadBuffer.h>
 #include <Memory/MemoryForwards.h>
@@ -122,6 +123,7 @@ namespace Engine::Render::Passes
     void ForwardPass::Draw(ComPtr<ID3D12GraphicsCommandList> commandList, const Scene::Mesh &mesh, const dx::XMMATRIX &world, Render::PassContext &passContext)
     {
         auto renderContext = passContext.renderContext;
+        auto commandRecorder = passContext.commandRecorder;
 
         auto cb = CommandListUtils::GetMeshUniform(world);
         auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(MeshUniform));
@@ -134,11 +136,11 @@ namespace Engine::Render::Passes
 
         if (mesh.material->GetProperties().doubleSided)
         {
-            commandList->SetPipelineState(renderContext->GetPipelineStateProvider()->GetPipelineState(PSONames::ForwardCullNone).Get());
+            commandRecorder->SetPipelineState(PSONames::ForwardCullNone);
         }
         else
         {
-            commandList->SetPipelineState(renderContext->GetPipelineStateProvider()->GetPipelineState(PSONames::ForwardCullBack).Get());
+            commandRecorder->SetPipelineState(PSONames::ForwardCullBack);
         }
 
         commandList->IASetPrimitiveTopology(mesh.primitiveTopology);
@@ -161,45 +163,19 @@ namespace Engine::Render::Passes
     void ForwardPass::Render(Render::PassContext &passContext)
     {
         auto renderContext = passContext.renderContext;
-        auto canvas = renderContext->GetSwapChain();
 
         auto commandList = passContext.commandList;
 
-        auto resourceStateTracker = passContext.resourceStateTracker;
+        auto commandRecorder = passContext.commandRecorder;
 
-        auto width = canvas->GetWidth();
-        auto height = canvas->GetHeight();
+        commandRecorder->SetViewPort();
 
-        Render::Texture* rtTexture = passContext.frameResourceProvider->GetTexture(ResourceNames::ForwardOutput);
-        Render::Texture* dsTexture = passContext.frameResourceProvider->GetTexture(ResourceNames::ForwardDepth);
-        CommandListUtils::TransitionBarrier(resourceStateTracker, dsTexture->D3D12Resource(), D3D12_RESOURCE_STATE_DEPTH_WRITE);
+        commandRecorder->SetRenderTargets({ResourceNames::ForwardOutput}, ResourceNames::ForwardDepth);
 
-        //passContext.frameContext->usingResources.push_back(dsTexture->D3D12Resource());
+        commandRecorder->ClearRenderTargets({ResourceNames::ForwardOutput});
+        commandRecorder->ClearDepthStencil(ResourceNames::ForwardDepth);
 
-        auto backBuffer = rtTexture->D3D12ResourceCom();// canvas->GetCurrentBackBuffer();
-
-        auto rtv = rtTexture->GetRTDescriptor(renderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_RTV).get());// canvas->GetCurrentRenderTargetView();
-
-        CommandListUtils::TransitionBarrier(resourceStateTracker, backBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET);
-
-        auto screenViewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float32>(width), static_cast<float32>(height));
-        auto scissorRect = CD3DX12_RECT(0, 0, width, height);
-
-        commandList->RSSetViewports(1, &screenViewport);
-        commandList->RSSetScissorRects(1, &scissorRect);
-
-        FLOAT clearColor[] = {0};
-        commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
-
-        auto descriptor = dsTexture->GetDSDescriptor(renderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_DSV).get());
-        commandList->ClearDepthStencilView(descriptor, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-
-        commandList->OMSetRenderTargets(1, &rtv, false, &descriptor);
-
-        auto rootSignature = renderContext->GetRootSignatureProvider()->GetRootSignature(RootSignatureNames::Forward);
-        commandList->SetGraphicsRootSignature(rootSignature->GetD3D12RootSignature().Get());
-
-        passContext.frameContext->dynamicDescriptorHeap->ParseRootSignature(rootSignature);
+        commandRecorder->SetRootSignature(RootSignatureNames::Forward);
 
         auto &registry = passContext.scene->GetRegistry();
         

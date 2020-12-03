@@ -19,6 +19,7 @@
 #include <Render/PassContext.h>
 #include <Render/RenderContext.h>
 #include <Render/RenderPassBase.h>
+#include <Render/PassCommandRecorder.h>
 
 #include <Memory/UploadBuffer.h>
 #include <Memory/IndexBuffer.h>
@@ -118,6 +119,13 @@ namespace Engine::Render
         passContext.frameResourceProvider = mFrameResourceProvider.get();
         passContext.timer = &timer;
         passContext.resourceStateTracker = MakeShared<ResourceStateTracker>(mRenderContext->GetGlobalResourceStateTracker());
+
+        passContext.commandRecorder = MakeShared<PassCommandRecorder>(
+            commandList,
+            passContext.resourceStateTracker.get(),
+            mRenderContext.get(),
+            mFrameResourceProvider.get(),
+            &mFrameContexts[currentBackbufferIndex]);
 
         pass->Render(passContext);
 

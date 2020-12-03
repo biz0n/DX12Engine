@@ -7,6 +7,7 @@ namespace Engine::Render
     class Graphics;
     class PassContext;
     class PipelineStateProvider;
+    class PassCommandRecorder;
     
     class RenderContext;
     class UIRenderContext;
