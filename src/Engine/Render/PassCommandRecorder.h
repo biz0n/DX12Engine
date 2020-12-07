@@ -21,7 +21,7 @@ namespace Engine::Render
             FrameTransientContext* frameTransientContext);
         ~PassCommandRecorder();
 
-        ComPtr<ID3D12CommandList> GetD3D12CommandList() const { return mCommandList; }
+        ComPtr<ID3D12GraphicsCommandList> GetD3D12CommandList() const { return mCommandList; }
 
         void SetViewPort(uint32 width = 0, uint32 height = 0);
 

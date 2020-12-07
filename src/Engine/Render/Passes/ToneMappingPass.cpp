@@ -31,7 +31,7 @@ namespace Engine::Render::Passes
 
     void ToneMappingPass::PrepareResources(Render::ResourcePlanner* planner)
     {
-        planner->ReadRenderTarget(ResourceNames::CubeOutput);
+        planner->ReadRenderTarget(ResourceNames::ForwardOutput);
     }
 
     void ToneMappingPass::CreateRootSignatures(Render::RootSignatureProvider* rootSignatureProvider)

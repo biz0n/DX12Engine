@@ -8,14 +8,16 @@
 #include <Scene/Components/RelationshipComponent.h>
 #include <Scene/Components/MeshComponent.h>
 #include <Scene/Components/WorldTransformComponent.h>
+#include <Scene/Components/CameraComponent.h>
 #include <Scene/Texture.h>
 
-#include <UI/ComponentRenderers./StateComponentsRenderer.h>
+#include <UI/ComponentRenderers/StateComponentsRenderer.h>
 #include <UI/ComponentRenderers/WorldTransformComponentRenderer.h>
 #include <UI/ComponentRenderers/MeshComponentRenderer.h>
 #include <UI/ComponentRenderers/LightComponentRenderer.h>
 
 #include <imgui/imgui.h>
+#include <imgui/ImGuizmo.h>
 #include <entt/entt.hpp>
 
 namespace Engine::UI::Systems
@@ -118,6 +120,30 @@ namespace Engine::UI::Systems
                 }
             }
             ImGui::End();
+        }
+
+        if (selectedEntity != entt::null && registry.has<Scene::Components::WorldTransformComponent>(selectedEntity))
+        {
+            auto cameraEntity = registry.view<Scene::Components::CameraComponent>().front();
+            auto camera = registry.get<Scene::Components::CameraComponent>(cameraEntity);
+            auto worldTransformComponent = registry.get<Scene::Components::WorldTransformComponent>(selectedEntity);
+            
+
+            dx::XMFLOAT4X4 view;
+            dx::XMFLOAT4X4 proj; 
+            dx::XMFLOAT4X4 matrix; 
+            dx::XMStoreFloat4x4(&view, camera.view);
+            dx::XMStoreFloat4x4(&proj, camera.projection);
+            dx::XMStoreFloat4x4(&matrix, worldTransformComponent.transform);
+
+
+            
+            ImGuizmo::Manipulate(*view.m, *proj.m, ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::MODE::WORLD, *matrix.m);
+
+            //ImGuizmo::DrawCubes(*view.m, *proj.m, *matrix.m, 1);
+
+            
+
         }
     }
 

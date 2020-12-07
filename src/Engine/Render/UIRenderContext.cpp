@@ -47,6 +47,7 @@ namespace Engine::Render
 
         ImGuiIO& io = ImGui::GetIO();
         ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
+        ImGuizmo::SetDrawlist(ImGui::GetBackgroundDrawList());
 
         mDescriptorAllocator->Reset(mCurrentFrameIndex);
     }
