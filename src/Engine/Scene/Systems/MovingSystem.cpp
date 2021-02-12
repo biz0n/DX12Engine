@@ -20,7 +20,7 @@ namespace Engine::Scene::Systems
    {
       auto& registry = scene->GetRegistry();
       const auto &view = registry.view<Components::MovingComponent, Components::LocalTransformComponent>();
-      for (auto &&[entity, movingComponent, transformComponent] : view.proxy())
+      for (auto &&[entity, movingComponent, transformComponent] : view.each())
       {
          float32 pitch, yaw, roll;
          Math::ExtractPitchYawRollFromXMMatrix(&pitch, &yaw, &roll, &transformComponent.transform);
@@ -37,7 +37,7 @@ namespace Engine::Scene::Systems
       const float32 speed = 5 * timer.DeltaTime();
       const float32 rotationSpeed = 1.0f * timer.DeltaTime();
 
-      for (auto &&[entity, movingComponent, transformComponent] : view.proxy())
+      for (auto &&[entity, movingComponent, transformComponent] : view.each())
       {
          float32 xTranslate = 0;
          float32 zTranslate = 0;

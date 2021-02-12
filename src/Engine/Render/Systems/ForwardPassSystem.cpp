@@ -43,8 +43,8 @@ namespace Engine::Render::Systems
 
         const auto &lightsView = registry.view<Scene::Components::LightComponent, Scene::Components::WorldTransformComponent>();
         
-        data.lights.reserve(lightsView.size());
-        for (auto &&[entity, lightComponent, transformComponent] : lightsView.proxy())
+        data.lights.reserve(lightsView.size_hint());
+        for (auto &&[entity, lightComponent, transformComponent] : lightsView.each())
         {
             if (lightComponent.light.IsEnabled())
             {
@@ -59,8 +59,8 @@ namespace Engine::Render::Systems
             Scene::Components::MeshComponent, 
             Scene::Components::WorldTransformComponent, 
             Scene::Components::AABBComponent>(entt::exclude<Scene::Components::IsDisabledComponent>);
-        data.meshes.reserve(meshsView.size());
-        for (auto &&[entity, meshComponent, transformComponent, aabbComponent] : meshsView.proxy())
+        data.meshes.reserve(meshsView.size_hint());
+        for (auto &&[entity, meshComponent, transformComponent, aabbComponent] : meshsView.each())
         {
             if (camera.frustum.Intersects(aabbComponent.boundingBox))
             {

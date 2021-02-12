@@ -27,7 +27,9 @@ add_subdirectory( src/Libraries/DirectXTex )
 
 add_subdirectory( src/Libraries/entt )
 
-set_target_properties( assimp IrrXML uninstall UpdateAssimpLibsDebugSymbolsAndDLLs zlib zlibstatic 
+add_subdirectory( src/Libraries/DirectX-Headers )
+
+set_target_properties( assimp uninstall UpdateAssimpLibsDebugSymbolsAndDLLs 
     PROPERTIES
         FOLDER src/Libraries/assimp 
 )
@@ -57,13 +59,15 @@ set_property(TARGET d3d12 PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE
 
 target_include_directories(d3d12 PRIVATE "src/Engine")
 
-target_include_directories(d3d12 PRIVATE "src/Libraries/D3DX12/")
+# target_include_directories(d3d12 PRIVATE "src/Libraries/D3DX12/")
+
+target_include_directories(d3d12 PRIVATE "src/Libraries/DirectX-Headers/include/derectx")
 
 target_include_directories(d3d12 PRIVATE "src/Libraries/imgui/")
 
 target_include_directories(d3d12 PRIVATE "src/Libraries/PIX/")
 
-target_link_libraries(d3d12 PRIVATE "d3d12.lib" "dxgi.lib" "d3dcompiler.lib" "dxguid.lib" "assimp" "DirectXTex" "EnTT" "${CMAKE_SOURCE_DIR}/src/Libraries/PIX/WinPixEventRuntime.lib")
+target_link_libraries(d3d12 PRIVATE "d3d12.lib" "dxgi.lib" "d3dcompiler.lib" "dxguid.lib" "assimp" "DirectXTex" "EnTT"  "DirectX-Headers" "${CMAKE_SOURCE_DIR}/src/Libraries/PIX/WinPixEventRuntime.lib")
 
 add_custom_command (TARGET d3d12 POST_BUILD
 # COPY

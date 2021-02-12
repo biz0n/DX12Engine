@@ -7,3 +7,6 @@
 [submodule "src/Libraries/entt"]
 	path = src/Libraries/entt
 	url = git@github.com:skypjack/entt.git
+[submodule "src/Libraries/DirectX-Headers"]
+	path = src/Libraries/DirectX-Headers
+	url = git@github.com:microsoft/DirectX-Headers.git

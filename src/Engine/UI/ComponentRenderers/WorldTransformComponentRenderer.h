@@ -41,9 +41,9 @@ namespace Engine::UI::ComponentRenderers
                 
                 //DirectX::XMStoreFloat3
                 float rt[3] = { DirectX::XMConvertToDegrees(pitch), DirectX::XMConvertToDegrees(yaw), DirectX::XMConvertToDegrees(roll)};
-                ImGui::InputFloat3("Tr", (float*)&position, 2, ImGuiInputTextFlags_ReadOnly);
-                ImGui::InputFloat3("Rt", rt, 2, ImGuiInputTextFlags_ReadOnly);
-                ImGui::InputFloat3("Sc", (float*)&scale, 2, ImGuiInputTextFlags_ReadOnly);
+                ImGui::InputFloat3("Tr", (float*)&position, "%.2f", ImGuiInputTextFlags_ReadOnly);
+                ImGui::InputFloat3("Rt", rt, "%.2f", ImGuiInputTextFlags_ReadOnly);
+                ImGui::InputFloat3("Sc", (float*)&scale, "%.2f", ImGuiInputTextFlags_ReadOnly);
             }
     };
 }

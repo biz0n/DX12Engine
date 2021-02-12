@@ -176,7 +176,7 @@ namespace Engine::Render
         uploadBuffer->Reset();
         bool anythingToLoad = false;
 
-        for (auto &&[entity, meshComponent] : meshView.proxy())
+        for (auto &&[entity, meshComponent] : meshView.each())
         {
             auto mesh = meshComponent.mesh;
             if (!mesh.vertexBuffer->GetD3D12Resource())
@@ -192,7 +192,7 @@ namespace Engine::Render
             anythingToLoad = CommandListUtils::UploadMaterialTextures(renderContext, commandList, stateTracker, mesh.material, uploadBuffer) || anythingToLoad;
         }
 
-        for (auto &&[entity, cubeComponent] : cubeMapView.proxy())
+        for (auto &&[entity, cubeComponent] : cubeMapView.each())
         {
             if (!cubeComponent.cubeMap.vertexBuffer->GetD3D12Resource())
             {

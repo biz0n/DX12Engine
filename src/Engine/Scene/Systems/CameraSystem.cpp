@@ -27,7 +27,7 @@ namespace Engine::Scene::Systems
         static const dx::XMVECTOR up = dx::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
         static const dx::XMVECTOR forward = dx::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
 
-        for (auto &&[entity, cameraComponent, transformComponent] : view.proxy())
+        for (auto &&[entity, cameraComponent, transformComponent] : view.each())
         {
             auto& camera = cameraComponent.camera;
             auto& world = transformComponent.transform;
