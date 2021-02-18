@@ -3,9 +3,11 @@
 #include <Types.h>
 #include <Timer.h>
 #include <Scene/SceneForwards.h>
+#include <Scene/Components/ComponentsForwards.h>
 
 #include <Scene/Systems/System.h>
 #include <vector>
+#include <tuple>
 #include <entt/entt.hpp>
 
 namespace Engine::Scene
@@ -18,6 +20,8 @@ namespace Engine::Scene
         ~SceneObject();
     public:
         entt::registry& GetRegistry();
+
+        std::tuple<entt::entity, Scene::Components::CameraComponent> GetMainCamera();
 
         void AddSystem(UniquePtr<Systems::System> system);
 

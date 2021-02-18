@@ -82,8 +82,11 @@ namespace Engine::Render
             for (auto resource : planner.GetPlannedResources())
             {
                 auto& creationInfo = resource.creationInfo;
-                creationInfo.description.Width = mRenderContext->GetSwapChain()->GetWidth();
-                creationInfo.description.Height = mRenderContext->GetSwapChain()->GetHeight();
+                if (creationInfo.description.Width == 0 && creationInfo.description.Height == 0)
+                {
+                    creationInfo.description.Width = mRenderContext->GetSwapChain()->GetWidth();
+                    creationInfo.description.Height = mRenderContext->GetSwapChain()->GetHeight();
+                }
 
                 mFrameResourceProvider->CreateResource(resource.name, resource.creationInfo);
             }

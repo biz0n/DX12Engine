@@ -53,7 +53,7 @@ namespace Engine::Render::Passes
         Render::RootSignatureBuilder builder = {};
         builder
             .AddCBVParameter(0, 0, D3D12_SHADER_VISIBILITY_VERTEX)
-            .AddCBVParameter(1, 0)
+            .AddCBVParameter(1, 0, D3D12_SHADER_VISIBILITY_ALL)
             .AddCBVParameter(2, 0, D3D12_SHADER_VISIBILITY_PIXEL)
             .AddSRVParameter(0, 1, D3D12_SHADER_VISIBILITY_PIXEL)
             .AddSRVDescriptorTableParameter(0, 0, D3D12_SHADER_VISIBILITY_PIXEL)
@@ -179,7 +179,7 @@ namespace Engine::Render::Passes
         }
 
         auto& camera = PassData().camera;
-        auto cb = CommandListUtils::GetFrameUniform(camera.camera, camera.viewProjection, camera.eyePosition, static_cast<uint32>(lights.size()));
+        auto cb = CommandListUtils::GetFrameUniform(camera.viewProjection, camera.eyePosition, static_cast<uint32>(lights.size()));
 
         auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(FrameUniform));
         cbAllocation.CopyTo(&cb);

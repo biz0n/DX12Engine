@@ -5,6 +5,7 @@
 
 #include <Scene/SceneObject.h>
 #include <Scene/Components/CameraComponent.h>
+#include <Scene/Components/LightComponent.h>
 #include <Scene/Components/WorldTransformComponent.h>
 
 #include <entt/entt.hpp>
@@ -21,9 +22,11 @@ namespace Engine::Scene::Systems
     {
         auto& registry = scene->GetRegistry();
 
-        const auto& view = registry.view<Components::CameraComponent, Components::WorldTransformComponent>();
+        const auto& view = registry.view<Components::CameraComponent, Components::WorldTransformComponent>(entt::exclude<Components::LightComponent>);
 
-        const float aspectRatio = mRenderContext->GetSwapChain()->GetWidth() / static_cast<float>(mRenderContext->GetSwapChain()->GetHeight());
+        const float32 width = static_cast<float32>(mRenderContext->GetSwapChain()->GetWidth());
+        const float32 height = static_cast<float32>(mRenderContext->GetSwapChain()->GetHeight());
+        
         static const dx::XMVECTOR up = dx::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
         static const dx::XMVECTOR forward = dx::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
 
@@ -31,7 +34,7 @@ namespace Engine::Scene::Systems
         {
             auto& camera = cameraComponent.camera;
             auto& world = transformComponent.transform;
-            auto projectionMatrix = camera.GetProjectionMatrix(aspectRatio);
+            auto projectionMatrix = camera.GetProjectionMatrix(width, height);
 
             dx::XMVECTOR sc;
             dx::XMVECTOR rt;

@@ -14,4 +14,8 @@ namespace Engine::Scene::Components
         dx::XMVECTOR eyePosition; 
         dx::BoundingFrustum frustum;
     };
+
+    struct MainCameraComponent
+    {
+    };
 }

@@ -37,6 +37,9 @@ namespace Engine::UI::ComponentRenderers
                 float newLinearAttenuation = linearAttenuation;
                 float newQuadraticAttenuation = quadraticAttenuation;
 
+                const std::string types[3] = {"Directiona", "Point", "Spot"};
+                ImGui::LabelText("Type", types[(uint32)light.GetLightType()].c_str());
+
                 bool changed = false;
                 if (ImGui::SliderFloat("Intensity", &newIntensity, 0.1f, 100.0f))
                 {

@@ -1,5 +1,6 @@
 #include "ShaderTypes.h"
 #include "LightUtils.hlsl"
+#include "Vertex.hlsl"
  
 ConstantBuffer<MeshUniform> ObjectCB : register(b0);
 
@@ -21,14 +22,6 @@ Texture2D occlusionTexture : register(t4);
 
 SamplerState gsamPointWrap : register(s0);
  
-struct VertexPosColor
-{
-    float3 PositionL : POSITION;
-    float3 NormalL : NORMAL;
-    float2 TextureCoord : TEXCOORD;
-    float4 Tangent : TANGENT;
-};
- 
 struct VertexShaderOutput
 {
     float3 PositionW : POSITION;
@@ -43,7 +36,7 @@ struct PixelShaderOutput
     float4 Color : SV_TARGET0;
 };
 
-VertexShaderOutput mainVS(VertexPosColor IN)
+VertexShaderOutput mainVS(Vertex1P1N1UV1T IN)
 {
     VertexShaderOutput OUT;
  

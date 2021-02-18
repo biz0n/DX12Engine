@@ -4,6 +4,7 @@ namespace Engine::Scene::Components
 {
     struct AABBComponent;
     struct CameraComponent;
+    struct MainCameraComponent;
     struct CubeMapComponent;
     struct IsDisabledComponent;
     struct LightComponent;

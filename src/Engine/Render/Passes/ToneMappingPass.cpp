@@ -21,6 +21,9 @@
 #include <Memory/DynamicDescriptorHeap.h>
 #include <Memory/UploadBuffer.h>
 
+#include <imgui/imgui.h>
+#include <Render/UIRenderContext.h>
+
 namespace Engine::Render::Passes
 {
     ToneMappingPass::ToneMappingPass() : RenderPassBase("Tone Mapping Pass")
@@ -107,5 +110,23 @@ namespace Engine::Render::Passes
 
 
         commandList->DrawIndexedInstanced(3, 1, 0, 0, 0);
+
+        auto* depth = passContext.frameResourceProvider->GetTexture(ResourceNames::ShadowDepth);
+
+        CommandListUtils::TransitionBarrier(passContext.resourceStateTracker, depth->D3D12ResourceCom(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+        D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
+        desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+        desc.TextureCube.MostDetailedMip = 0;
+        desc.TextureCube.MipLevels = depth->D3D12Resource()->GetDesc().MipLevels;
+        desc.TextureCube.ResourceMinLODClamp = 0.0f;
+        desc.Format = DXGI_FORMAT_R32_FLOAT;
+        auto srv = depth->GetSRDescriptor(renderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV).get(), &desc);
+
+        ImGui::Begin("ShadowMap");
+        ImGui::Image(passContext.renderContext->GetUIContext()->GetTextureId(srv), {512, 512});
+        ImGui::End();
+
     }
 } // namespace Engine::Render::Passes

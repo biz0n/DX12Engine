@@ -108,7 +108,7 @@ namespace Engine::Render::Passes
         commandRecorder->SetPipelineState(PSONames::Cube);
 
         auto& camera = PassData().camera;
-        auto cb = CommandListUtils::GetFrameUniform(camera.camera, camera.viewProjection, camera.eyePosition, static_cast<uint32>(0));
+        auto cb = CommandListUtils::GetFrameUniform(camera.viewProjection, camera.eyePosition, static_cast<uint32>(0));
 
         auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(FrameUniform));
         cbAllocation.CopyTo(&cb);

@@ -38,6 +38,7 @@ namespace Engine::Scene::Loader
             std::unordered_map<String, SharedPtr<Scene::Texture>> fileTextures;
             std::unordered_map<String, aiLight*> lightsMap;
             std::unordered_map<String, aiCamera*> camerasMap;
+            bool isMainCameraAssigned;
 
             entt::registry* registry;
         };
@@ -68,7 +69,7 @@ namespace Engine::Scene::Loader
         void AddCubeMapToScene(SceneObject* scene, String texturePath);
 
     private:
-        void ParseNode(const aiScene* aScene, const aiNode* aNode, const LoadingContext& context, entt::entity entity, Engine::Scene::Components::RelationshipComponent* relationship);
+        void ParseNode(const aiScene* aScene, const aiNode* aNode, LoadingContext& context, entt::entity entity, Engine::Scene::Components::RelationshipComponent* relationship);
         SharedPtr<Texture> GetTexture(const aiString& path, LoadingContext& context);
         SharedPtr<Texture> GetTexture(const aiTexture* aTexture, const LoadingContext& context);
         SharedPtr<Material> ParseMaterial(const aiMaterial* aMaterial, LoadingContext& context);
@@ -79,6 +80,6 @@ namespace Engine::Scene::Loader
         bool IsCameraNode(const aiNode* aNode, const LoadingContext& context);
         void CreateLightNode(const aiNode* aNode, const LoadingContext& context, entt::entity entity);
         void CreateMeshNode(const aiNode* aNode, const LoadingContext& context, entt::entity entity, Engine::Scene::Components::RelationshipComponent* relationship);
-        void CreateCameraNode(const aiNode* aNode, const LoadingContext& context, entt::entity entity);
+        void CreateCameraNode(const aiNode* aNode, LoadingContext& context, entt::entity entity);
     }; 
 } // namespace Engine::Scene

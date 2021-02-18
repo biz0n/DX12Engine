@@ -1,5 +1,7 @@
 #include "SceneObject.h"
 
+#include <Scene/Components/CameraComponent.h>
+
 namespace Engine::Scene
 {
     SceneObject::SceneObject() = default;
@@ -9,6 +11,13 @@ namespace Engine::Scene
     entt::registry& SceneObject::GetRegistry() 
     { 
         return registry; 
+    }
+
+    std::tuple<entt::entity, Scene::Components::CameraComponent> SceneObject::GetMainCamera()
+    {
+        auto cameraEntity = registry.view<Scene::Components::CameraComponent, Scene::Components::MainCameraComponent>().front();
+        auto component = registry.get<Scene::Components::CameraComponent>(cameraEntity);
+        return {cameraEntity, component};
     }
 
     void SceneObject::AddSystem(UniquePtr<Systems::System> system)

@@ -31,10 +31,8 @@ namespace Engine::Render::Systems
         auto view = registry.view<Scene::Components::CubeMapComponent>();
         if (!view.empty())
         {
-            auto cameraEntity = registry.view<Scene::Components::CameraComponent>().front();
-            auto camera = registry.get<Scene::Components::CameraComponent>(cameraEntity);
+            auto [cameraEntity, camera] = scene->GetMainCamera();
 
-            data.camera.camera = camera.camera;
             data.camera.projection = camera.projection;
             data.camera.view = camera.view;
             data.camera.viewProjection = camera.viewProjection;

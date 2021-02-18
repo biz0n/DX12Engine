@@ -80,7 +80,7 @@ namespace Engine::Scene::Loader
 
         auto scene = MakeUnique<SceneObject>();
 
-        LoadingContext context;
+        LoadingContext context = {};
         context.RootPath = filePath.parent_path().string();
         context.registry = &scene->GetRegistry();
 
@@ -133,6 +133,7 @@ namespace Engine::Scene::Loader
         {
             auto cameraEntity = context.registry->create();
             context.registry->emplace<Components::CameraComponent>(cameraEntity, Camera());
+            context.registry->emplace<Components::MainCameraComponent>(cameraEntity);
             context.registry->emplace<Components::LocalTransformComponent>(cameraEntity, dx::XMMatrixIdentity());
             
             context.registry->emplace<Components::NameComponent>(cameraEntity, "Default Camera");
@@ -148,6 +149,7 @@ namespace Engine::Scene::Loader
             context.registry->emplace<Components::RelationshipComponent>(lightEntity, Components::RelationshipComponent());
             context.registry->emplace<Components::Root>(lightEntity);
             context.registry->emplace<Components::NameComponent>(lightEntity, name);
+            context.registry->emplace<Components::CameraComponent>(lightEntity, Camera());
         };
 
 
@@ -172,7 +174,7 @@ namespace Engine::Scene::Loader
         return scene;
     }
 
-    void SceneLoader::ParseNode(const aiScene *aScene, const aiNode *aNode, const LoadingContext &context, entt::entity entity, Engine::Scene::Components::RelationshipComponent* relationship)
+    void SceneLoader::ParseNode(const aiScene *aScene, const aiNode *aNode, LoadingContext &context, entt::entity entity, Engine::Scene::Components::RelationshipComponent* relationship)
     {
         aiVector3D scaling;
 		aiQuaternion rotation;
@@ -580,6 +582,7 @@ namespace Engine::Scene::Loader
         lightComponent.light = light;
 
         context.registry->emplace<Components::LightComponent>(entity, lightComponent);
+        context.registry->emplace<Components::CameraComponent>(entity, Camera());
 
     }
 
@@ -622,7 +625,7 @@ namespace Engine::Scene::Loader
 		}
     }
 
-    void SceneLoader::CreateCameraNode(const aiNode* aNode, const LoadingContext& context, entt::entity entity)
+    void SceneLoader::CreateCameraNode(const aiNode* aNode, LoadingContext& context, entt::entity entity)
     {
         auto iter = context.camerasMap.find(aNode->mName.C_Str());
 
@@ -638,6 +641,12 @@ namespace Engine::Scene::Loader
         cameraComponent.camera = camera;
 
         context.registry->emplace<Components::CameraComponent>(entity, cameraComponent);
+
+        if (!context.isMainCameraAssigned)
+        {
+            context.isMainCameraAssigned = true;
+            context.registry->emplace<Components::MainCameraComponent>(entity);
+        }
     }
 
     void SceneLoader::AddCubeMapToScene(SceneObject* scene, String texturePath)

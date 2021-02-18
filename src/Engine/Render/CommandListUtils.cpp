@@ -249,7 +249,7 @@ namespace Engine::Render::CommandListUtils
         return uniform;
     }
 
-    FrameUniform GetFrameUniform(const Scene::Camera& camera, const DirectX::XMMATRIX& viewProj, const DirectX::XMVECTOR& eyePos, uint32 lightsCount)
+    FrameUniform GetFrameUniform(const DirectX::XMMATRIX& viewProj, const DirectX::XMVECTOR& eyePos, uint32 lightsCount)
     {
         FrameUniform cb = {};
         DirectX::XMStoreFloat4x4(&cb.ViewProj, viewProj);

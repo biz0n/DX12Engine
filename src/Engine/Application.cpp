@@ -29,8 +29,10 @@
 #include <Scene/Systems/WorldTransformSystem.h>
 #include <Scene/Systems/MovingSystem.h>
 #include <Scene/Systems/CameraSystem.h>
+#include <Scene/Systems/LightCameraSystem.h>
 #include <UI/Systems/UISystem.h>
 #include <Render/Systems/RenderSystem.h>
+#include <Render/Systems/DepthPassSystem.h>
 #include <Render/Systems/ForwardPassSystem.h>
 #include <Render/Systems/CubePassSystem.h>
 #include <Render/Systems/ToneMappingPassSystem.h>
@@ -78,13 +80,15 @@ namespace Engine
         auto renderer = MakeShared<Render::Renderer>(mRenderContext);
 
         auto& registry = scene->GetRegistry();
-        auto camera = registry.view<Scene::Components::CameraComponent>()[0];
-        registry.emplace<Scene::Components::MovingComponent>(camera, Scene::Components::MovingComponent());
+        auto [cameraEntity, camera] = scene->GetMainCamera();
+        registry.emplace<Scene::Components::MovingComponent>(cameraEntity, Scene::Components::MovingComponent());
 
         scene->AddSystem(MakeUnique<Scene::Systems::WorldTransformSystem>());
 
         scene->AddSystem(MakeUnique<Scene::Systems::CameraSystem>(mRenderContext));
+        scene->AddSystem(MakeUnique<Scene::Systems::LightCameraSystem>(mRenderContext));
 
+        scene->AddSystem(MakeUnique<Render::Systems::DepthPassSystem>(renderer));
         scene->AddSystem(MakeUnique<Render::Systems::ForwardPassSystem>(renderer));
         scene->AddSystem(MakeUnique<Render::Systems::CubePassSystem>(renderer));
         scene->AddSystem(MakeUnique<Render::Systems::ToneMappingPassSystem>(renderer));

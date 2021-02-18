@@ -16,6 +16,9 @@ namespace Engine::Render::Passes
 
         inline String ToneMapPS {"Resources\\Shaders\\TonemappingPS.hlsl"};
         inline String TonemapVS {"Resources\\Shaders\\ScreenVS.hlsl"};
+
+        inline String DepthPS {"Resources\\Shaders\\Depth.hlsl"};
+        inline String DepthVS {"Resources\\Shaders\\Depth.hlsl"};
     }
 
     namespace ResourceNames
@@ -23,6 +26,7 @@ namespace Engine::Render::Passes
         inline Name ForwardOutput {"ForwardOutput"};
         inline Name CubeOutput {"CubeOutput"};
         inline Name ForwardDepth {"ForwardDepth"};
+        inline Name ShadowDepth {"Depth::Shadow"};
     }
 
     namespace PSONames
@@ -33,6 +37,7 @@ namespace Engine::Render::Passes
         inline Name ToneMapping {"ToneMapping::PSO"};
 
         inline Name Cube {"Cube::PSO"};
+        inline Name Depth {"Depth::PSO"};
     }
 
     namespace RootSignatureNames
@@ -40,6 +45,7 @@ namespace Engine::Render::Passes
         inline Name Forward {"Forward::RS"};
         inline Name ToneMapping {"ToneMapping::RS"};
         inline Name Cube {"Cube::RS"};
+        inline Name Depth {"Depth::RS"};
     }
     
 } // namespace Engine::Render::Passes

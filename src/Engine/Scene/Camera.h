@@ -6,10 +6,16 @@
 
 namespace Engine::Scene
 {
+    enum class CameraType : uint32
+    {
+        Perspective = 0,
+        Orthographic = 1
+    };
+
     class Camera
     {
     public: 
-        Camera() : mNearPlane(0.001f), mFarPlane(100.0f), mFoV(45 * Math::PI / 180.0f){}
+        Camera() : mType(CameraType::Perspective), mNearPlane(0.001f), mFarPlane(100.0f), mFoV(45 * Math::PI / 180.0f){}
 
         void SetNearPlane(float32 nearPlane) { mNearPlane = nearPlane; }
         float32 GetNearPlane() const { return mNearPlane; }
@@ -20,12 +26,22 @@ namespace Engine::Scene
         void SetFoV(float32 fov) { mFoV = fov; }
         float32 GetFoV() const { return mFoV; }
 
-        dx::XMMATRIX GetProjectionMatrix(float32 aspectRation) const
-        {
-            return dx::XMMatrixPerspectiveFovLH(GetFoV(), aspectRation, GetNearPlane(), GetFarPlane());
-        }
+        void SetType(CameraType type) { mType = type; }
+        CameraType GetType() const { return mType; }
 
+        dx::XMMATRIX GetProjectionMatrix(float32 width, float32 height) const
+        {
+            if (mType == CameraType::Perspective)
+            {
+                return dx::XMMatrixPerspectiveFovLH(GetFoV(), width / height, GetNearPlane(), GetFarPlane());
+            }
+            else
+            {
+                return dx::XMMatrixOrthographicLH(width, height, GetNearPlane(), GetFarPlane());
+            }
+        }
     private:
+        CameraType mType;
         float32 mNearPlane;
         float32 mFarPlane;
         float32 mFoV;

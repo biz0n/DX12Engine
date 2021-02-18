@@ -25,7 +25,6 @@ namespace Engine::Render::Passes
 
     struct CameraData
     {
-        Scene::Camera camera;
         dx::XMMATRIX projection;
         dx::XMMATRIX view;
         dx::XMMATRIX viewProjection;

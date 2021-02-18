@@ -2,6 +2,7 @@
 
 #include <Render/UIRenderContext.h>
 #include <Render/RenderContext.h>
+#include <Render/SwapChain.h>
 
 #include <Scene/SceneObject.h>
 #include <Scene/Components/NameComponent.h>
@@ -15,6 +16,7 @@
 #include <UI/ComponentRenderers/WorldTransformComponentRenderer.h>
 #include <UI/ComponentRenderers/MeshComponentRenderer.h>
 #include <UI/ComponentRenderers/LightComponentRenderer.h>
+#include <UI/ComponentRenderers/CameraComponentRenderer.h>
 
 #include <imgui/imgui.h>
 #include <imgui/ImGuizmo.h>
@@ -29,6 +31,7 @@ namespace Engine::UI::Systems
         mComponentRenderers.push_back(MakeUnique<UI::ComponentRenderers::WorldTransformComponentRenderer>());
         mComponentRenderers.push_back(MakeUnique<UI::ComponentRenderers::MeshComponentRenderer>(renderContext, uiRenderContext));
         mComponentRenderers.push_back(MakeUnique<UI::ComponentRenderers::LightComponentRenderer>());
+        mComponentRenderers.push_back(MakeUnique<UI::ComponentRenderers::CameraComponentRenderer>());
     }
 
     UISystem::~UISystem() = default;
@@ -43,6 +46,11 @@ namespace Engine::UI::Systems
         std::function<void(entt::entity, Scene::Components::RelationshipComponent)> showChilds;
 
         static entt::entity selectedEntity = entt::null;
+        if (!registry.valid(selectedEntity))
+        {
+            selectedEntity = entt::null;
+        }
+        
         showChilds = [&registry, &showChilds](entt::entity e, Scene::Components::RelationshipComponent r) {
             const auto &name = registry.get<Scene::Components::NameComponent>(e);
 
@@ -122,11 +130,45 @@ namespace Engine::UI::Systems
             ImGui::End();
         }
 
+        ImGui::Begin("Cameras");
+        {
+            int currentCameraIndex;
+            entt::entity currentCameraEntity;
+            std::vector<std::string> cameraNames;
+            std::vector<entt::entity> cameraEntities;
+            for (auto&& [entity, camera, name] : registry.view<Scene::Components::CameraComponent, Scene::Components::NameComponent>().each())
+            {
+                if (registry.has<Scene::Components::MainCameraComponent>(entity))
+                {
+                    currentCameraIndex = cameraNames.size();
+                    currentCameraEntity = entity;
+                }
+                cameraNames.push_back(name.Name);
+                cameraEntities.push_back(entity);
+
+                dx::XMFLOAT3 corners[8];
+                camera.frustum.GetCorners(corners);
+            }
+
+            if (ImGui::Combo("", &currentCameraIndex, cameraNames))
+            {
+                registry.remove<Scene::Components::MainCameraComponent>(currentCameraEntity);
+                currentCameraEntity = cameraEntities[currentCameraIndex];
+                registry.emplace<Scene::Components::MainCameraComponent>(currentCameraEntity);
+            }
+        }
+        ImGui::End();
+
+        
+
         if (selectedEntity != entt::null && registry.has<Scene::Components::WorldTransformComponent>(selectedEntity))
         {
-            auto cameraEntity = registry.view<Scene::Components::CameraComponent>().front();
-            auto camera = registry.get<Scene::Components::CameraComponent>(cameraEntity);
+            auto [cameraEntity, camera] = scene->GetMainCamera();
             auto worldTransformComponent = registry.get<Scene::Components::WorldTransformComponent>(selectedEntity);
+            if (selectedEntity == cameraEntity)
+            {
+                return;
+            }
             
 
             dx::XMFLOAT4X4 view;
@@ -136,14 +178,12 @@ namespace Engine::UI::Systems
             dx::XMStoreFloat4x4(&proj, camera.projection);
             dx::XMStoreFloat4x4(&matrix, worldTransformComponent.transform);
 
-
-            
             ImGuizmo::Manipulate(*view.m, *proj.m, ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::MODE::WORLD, *matrix.m);
 
-            //ImGuizmo::DrawCubes(*view.m, *proj.m, *matrix.m, 1);
+            ImGuizmo::DrawCubes(*view.m, *proj.m, *matrix.m, 1);
 
             
-
+            
         }
     }
 

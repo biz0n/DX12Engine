@@ -35,5 +35,6 @@ namespace Engine::Render
         class ForwardPass;
         class CubePass;
         class ToneMappingPass;
+        class DepthPass;
     }
 } // namespace Engine::Render
