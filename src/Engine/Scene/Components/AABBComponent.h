@@ -7,6 +7,7 @@ namespace Engine::Scene::Components
 {
     struct AABBComponent
     {
+        DirectX::BoundingBox originalBoundingBox;
         DirectX::BoundingBox boundingBox;
     };
 }

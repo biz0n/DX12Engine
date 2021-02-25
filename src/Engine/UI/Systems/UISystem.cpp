@@ -50,7 +50,7 @@ namespace Engine::UI::Systems
         {
             selectedEntity = entt::null;
         }
-        
+
         showChilds = [&registry, &showChilds](entt::entity e, Scene::Components::RelationshipComponent r) {
             const auto &name = registry.get<Scene::Components::NameComponent>(e);
 
@@ -178,9 +178,9 @@ namespace Engine::UI::Systems
             dx::XMStoreFloat4x4(&proj, camera.projection);
             dx::XMStoreFloat4x4(&matrix, worldTransformComponent.transform);
 
-            ImGuizmo::Manipulate(*view.m, *proj.m, ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::MODE::WORLD, *matrix.m);
+           // ImGuizmo::Manipulate(*view.m, *proj.m, ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::MODE::WORLD, *matrix.m);
 
-            ImGuizmo::DrawCubes(*view.m, *proj.m, *matrix.m, 1);
+            // ImGuizmo::DrawCubes(*view.m, *proj.m, *matrix.m, 1);
 
             
             

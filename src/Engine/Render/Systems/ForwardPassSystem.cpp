@@ -39,6 +39,26 @@ namespace Engine::Render::Systems
         data.camera.viewProjection = camera.viewProjection;
         data.camera.eyePosition = camera.eyePosition;
 
+        auto shadowCameraComponent = camera;
+        auto cameras = registry.view<Scene::Components::CameraComponent, Scene::Components::LightComponent>();
+
+        for (auto&& [entity, cameraComponent, lightComponent] : cameras.each())
+        {
+            if (lightComponent.light.GetLightType() == Scene::LightType::DirectionalLight)
+            {
+                shadowCameraComponent = cameraComponent;
+                break;
+            }
+        }
+
+        const dx::XMMATRIX T(
+            0.5f, 0.0f, 0.0f, 0.0f,
+            0.0f, -0.5f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.5f, 0.5f, 0.0f, 1.0f);
+
+        dx::XMStoreFloat4x4(&data.shadowTransform, dx::XMMatrixTranspose(dx::XMMatrixTranspose(shadowCameraComponent.viewProjection) * T));
+
         const auto &lightsView = registry.view<Scene::Components::LightComponent, Scene::Components::WorldTransformComponent>();
         
         data.lights.reserve(lightsView.size_hint());

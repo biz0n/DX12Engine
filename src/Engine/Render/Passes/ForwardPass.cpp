@@ -60,7 +60,8 @@ namespace Engine::Render::Passes
             .AddSRVDescriptorTableParameter(1, 0, D3D12_SHADER_VISIBILITY_PIXEL)
             .AddSRVDescriptorTableParameter(2, 0, D3D12_SHADER_VISIBILITY_PIXEL)
             .AddSRVDescriptorTableParameter(3, 0, D3D12_SHADER_VISIBILITY_PIXEL)
-            .AddSRVDescriptorTableParameter(4, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+            .AddSRVDescriptorTableParameter(4, 0, D3D12_SHADER_VISIBILITY_PIXEL)
+            .AddSRVDescriptorTableParameter(5, 0, D3D12_SHADER_VISIBILITY_PIXEL);
 
         rootSignatureProvider->BuildRootSignature(RootSignatureNames::Forward, builder);
     }
@@ -180,6 +181,7 @@ namespace Engine::Render::Passes
 
         auto& camera = PassData().camera;
         auto cb = CommandListUtils::GetFrameUniform(camera.viewProjection, camera.eyePosition, static_cast<uint32>(lights.size()));
+        cb.ShadowTransform = PassData().shadowTransform;
 
         auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(FrameUniform));
         cbAllocation.CopyTo(&cb);
@@ -191,6 +193,21 @@ namespace Engine::Render::Passes
         lightsAllocation.CopyTo(lights);
 
         commandList->SetGraphicsRootShaderResourceView(3, lightsAllocation.GPU);
+
+        auto* depth = passContext.frameResourceProvider->GetTexture(ResourceNames::ShadowDepth);
+
+        CommandListUtils::TransitionBarrier(passContext.resourceStateTracker, depth->D3D12ResourceCom(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+        D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
+        desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+        desc.TextureCube.MostDetailedMip = 0;
+        desc.TextureCube.MipLevels = depth->D3D12Resource()->GetDesc().MipLevels;
+        desc.TextureCube.ResourceMinLODClamp = 0.0f;
+        desc.Format = DXGI_FORMAT_R32_FLOAT;
+        auto srv = depth->GetSRDescriptor(renderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV).get(), &desc);
+
+        passContext.frameContext->dynamicDescriptorHeap->StageDescriptor(9, 0, 1, srv);
 
         auto& meshes = PassData().meshes;
         for (auto &mesh : meshes)

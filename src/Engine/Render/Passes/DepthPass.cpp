@@ -65,7 +65,10 @@ namespace Engine::Render::Passes
     {
         CD3DX12_RASTERIZER_DESC rasterizer = {};
         rasterizer.FillMode = D3D12_FILL_MODE_SOLID;
-        rasterizer.CullMode = D3D12_CULL_MODE_FRONT;
+        rasterizer.CullMode = D3D12_CULL_MODE_BACK;
+        rasterizer.DepthBias = 50000;
+        rasterizer.DepthBiasClamp = 0.0f;
+        rasterizer.SlopeScaledDepthBias = 1.0f;
 
         PipelineStateProxy pipelineState = {
             .rootSignatureName = RootSignatureNames::Depth,
@@ -89,7 +92,7 @@ namespace Engine::Render::Passes
 
         auto commandRecorder = passContext.commandRecorder;
 
-        commandRecorder->SetViewPort(2048, 2048);
+        commandRecorder->SetViewPort(EngineConfig::ShadowWidth, EngineConfig::ShadowHeight);
 
         commandRecorder->SetRenderTargets({}, ResourceNames::ShadowDepth);
 

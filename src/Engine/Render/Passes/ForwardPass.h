@@ -15,6 +15,7 @@ namespace Engine::Render::Passes
         CameraData camera;
         std::vector<MeshData> meshes;
         std::vector<LightData> lights;
+        dx::XMFLOAT4X4 shadowTransform;
     };
 
     class ForwardPass : public RenderPassBaseWithData<ForwardPassData>

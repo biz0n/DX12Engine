@@ -621,7 +621,11 @@ namespace Engine::Scene::Loader
             meshComponent.mesh = std::get<1>(meshData);
 
             context.registry->emplace<Components::MeshComponent>(meshEntity, meshComponent);
-            context.registry->emplace<Components::AABBComponent>(meshEntity, std::get<2>(meshData));
+
+            Components::AABBComponent aabbComponent = {};
+            aabbComponent.originalBoundingBox = std::get<2>(meshData);
+            aabbComponent.boundingBox = std::get<2>(meshData);
+            context.registry->emplace<Components::AABBComponent>(meshEntity, aabbComponent);
 		}
     }
 

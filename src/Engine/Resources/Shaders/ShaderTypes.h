@@ -76,6 +76,7 @@ struct LightUniform
 struct FrameUniform
 {
     float4x4 ViewProj;
+    float4x4 ShadowTransform;
     float3 EyePos;
     int LightsCount;
 };

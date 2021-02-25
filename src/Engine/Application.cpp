@@ -68,7 +68,8 @@ namespace Engine
             { "Normal Tangent Mirror Test", "Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\NormalTangentMirrorTest\\glTF\\NormalTangentMirrorTest.gltf" },
             { "Flight Helmet", "Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\FlightHelmet\\glTF\\FlightHelmet.gltf" },
             { "Damaged Helmet", "Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\DamagedHelmet\\glTF\\DamagedHelmet.gltf" },
-            { "Orientation Test", "Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\OrientationTest\\glTF\\OrientationTest.gltf" }
+            { "Orientation Test", "Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\OrientationTest\\glTF\\OrientationTest.gltf" },
+            { "s_test", "Resources\\Scenes\\shadow\\test1.gltf" }
         };
 
         mSceneLoadingInfo->scenePath = mSceneLoadingInfo->scenes["Sponza"];

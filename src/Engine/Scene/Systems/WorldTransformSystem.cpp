@@ -60,14 +60,14 @@ namespace Engine::Scene::Systems
             {
                 const auto& parentWorld = registry.get<Scene::Components::WorldTransformComponent>(relationship.parent);
 
-                worldTransform = DirectX::XMMatrixMultiply(parentWorld.transform, local.transform);
+                worldTransform = DirectX::XMMatrixMultiply(local.transform, parentWorld.transform);
             }
 
             registry.emplace_or_replace<Scene::Components::WorldTransformComponent>(e, worldTransform);
 
             if (auto* aabbPtr = registry.try_get<Components::AABBComponent>(e); aabbPtr)
             {
-                aabbPtr->boundingBox.Transform(aabbPtr->boundingBox, worldTransform);
+                aabbPtr->originalBoundingBox.Transform(aabbPtr->boundingBox, worldTransform);
             }
 
             registry.remove<Scene::Components::Dirty>(e);

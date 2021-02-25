@@ -20,11 +20,15 @@ Texture2D emissiveTexture : register(t3);
 
 Texture2D occlusionTexture : register(t4);
 
+Texture2D shadowTexture : register(t5);
+
 SamplerState gsamPointWrap : register(s0);
+SamplerComparisonState gsamShadow : register(s1);
  
 struct VertexShaderOutput
 {
-    float3 PositionW : POSITION;
+    float3 PositionW : POSITION0;
+    float4 ShadowPosH : POSITION1;
     float3 NormalW : NORMAL;
     float2 TextureCoord : TEXCOORD;
     float3x3 TBN : TBN;
@@ -35,6 +39,37 @@ struct PixelShaderOutput
 {
     float4 Color : SV_TARGET0;
 };
+
+float ShadowCalculation(float4 fragPosLightSpace)
+{
+    float3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+
+    float currentDepth = projCoords.z;
+
+
+    uint width, height, numMips;
+    shadowTexture.GetDimensions(0, width, height, numMips);
+
+    // Texel size.
+    float dx = 1.0f / (float)width;
+
+    float percentLit = 0.0f;
+    const float2 offsets[9] =
+    {
+        float2(-dx,  -dx), float2(0.0f,  -dx), float2(dx,  -dx),
+        float2(-dx, 0.0f), float2(0.0f, 0.0f), float2(dx, 0.0f),
+        float2(-dx,  +dx), float2(0.0f,  +dx), float2(dx,  +dx)
+    };
+
+    [unroll]
+    for(int i = 0; i < 9; ++i)
+    {
+        percentLit += shadowTexture.SampleCmpLevelZero(gsamShadow,
+            projCoords.xy + offsets[i], currentDepth).r;
+    }
+    
+    return percentLit / 9.0f;
+}
 
 VertexShaderOutput mainVS(Vertex1P1N1UV1T IN)
 {
@@ -52,6 +87,7 @@ VertexShaderOutput mainVS(Vertex1P1N1UV1T IN)
 
     OUT.NormalW = normalW;
     OUT.PositionW = posW.xyz;
+    OUT.ShadowPosH = mul(posW, FrameCB.ShadowTransform);
     OUT.PositionH = mul(posW, FrameCB.ViewProj);
     OUT.TBN = TBN;
     OUT.TextureCoord = IN.TextureCoord;
@@ -124,6 +160,8 @@ PixelShaderOutput mainPS(VertexShaderOutput IN)
         case DIRECTIONAL_LIGHT:
             {
                 luminance = ApplyDirectionalLight(light, IN.PositionW, F0, N, V, baseColor.rgb, metallic, roughness);
+
+                luminance *= ShadowCalculation(IN.ShadowPosH);
             }
             break;
         case POINT_LIGHT: 
