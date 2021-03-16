@@ -7,6 +7,9 @@
 #include <Memory/DescriptorAllocation.h>
 #include <Memory/CommandAllocatorPool.h>
 
+#include <Memory/DescriptorAllocatorPool.h>
+#include <Memory/NewDescriptorAllocator.h>
+
 #include <Render/SwapChain.h>
 #include <Render/UIRenderContext.h>
 #include <Render/CommandListUtils.h>
@@ -24,11 +27,12 @@ namespace Engine::Render
     {
         mGraphics = MakeUnique<Graphics>();
 
+        mDescriptorAllocatorPool = MakeShared<Memory::DescriptorAllocatorPool>(Device().Get(), Memory::DescriptorAllocatorConfig{});
         for (uint32 i = 0; i < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES; ++i)
         {
             D3D12_DESCRIPTOR_HEAP_TYPE type = (D3D12_DESCRIPTOR_HEAP_TYPE)i;
             uint32 incrementalSize = Device()->GetDescriptorHandleIncrementSize(type);
-            mDescriptorAllocators[i] = MakeShared<Memory::DescriptorAllocator>(Device(), type);
+            mDescriptorAllocators[i] = MakeShared<Memory::DescriptorAllocator>(Device(), type, mDescriptorAllocatorPool);
         }
 
         mDirrectCommandQueue = MakeShared<CommandQueue>(Device(), D3D12_COMMAND_LIST_TYPE_DIRECT);

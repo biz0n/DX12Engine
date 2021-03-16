@@ -63,23 +63,6 @@ namespace std
         return seed;
     }
 
-    
-
-    template <typename T>
-    auto operator<=>(const std::vector<T> &left, const std::vector<T> &right)
-    {
-        if (left < right)
-        {
-            return std::strong_ordering::less;
-        }
-        else if (left > right)
-        {
-            return std::strong_ordering::greater;
-        }
-
-        return std::strong_ordering::equal;
-    }
-
     template <typename T, Size N>
     std::strong_ordering operator<=>(const std::array<T, N> &left, const std::array<T, N> &right)
     {

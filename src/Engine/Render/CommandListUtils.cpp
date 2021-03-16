@@ -91,23 +91,8 @@ namespace Engine::Render::CommandListUtils
 
         ComPtr<ID3D12Resource> textureResource;
 
-        DXGI_FORMAT format = metadata.format;
-        if (texture->IsSRGB())
-        {
-            format = DirectX::MakeSRGB(format);
-        }
+        D3D12_RESOURCE_DESC desc = image->GetDescription(texture->IsSRGB());
 
-        D3D12_RESOURCE_DESC desc = {};
-        desc.Width = static_cast<uint32>(metadata.width);
-        desc.Height = static_cast<uint32>(metadata.height);
-        desc.MipLevels = static_cast<uint16>(metadata.mipLevels);
-        desc.DepthOrArraySize = (metadata.dimension == DirectX::TEX_DIMENSION_TEXTURE3D)
-            ? static_cast<uint16>(metadata.depth)
-            : static_cast<uint16>(metadata.arraySize);
-        desc.Format = format;
-        desc.Flags = D3D12_RESOURCE_FLAG_NONE;
-        desc.SampleDesc.Count = 1;
-        desc.Dimension = static_cast<D3D12_RESOURCE_DIMENSION>(metadata.dimension);
         CD3DX12_HEAP_PROPERTIES props{D3D12_HEAP_TYPE_DEFAULT};
         ThrowIfFailed(device->CreateCommittedResource(
             &props,

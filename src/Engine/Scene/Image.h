@@ -19,11 +19,12 @@ namespace Engine::Scene
         Image() = default;
         ~Image() = default;
 
-        void SetImage(UniquePtr<DirectX::ScratchImage> image) { mImage = std::move(image); }
         const UniquePtr<DirectX::ScratchImage> &GetImage() const { return mImage; }
 
         void SetName(const String &name) { mName = name; }
         const String &GetName() const { return mName; }
+
+        D3D12_RESOURCE_DESC GetDescription(bool makeSRGB) const;
 
     private:
         UniquePtr<DirectX::ScratchImage> mImage;

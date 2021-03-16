@@ -64,7 +64,7 @@ namespace Engine::Scene
        // DirectX::SaveToDDSFile(scratch->GetImages(),scratch->GetImageCount(), scratch->GetMetadata(), DirectX::DDS_FLAGS_NONE, dds.wstring().c_str());
 
         SharedPtr<Image> image = MakeShared<Image>();
-        image->SetImage(std::move(scratch));
+        image->mImage = std::move(scratch);
         image->SetName(path);
 
         return image;
@@ -111,9 +111,33 @@ namespace Engine::Scene
         }
 
         SharedPtr<Image> image = MakeShared<Image>();
-        image->SetImage(std::move(scratch));
+        image->mImage = std::move(scratch);
         image->SetName(name);
         return image;
+    }
+
+    D3D12_RESOURCE_DESC Image::GetDescription(bool makeSRGB) const
+    {
+        const auto& metadata = mImage->GetMetadata();
+        DXGI_FORMAT format = metadata.format;
+        if (makeSRGB)
+        {
+            format = DirectX::MakeSRGB(format);
+        }
+
+        D3D12_RESOURCE_DESC desc = {};
+        desc.Width = static_cast<uint32>(metadata.width);
+        desc.Height = static_cast<uint32>(metadata.height);
+        desc.MipLevels = static_cast<uint16>(metadata.mipLevels);
+        desc.DepthOrArraySize = (metadata.dimension == DirectX::TEX_DIMENSION_TEXTURE3D)
+            ? static_cast<uint16>(metadata.depth)
+            : static_cast<uint16>(metadata.arraySize);
+        desc.Format = format;
+        desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+        desc.SampleDesc.Count = 1;
+        desc.Dimension = static_cast<D3D12_RESOURCE_DIMENSION>(metadata.dimension);
+
+        return desc;
     }
 
 } // namespace Engine::Scene

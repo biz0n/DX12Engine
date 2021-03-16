@@ -13,6 +13,10 @@ namespace Engine::Memory
 
     class DescriptorAllocatorPage;
     class DescriptorAllocator;
+    class DescriptorAllocatorPool;
 
     class UploadBuffer;
+
+    class DescriptorHeap;
+    class IndexPool;
 } // namespace Engine::Memory
