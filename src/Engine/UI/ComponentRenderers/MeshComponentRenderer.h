@@ -27,7 +27,7 @@ namespace Engine::UI::ComponentRenderers
             MeshComponentRenderer(SharedPtr<Render::RenderContext> renderContext, SharedPtr<Render::UIRenderContext> uiRenderContext)
                 : ComponentRenderer("Mesh Component"), mRenderContext(renderContext), mUIRenderContext(uiRenderContext)
              {}
-            ~MeshComponentRenderer() {}
+            ~MeshComponentRenderer() override = default;
 
         protected:
             void RenderComponent(entt::registry& registry, entt::entity entity, Engine::Scene::Components::MeshComponent& meshComponent) override

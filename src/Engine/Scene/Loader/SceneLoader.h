@@ -39,6 +39,10 @@ namespace Engine::Scene::Loader
 
             std::unordered_map<String, Index> camerasIndexMap;
 
+            std::unordered_map<size_t, Index> samplerHashesIndexMap;
+
+            Index defaultSamplerIndex;
+
             SceneDto* sceneDTO;
         };
 
@@ -79,6 +83,6 @@ namespace Engine::Scene::Loader
         LightDto ParseLight(const aiLight* aLight);
         MeshDto ParseMesh(const aiMesh* aMesh);
         MaterialDto ParseMaterial(const aiMaterial* aMaterial, LoadingContext& context);
-        void ParseSampler(const aiMaterial* aMaterial, aiTextureType textureType, unsigned int idx);
+        Index ParseSampler(const aiMaterial* aMaterial, aiTextureType textureType, unsigned int idx, LoadingContext& context);
     }; 
 } // namespace Engine::Scene

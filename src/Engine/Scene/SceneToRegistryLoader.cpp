@@ -64,7 +64,7 @@ namespace Engine::Scene
         registry->emplace<Components::NameComponent>(entity, node.Name);
         registry->emplace<Scene::Components::LocalTransformComponent>(entity, node.LocalTransform);
 
-        if (!node.MeshIndeces.empty())
+        if (!node.MeshIndices.empty())
         {
             CreateMeshNode(context, node, entity, relationship);
         }
@@ -143,14 +143,14 @@ namespace Engine::Scene
 
     void SceneToRegisterLoader::CreateMeshNode(Context& context, const Loader::Node& node, entt::entity entity, Engine::Scene::Components::RelationshipComponent* relationship)
     {
-        auto numMeshes = node.MeshIndeces.size();
+        auto numMeshes = node.MeshIndices.size();
         entt::entity nextEntity = context.registry->create();;
         relationship->first = nextEntity;
         relationship->childsCount = numMeshes;
 
         for (uint32 i = 0; i < numMeshes; ++i)
         {
-            auto meshIndex = node.MeshIndeces[i];
+            auto meshIndex = node.MeshIndices[i];
             auto meshData = context.meshes[meshIndex];
 
             auto meshEntity = nextEntity;

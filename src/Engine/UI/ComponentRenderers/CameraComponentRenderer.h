@@ -17,7 +17,7 @@ namespace Engine::UI::ComponentRenderers
     {
         public:
             CameraComponentRenderer() : ComponentRenderer("Camera Component") {}
-            ~CameraComponentRenderer() {}
+            ~CameraComponentRenderer() override = default;
 
         protected:
             void RenderComponent(entt::registry& registry, entt::entity entity, Engine::Scene::Components::CameraComponent& component) override

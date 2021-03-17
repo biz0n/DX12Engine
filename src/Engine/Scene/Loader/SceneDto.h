@@ -74,7 +74,7 @@ namespace Engine::Scene::Loader
     struct Node
     {
         std::vector<Node> Children;
-        std::vector<Index> MeshIndeces;
+        std::vector<Index> MeshIndices;
         std::optional<Index> LightIndex;
         std::optional<Index> CameraIndex;
         dx::XMMATRIX LocalTransform;

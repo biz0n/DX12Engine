@@ -17,7 +17,7 @@ namespace Engine::UI::ComponentRenderers
     {
         public:
             LightComponentRenderer() : ComponentRenderer("Light Component") {}
-            ~LightComponentRenderer() {}
+            ~LightComponentRenderer() override = default;
 
         protected:
             void RenderComponent(entt::registry& registry, entt::entity entity, Engine::Scene::Components::LightComponent& component) override

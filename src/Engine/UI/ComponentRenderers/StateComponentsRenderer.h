@@ -18,7 +18,7 @@ namespace Engine::UI::ComponentRenderers
             StateComponentsRenderer()
                 : ComponentRendererBase("State")
              {}
-            ~StateComponentsRenderer() {}
+            ~StateComponentsRenderer() override = default;
 
         public:
             bool HasComponent(entt::registry& registry, entt::entity entity) const override

@@ -24,7 +24,7 @@ namespace Engine::UI::ComponentRenderers
     {
         public:
             WorldTransformComponentRenderer() : ComponentRenderer("WorldTransform Component") {}
-            ~WorldTransformComponentRenderer() {}
+            ~WorldTransformComponentRenderer() override = default;
 
         protected:
             void RenderComponent(entt::registry& registry, entt::entity entity, Engine::Scene::Components::WorldTransformComponent& component) override
@@ -35,23 +35,11 @@ namespace Engine::UI::ComponentRenderers
                 DirectX::XMVECTOR positionVector;
                 DirectX::XMMatrixDecompose(&scaleVector, &rotationQuaternion, &positionVector, matrix);
 
-                DirectX::XMFLOAT3 scale;
-                DirectX::XMFLOAT3 position;
+                DirectX::XMFLOAT3 scale{};
+                DirectX::XMFLOAT3 position{};
                 
                 DirectX::XMStoreFloat3(&scale, scaleVector);
                 DirectX::XMStoreFloat3(&position, positionVector);
-
-                float pitch, yaw, roll;
-                Math::ExtractPitchYawRollFromXMMatrix(&pitch, &yaw, &roll, &matrix);
-                //float pitch;
-                //DirectX::XMQuaternionToAxisAngle(&rotationQuaternion, &pitch, )
-                
-                //DirectX::XMStoreFloat3
-                float rt[3] = { DirectX::XMConvertToDegrees(pitch), DirectX::XMConvertToDegrees(yaw), DirectX::XMConvertToDegrees(roll)};
-              //  ImGui::InputFloat3("Tr", (float*)&position, "%.2f", ImGuiInputTextFlags_ReadOnly);
-              //  ImGui::InputFloat3("Rt", rt, "%.2f", ImGuiInputTextFlags_ReadOnly);
-              //  ImGui::InputFloat3("Sc", (float*)&scale, "%.2f", ImGuiInputTextFlags_ReadOnly);
-
 
                 auto localTransform = registry.get<Scene::Components::LocalTransformComponent>(entity);
 
@@ -65,7 +53,7 @@ namespace Engine::UI::ComponentRenderers
                     parentWorldTransform = registry.get<Scene::Components::WorldTransformComponent>(parentEntity).transform;
                 }
 
-                dx::XMFLOAT4X4 localMatrix;
+                dx::XMFLOAT4X4 localMatrix{};
                 dx::XMStoreFloat4x4(&localMatrix, localTransform.transform);
 
                 auto result = EditTransform(camera, localMatrix, parentWorldTransform);
@@ -125,8 +113,8 @@ namespace Engine::UI::ComponentRenderers
                 }
                 ImGuiIO& io = ImGui::GetIO();
                 ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
-                dx::XMFLOAT4X4 view;
-                dx::XMFLOAT4X4 projection;
+                dx::XMFLOAT4X4 view{};
+                dx::XMFLOAT4X4 projection{};
 
                 using namespace dx;
                 dx::XMStoreFloat4x4(&view, camera.view * parentWorldTransform);
@@ -139,7 +127,7 @@ namespace Engine::UI::ComponentRenderers
                     mCurrentGizmoMode,
                     static_cast<float*>((void*)&matrix),
                     nullptr,
-                    useSnap ? &snap.x : NULL);
+                    useSnap ? &snap.x : nullptr);
 
                 return matrix;
             }

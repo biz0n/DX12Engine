@@ -93,6 +93,19 @@ namespace Engine::Scene::Loader
             context.sceneDTO->ImageResources.push_back({texture});
         }
 
+        Sampler defaultSampler;
+        defaultSampler.ModeU = Sampler::AddressMode::Mirror;
+        defaultSampler.ModeV = Sampler::AddressMode::Mirror;
+        defaultSampler.ModeW = Sampler::AddressMode::Mirror;
+        defaultSampler.MinFilter = Sampler::Filter::Linear;
+        defaultSampler.MagFilter = Sampler::Filter::Linear;
+        defaultSampler.MipFilter = Sampler::Filter::Linear;
+
+        context.defaultSamplerIndex = sceneDTO.Samplers.size();
+        sceneDTO.Samplers.push_back(defaultSampler);
+        size_t defaultSamplerHash = std::hash<Sampler>{}(defaultSampler);
+        context.samplerHashesIndexMap[defaultSamplerHash] = context.defaultSamplerIndex;
+
         context.sceneDTO->Materials.reserve(static_cast<Size>(aScene->mNumMaterials));
         for (uint32 i = 0; i < aScene->mNumMaterials; ++i)
         {
@@ -211,7 +224,7 @@ namespace Engine::Scene::Loader
             for (uint32 i = 0; i < aNode->mNumMeshes; ++i)
             {
                 uint32 meshIndex = aNode->mMeshes[i];
-                node.MeshIndeces.push_back(meshIndex);
+                node.MeshIndices.push_back(meshIndex);
             }
 		}
         else if (IsLightNode(aNode, context))
@@ -242,9 +255,9 @@ namespace Engine::Scene::Loader
         return node;
     }
 
-    void SceneLoader::ParseSampler(const aiMaterial* aMaterial, aiTextureType textureType, unsigned int idx)
+    Index SceneLoader::ParseSampler(const aiMaterial* aMaterial, aiTextureType textureType, unsigned int idx, LoadingContext& context)
     {
-        Sampler sampler;
+        Sampler sampler = context.sceneDTO->Samplers[context.defaultSamplerIndex];
 
         aiTextureMapMode wrapS;
         if (aMaterial->Get<aiTextureMapMode>(AI_MATKEY_MAPPINGMODE_U(textureType, idx), wrapS) == aiReturn_SUCCESS)
@@ -252,19 +265,19 @@ namespace Engine::Scene::Loader
             switch (wrapS)
             {
                 case aiTextureMapMode_Wrap:
-                    sampler.ModeU = AddressMode::Wrap;
+                    sampler.ModeU = Sampler::AddressMode::Wrap;
                     break;
                 case aiTextureMapMode_Clamp:
-                    sampler.ModeU = AddressMode::Clamp;
+                    sampler.ModeU = Sampler::AddressMode::Clamp;
                     break;
                 case aiTextureMapMode_Decal:
-                    sampler.ModeU = AddressMode::Border;
+                    sampler.ModeU = Sampler::AddressMode::Border;
                     break;
                 case aiTextureMapMode_Mirror:
-                    sampler.ModeU = AddressMode::Mirror;
+                    sampler.ModeU = Sampler::AddressMode::Mirror;
                     break;
                 default:
-                    sampler.ModeU = AddressMode::Wrap;
+                    sampler.ModeU = Sampler::AddressMode::Wrap;
                     break;
             }
         }
@@ -275,19 +288,19 @@ namespace Engine::Scene::Loader
             switch (wrapT)
             {
                 case aiTextureMapMode_Wrap:
-                    sampler.ModeV = AddressMode::Wrap;
+                    sampler.ModeV = Sampler::AddressMode::Wrap;
                     break;
                 case aiTextureMapMode_Clamp:
-                    sampler.ModeV = AddressMode::Clamp;
+                    sampler.ModeV = Sampler::AddressMode::Clamp;
                     break;
                 case aiTextureMapMode_Decal:
-                    sampler.ModeV = AddressMode::Border;
+                    sampler.ModeV = Sampler::AddressMode::Border;
                     break;
                 case aiTextureMapMode_Mirror:
-                    sampler.ModeV = AddressMode::Mirror;
+                    sampler.ModeV = Sampler::AddressMode::Mirror;
                     break;
                 default:
-                    sampler.ModeV = AddressMode::Wrap;
+                    sampler.ModeV = Sampler::AddressMode::Wrap;
                     break;
             }
         }
@@ -298,10 +311,10 @@ namespace Engine::Scene::Loader
             switch (magFilter)
             {
                 case SamplerMagFilter::SamplerMagFilter_Nearest:
-                    sampler.MagFilter = Filter::Point;
+                    sampler.MagFilter = Sampler::Filter::Point;
                     break;
                 case SamplerMagFilter::SamplerMagFilter_Linear:
-                    sampler.MagFilter = Filter::Linear;
+                    sampler.MagFilter = Sampler::Filter::Linear;
                     break;
             }
         }
@@ -312,34 +325,48 @@ namespace Engine::Scene::Loader
             switch (minFilter)
             {
                 case SamplerMinFilter::SamplerMinFilter_Nearest:
-                    sampler.MinFilter = Filter::Point;
-                    sampler.MipFilter = Filter::Point;
+                    sampler.MinFilter = Sampler::Filter::Point;
+                    sampler.MipFilter = Sampler::Filter::Point;
                     sampler.MinLod = 0;
                     sampler.MaxLod = 0.25;
                     break;
                 case SamplerMinFilter::SamplerMinFilter_Linear:
-                    sampler.MinFilter = Filter::Linear;
-                    sampler.MipFilter = Filter::Linear;
+                    sampler.MinFilter = Sampler::Filter::Linear;
+                    sampler.MipFilter = Sampler::Filter::Linear;
                     sampler.MinLod = 0;
                     sampler.MaxLod = 0.25;
                     break;
                 case SamplerMinFilter::SamplerMinFilter_Nearest_Mipmap_Nearest:
-                    sampler.MinFilter = Filter::Point;
-                    sampler.MipFilter = Filter::Point;
+                    sampler.MinFilter = Sampler::Filter::Point;
+                    sampler.MipFilter = Sampler::Filter::Point;
                     break;
                 case SamplerMinFilter::SamplerMinFilter_Linear_Mipmap_Nearest:
-                    sampler.MinFilter = Filter::Linear;
-                    sampler.MipFilter = Filter::Point;
+                    sampler.MinFilter = Sampler::Filter::Linear;
+                    sampler.MipFilter = Sampler::Filter::Point;
                     break;
                 case SamplerMinFilter::SamplerMinFilter_Nearest_Mipmap_Linear:
-                    sampler.MinFilter = Filter::Point;
-                    sampler.MipFilter = Filter::Linear;
+                    sampler.MinFilter = Sampler::Filter::Point;
+                    sampler.MipFilter = Sampler::Filter::Linear;
                     break;
                 case SamplerMinFilter::SamplerMinFilter_Linear_Mipmap_Linear:
-                    sampler.MinFilter = Filter::Linear;
-                    sampler.MipFilter = Filter::Linear;
+                    sampler.MinFilter = Sampler::Filter::Linear;
+                    sampler.MipFilter = Sampler::Filter::Linear;
                     break;
             }
+        }
+
+        size_t hash = std::hash<Sampler>{}(sampler);
+        auto iter = context.samplerHashesIndexMap.find(hash);
+        if (iter != context.samplerHashesIndexMap.end())
+        {
+            return iter->second;
+        }
+        else
+        {
+            Index index = context.sceneDTO->Samplers.size();
+            context.samplerHashesIndexMap[hash] = index;
+            context.sceneDTO->Samplers.push_back(sampler);
+            return index;
         }
     }
 
@@ -613,7 +640,7 @@ namespace Engine::Scene::Loader
         aiString albedoTexturePath;
         if (aMaterial->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_TEXTURE, &albedoTexturePath) == aiReturn_SUCCESS)
         {
-            ParseSampler(aMaterial, AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_TEXTURE);
+            material.BaseColorTextureSamplerIndex = ParseSampler(aMaterial, AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_TEXTURE, context);
             auto albedoTextureIndex = GetImage(albedoTexturePath, context);
             material.BaseColorTextureIndex = albedoTextureIndex;
         }
@@ -621,7 +648,7 @@ namespace Engine::Scene::Loader
         aiString normalTexturePath;
         if (aMaterial->GetTexture(aiTextureType_NORMALS, 0, &normalTexturePath) == aiReturn_SUCCESS)
         {
-            ParseSampler(aMaterial, aiTextureType_NORMALS, 0);
+            material.NormalTextureSamplerIndex = ParseSampler(aMaterial, aiTextureType_NORMALS, 0, context);
             auto normalTextureIndex = GetImage(normalTexturePath, context);
             material.NormalTextureIndex = normalTextureIndex;
 
@@ -635,7 +662,7 @@ namespace Engine::Scene::Loader
         aiString metallicRoughnessTexturePath;
         if (aMaterial->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE, &metallicRoughnessTexturePath) == aiReturn_SUCCESS)
         {
-            ParseSampler(aMaterial, AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE);
+            material.MetallicRoughnessTextureSamplerIndex = ParseSampler(aMaterial, AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE, context);
             auto metallicRoughnessTextureIndex = GetImage(metallicRoughnessTexturePath, context);
             material.MetallicRoughnessTextureIndex = metallicRoughnessTextureIndex;
         }
@@ -643,7 +670,7 @@ namespace Engine::Scene::Loader
         aiString ambientOcclusionTexturePath;
         if (aMaterial->GetTexture(aiTextureType_LIGHTMAP, 0, &ambientOcclusionTexturePath) == aiReturn_SUCCESS)
         {
-            ParseSampler(aMaterial, aiTextureType_LIGHTMAP, 0);
+            material.AmbientOcclusionTextureSamplerIndex = ParseSampler(aMaterial, aiTextureType_LIGHTMAP, 0, context);
             auto aoTextureIndex = GetImage(ambientOcclusionTexturePath, context);
             material.AmbientOcclusionTextureIndex = aoTextureIndex;
         }
@@ -651,7 +678,7 @@ namespace Engine::Scene::Loader
         aiString emissiveTexturePath;
         if (aMaterial->GetTexture(aiTextureType_EMISSIVE, 0, &emissiveTexturePath) == aiReturn_SUCCESS)
         {
-            ParseSampler(aMaterial, aiTextureType_EMISSIVE, 0);
+            material.EmissiveTextureSamplerIndex = ParseSampler(aMaterial, aiTextureType_EMISSIVE, 0, context);
             auto emissiveTextureIndex = GetImage(emissiveTexturePath, context);
             material.EmissiveTextureIndex = emissiveTextureIndex;
 
