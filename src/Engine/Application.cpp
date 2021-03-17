@@ -19,6 +19,7 @@
 #include <Scene/SceneObject.h>
 #include <Scene/SceneLoadingInfo.h>
 #include <Scene/Loader/SceneLoader.h>
+#include <Scene/SceneToRegistryLoader.h>
 
 #include <Scene/Components/RelationshipComponent.h>
 #include <Scene/Components/LocalTransformComponent.h>
@@ -60,19 +61,19 @@ namespace Engine
 
         mSceneLoadingInfo = MakeShared<Scene::SceneLoadingInfo>();
         mSceneLoadingInfo->scenes = {
-            { "Sponza", "Resources\\Scenes\\gltf2\\sponza\\sponza.gltf" },
-            { "Corset", "Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\Corset\\glTF\\Corset.gltf" },
-            { "Axis Test", "Resources\\Scenes\\gltf2\\axis.gltf" },
-            { "Metal Rough Spheres", "Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\MetalRoughSpheres\\glTF\\MetalRoughSpheres.gltf" },
-            { "Texture Settings Test", "Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\TextureSettingsTest\\glTF\\TextureSettingsTest.gltf" },
-            { "Normal Tangent Mirror Test", "Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\NormalTangentMirrorTest\\glTF\\NormalTangentMirrorTest.gltf" },
-            { "Flight Helmet", "Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\FlightHelmet\\glTF\\FlightHelmet.gltf" },
-            { "Damaged Helmet", "Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\DamagedHelmet\\glTF\\DamagedHelmet.gltf" },
-            { "Orientation Test", "Resources\\Scenes\\glTF-Sample-Models-master\\2.0\\OrientationTest\\glTF\\OrientationTest.gltf" },
-            { "s_test", "Resources\\Scenes\\shadow\\test1.gltf" }
+            { "Sponza", R"(Resources\Scenes\gltf2\sponza\sponza.gltf)" },
+            { "Corset", R"(Resources\Scenes\glTF-Sample-Models-master\2.0\Corset\glTF\Corset.gltf)" },
+            { "Axis Test", R"(Resources\Scenes\gltf2\axis.gltf)" },
+            { "Metal Rough Spheres", R"(Resources\Scenes\glTF-Sample-Models-master\2.0\MetalRoughSpheres\glTF\MetalRoughSpheres.gltf)" },
+            { "Texture Settings Test", R"(Resources\Scenes\glTF-Sample-Models-master\2.0\TextureSettingsTest\glTF\TextureSettingsTest.gltf)" },
+            { "Normal Tangent Mirror Test", R"(Resources\Scenes\glTF-Sample-Models-master\2.0\NormalTangentMirrorTest\glTF\NormalTangentMirrorTest.gltf)" },
+            { "Flight Helmet", R"(Resources\Scenes\glTF-Sample-Models-master\2.0\FlightHelmet\glTF\FlightHelmet.gltf)" },
+            { "Damaged Helmet", R"(Resources\Scenes\glTF-Sample-Models-master\2.0\DamagedHelmet\glTF\DamagedHelmet.gltf)" },
+            { "Orientation Test", R"(Resources\Scenes\glTF-Sample-Models-master\2.0\OrientationTest\glTF\OrientationTest.gltf)" },
+            { "s_test", R"(Resources\Scenes\shadow\test1.gltf)" }
         };
 
-        mSceneLoadingInfo->scenePath = mSceneLoadingInfo->scenes["Sponza"];
+        mSceneLoadingInfo->scenePath = mSceneLoadingInfo->scenes["Corset"];
         mSceneLoadingInfo->loadScene = true;
     }
 
@@ -128,10 +129,16 @@ namespace Engine
                 mSceneLoadingInfo->sceneFuture = std::async(std::launch::async, [this]()
                 {    
                     CoInitialize(nullptr);
-                    Scene::Loader::SceneLoader loader;
-                    auto scene = loader.LoadScene(mSceneLoadingInfo->scenePath);
+                    UniquePtr<Scene::SceneObject> scene = MakeUnique<Scene::SceneObject>();
 
-                    loader.AddCubeMapToScene(scene.get(), "Resources\\Scenes\\cubemaps\\snowcube1024.dds");
+                    Scene::Loader::SceneLoader loader;
+                    Scene::SceneToRegisterLoader toRegisterLoader;
+
+                    const auto sceneDto = loader.LoadScene(mSceneLoadingInfo->scenePath);
+
+                    toRegisterLoader.LoadSceneToRegistry(scene->GetRegistry(), sceneDto);
+
+                    toRegisterLoader.AddCubeMapToScene(scene->GetRegistry(), R"(Resources\Scenes\cubemaps\snowcube1024.dds)");
 
                     return std::move(scene);
                 });

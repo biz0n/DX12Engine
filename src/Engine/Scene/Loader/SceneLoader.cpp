@@ -17,6 +17,7 @@
 #include <Scene/Mesh.h>
 #include <Scene/Camera.h>
 #include <Scene/PunctualLight.h>
+#include <Scene/Sampler.h>
 
 #include <Scene/Components/RelationshipComponent.h>
 #include <Scene/Components/LocalTransformComponent.h>
@@ -37,7 +38,7 @@
 
 namespace Engine::Scene::Loader
 {
-    UniquePtr<SceneObject> SceneLoader::LoadScene(String path, Optional<float32> scale)
+    SceneDto SceneLoader::LoadScene(String path, Optional<float32> scale)
     {
         std::filesystem::path filePath = path;
         std::filesystem::path exportPath = filePath;
@@ -78,103 +79,115 @@ namespace Engine::Scene::Loader
             }
         }
 
-        auto scene = MakeUnique<SceneObject>();
+        SceneDto sceneDTO;
 
         LoadingContext context = {};
         context.RootPath = filePath.parent_path().string();
-        context.registry = &scene->GetRegistry();
+        context.sceneDTO = &sceneDTO;
 
-        context.dataTextures.reserve(aScene->mNumTextures);
+        context.sceneDTO->ImageResources.reserve(aScene->mNumTextures);
         for (uint32 i = 0; i < aScene->mNumTextures; ++i)
         {
             aiTexture *aTexture = aScene->mTextures[i];
-            auto texture = GetTexture(aTexture, context);
-            context.dataTextures.push_back(texture);
+            auto texture = ParseImage(aTexture, context);
+            context.sceneDTO->ImageResources.push_back({texture});
         }
 
-        context.materials.reserve(static_cast<Size>(aScene->mNumMaterials));
+        context.sceneDTO->Materials.reserve(static_cast<Size>(aScene->mNumMaterials));
         for (uint32 i = 0; i < aScene->mNumMaterials; ++i)
         {
             aiMaterial *aMaterial = aScene->mMaterials[i];
             auto material = ParseMaterial(aMaterial, context);
-            context.materials.emplace_back(material);
+            context.sceneDTO->Materials.emplace_back(material);
         }
 
-        context.meshes.reserve(static_cast<Size>(aScene->mNumMeshes));
+        context.sceneDTO->Meshes.reserve(static_cast<Size>(aScene->mNumMeshes));
         for (uint32 i = 0; i < aScene->mNumMeshes; ++i)
         {
             aiMesh *aMesh = aScene->mMeshes[i];
-            auto mesh = ParseMesh(aMesh, context);
-            context.meshes.push_back(mesh);
+            auto mesh = ParseMesh(aMesh);
+            context.sceneDTO->Meshes.push_back(mesh);
         }
 
-        context.lightsMap.reserve(static_cast<Size>(aScene->mNumLights));
+        context.lightsIndexMap.reserve(static_cast<Size>(aScene->mNumLights));
+        context.sceneDTO->Lights.reserve(static_cast<Size>(aScene->mNumLights));
         for (uint32 i = 0; i < aScene->mNumLights; ++i)
         {
             aiLight *aLight = aScene->mLights[i];
-            context.lightsMap[aLight->mName.C_Str()] = aLight;
+            context.lightsIndexMap[aLight->mName.C_Str()] = context.sceneDTO->Lights.size();
+            context.sceneDTO->Lights.push_back(ParseLight(aLight));
         }
 
-        context.camerasMap.reserve(static_cast<Size>(aScene->mNumCameras));
+        context.camerasIndexMap.reserve(static_cast<Size>(aScene->mNumCameras));
+        context.sceneDTO->Cameras.reserve(static_cast<Size>(aScene->mNumCameras));
 		for (uint32 i = 0; i < aScene->mNumCameras; ++i)
 		{
 			aiCamera* aCamera = aScene->mCameras[i];
-			context.camerasMap[aCamera->mName.C_Str()] = aCamera;
+			context.camerasIndexMap[aCamera->mName.C_Str()] = context.sceneDTO->Cameras.size();
+            context.sceneDTO->Cameras.push_back(ParseCamera(aCamera));
 		}
 
-        auto rootEntity = context.registry->create();
-        Engine::Scene::Components::RelationshipComponent relationship;
-        ParseNode(aScene, aScene->mRootNode, context, rootEntity, &relationship);
-
-        context.registry->emplace<Components::RelationshipComponent>(rootEntity, relationship);
-        context.registry->emplace<Components::Root>(rootEntity);
+        const auto rootNode = ParseNode(aScene->mRootNode, context);
+		sceneDTO.RootNodes.push_back(rootNode);
 
         if (aScene->mNumCameras == 0)
         {
-            auto cameraEntity = context.registry->create();
-            context.registry->emplace<Components::CameraComponent>(cameraEntity, Camera());
-            context.registry->emplace<Components::MainCameraComponent>(cameraEntity);
-            context.registry->emplace<Components::LocalTransformComponent>(cameraEntity, dx::XMMatrixIdentity());
-            
-            context.registry->emplace<Components::NameComponent>(cameraEntity, "Default Camera");
-            context.registry->emplace<Components::RelationshipComponent>(cameraEntity, Components::RelationshipComponent());
-            context.registry->emplace<Components::Root>(cameraEntity);
+            CameraDto camera;
+            camera.Name = "Default Camera";
+            camera.Type = CameraType::Perspective;
+            camera.NearPlane = 0.001f;
+            camera.FarPlane = 100.0f;
+            camera.FoV = 45 * Math::PI / 180.0f;
+
+            Node cameraNode;
+            cameraNode.Name = camera.Name;
+            cameraNode.CameraIndex = sceneDTO.Cameras.size();
+            cameraNode.LocalTransform = dx::XMMatrixIdentity();
+            sceneDTO.Cameras.push_back(camera);
+            sceneDTO.RootNodes.push_back(cameraNode);
         }
 
-        std::function<void(const PunctualLight&, const dx::XMMATRIX&, String)> addLight = [&context](const PunctualLight& light, const dx::XMMATRIX& transform, String name)
+        std::function<void(const LightDto&, const dx::XMMATRIX&)> addLight = [&sceneDTO](const LightDto& light, const dx::XMMATRIX& transform)
         {
-            auto lightEntity= context.registry->create();
-            context.registry->emplace<Components::LightComponent>(lightEntity, light);
-            context.registry->emplace<Components::LocalTransformComponent>(lightEntity, transform);
-            context.registry->emplace<Components::RelationshipComponent>(lightEntity, Components::RelationshipComponent());
-            context.registry->emplace<Components::Root>(lightEntity);
-            context.registry->emplace<Components::NameComponent>(lightEntity, name);
-            context.registry->emplace<Components::CameraComponent>(lightEntity, Camera());
+            Node lightNode;
+            lightNode.Name = light.Name;
+            lightNode.LocalTransform = transform;
+            lightNode.LightIndex = sceneDTO.Lights.size();
+            sceneDTO.Lights.push_back(light);
+            sceneDTO.RootNodes.push_back(lightNode);
         };
 
 
-        PunctualLight pointLight1;
-        pointLight1.SetColor({1.0f, 0.6f, 0.2f});
-        pointLight1.SetIntensity(50);
-        pointLight1.SetQuadraticAttenuation(1.0f);
-        pointLight1.SetEnabled(true);
-        pointLight1.SetLightType(LightType::PointLight);
+        LightDto light1 = {};
+        light1.Name = "Custom light 1";
+        light1.Color = {1.0f, 0.6f, 0.2f};
+        light1.Intensity = 50;
+        light1.ConstantAttenuation = 0;
+        light1.LinearAttenuation = 0;
+        light1.QuadraticAttenuation = 1;
+        light1.InnerConeAngle = 0;
+        light1.OuterConeAngle = 0;
+        light1.LightType = LightType::PointLight;
 
-        addLight(pointLight1, DirectX::XMMatrixTranslation(4.0f, 5.0f, -2.0f), "Custom light 1");
+        addLight(light1, DirectX::XMMatrixTranslation(4.0f, 5.0f, -2.0f));
 
-        PunctualLight pointLight2;
-        pointLight2.SetColor({1.0f, 1.0f, 1.0f});
-        pointLight2.SetIntensity(2);
-        pointLight2.SetQuadraticAttenuation(1.0f);
-        pointLight2.SetEnabled(true);
-        pointLight2.SetLightType(LightType::PointLight);
+        LightDto light2 = {};
+        light2.Name = "Custom light 2";
+        light2.Color = {1.0f, 1.0f, 1.0f};
+        light2.Intensity = 2;
+        light2.ConstantAttenuation = 0;
+        light2.LinearAttenuation = 0;
+        light2.QuadraticAttenuation = 1;
+        light2.InnerConeAngle = 0;
+        light2.OuterConeAngle = 0;
+        light2.LightType = LightType::PointLight;
 
-        addLight(pointLight2, DirectX::XMMatrixTranslation(0.0f, 2.0f, 0.0f), "Custom light 2");
+        addLight(light2, DirectX::XMMatrixTranslation(0.0f, 2.0f, 0.0f));
 
-        return scene;
+        return sceneDTO;
     }
 
-    void SceneLoader::ParseNode(const aiScene *aScene, const aiNode *aNode, LoadingContext &context, entt::entity entity, Engine::Scene::Components::RelationshipComponent* relationship)
+    Node SceneLoader::ParseNode(const aiNode *aNode, LoadingContext &context)
     {
         aiVector3D scaling;
 		aiQuaternion rotation;
@@ -187,69 +200,271 @@ namespace Engine::Scene::Loader
 
         DirectX::XMMATRIX srt = s * r * t;
 
+        String name = aNode->mName.C_Str();
+        Node node;
+
+
 		if (IsMeshNode(aNode, context))
 		{
-            context.registry->emplace<Components::NameComponent>(entity, "Mesh_" + std::string(aNode->mName.C_Str()));
-            context.registry->emplace<Scene::Components::LocalTransformComponent>(entity, srt);
-
-            CreateMeshNode(aNode, context, entity, relationship);
-            
+            node.Name = "Mesh_" + name;
+            node.LocalTransform = srt;
+            for (uint32 i = 0; i < aNode->mNumMeshes; ++i)
+            {
+                uint32 meshIndex = aNode->mMeshes[i];
+                node.MeshIndeces.push_back(meshIndex);
+            }
 		}
         else if (IsLightNode(aNode, context))
         {
-            CreateLightNode(aNode, context, entity);
-
-            context.registry->emplace<Components::NameComponent>(entity, "Light_" + std::string(aNode->mName.C_Str()));
-            context.registry->emplace<Scene::Components::LocalTransformComponent>(entity, srt);
+            node.Name = "Light_" + name;
+            node.LocalTransform = srt;
+            node.LightIndex = context.lightsIndexMap[name];
         }
         else if (IsCameraNode(aNode, context))
         {
-            CreateCameraNode(aNode, context, entity);
-
-            context.registry->emplace<Components::NameComponent>(entity, "Camera_" + std::string(aNode->mName.C_Str()));
-            context.registry->emplace<Scene::Components::LocalTransformComponent>(entity, srt);
+            node.Name = "Camera_" + name;
+            node.LocalTransform = srt;
+            node.CameraIndex = context.camerasIndexMap[name];
         }
         else
         {
-            context.registry->emplace<Components::NameComponent>(entity, aNode->mName.C_Str());
-            context.registry->emplace<Scene::Components::LocalTransformComponent>(entity, srt);
+            node.Name = name;
+            node.LocalTransform = srt;
 
-            entt::entity nextEntity = aNode->mNumChildren > 0 ? context.registry->create() : entt::null;
-            relationship->first = nextEntity;
-            relationship->childsCount = aNode->mNumChildren;
-
-            for (uint32 i = 0; i < aNode->mNumChildren; i++)
+            for (auto i = 0; i < aNode->mNumChildren; i++)
             {
                 auto aChild = aNode->mChildren[i];
+                Node child = ParseNode(aChild, context);
+                node.Children.push_back(child);
+            }
+        }
 
-                auto childEntity = nextEntity;
+        return node;
+    }
 
-                if (i < (aNode->mNumChildren - 1))
-                {
-                    nextEntity = context.registry->create();
-                }
-                else
-                {
-                    nextEntity = entt::null;
-                }
+    void SceneLoader::ParseSampler(const aiMaterial* aMaterial, aiTextureType textureType, unsigned int idx)
+    {
+        Sampler sampler;
 
-                Components::RelationshipComponent childRelationship;
-                childRelationship.parent = entity;
-                childRelationship.next = nextEntity;
-                childRelationship.depth = relationship->depth + 1;
+        aiTextureMapMode wrapS;
+        if (aMaterial->Get<aiTextureMapMode>(AI_MATKEY_MAPPINGMODE_U(textureType, idx), wrapS) == aiReturn_SUCCESS)
+        {
+            switch (wrapS)
+            {
+                case aiTextureMapMode_Wrap:
+                    sampler.ModeU = AddressMode::Wrap;
+                    break;
+                case aiTextureMapMode_Clamp:
+                    sampler.ModeU = AddressMode::Clamp;
+                    break;
+                case aiTextureMapMode_Decal:
+                    sampler.ModeU = AddressMode::Border;
+                    break;
+                case aiTextureMapMode_Mirror:
+                    sampler.ModeU = AddressMode::Mirror;
+                    break;
+                default:
+                    sampler.ModeU = AddressMode::Wrap;
+                    break;
+            }
+        }
 
-                ParseNode(aScene, aChild, context, childEntity, &childRelationship);
+        aiTextureMapMode wrapT;
+        if (aMaterial->Get<aiTextureMapMode>(AI_MATKEY_MAPPINGMODE_V(textureType, idx), wrapT) == aiReturn_SUCCESS)
+        {
+            switch (wrapT)
+            {
+                case aiTextureMapMode_Wrap:
+                    sampler.ModeV = AddressMode::Wrap;
+                    break;
+                case aiTextureMapMode_Clamp:
+                    sampler.ModeV = AddressMode::Clamp;
+                    break;
+                case aiTextureMapMode_Decal:
+                    sampler.ModeV = AddressMode::Border;
+                    break;
+                case aiTextureMapMode_Mirror:
+                    sampler.ModeV = AddressMode::Mirror;
+                    break;
+                default:
+                    sampler.ModeV = AddressMode::Wrap;
+                    break;
+            }
+        }
 
-                context.registry->emplace<Components::RelationshipComponent>(childEntity, childRelationship);
+        SamplerMagFilter magFilter;
+        if (aMaterial->Get<SamplerMagFilter>(AI_MATKEY_GLTF_MAPPINGFILTER_MAG(textureType, idx), magFilter) == aiReturn_SUCCESS)
+        {
+            switch (magFilter)
+            {
+                case SamplerMagFilter::SamplerMagFilter_Nearest:
+                    sampler.MagFilter = Filter::Point;
+                    break;
+                case SamplerMagFilter::SamplerMagFilter_Linear:
+                    sampler.MagFilter = Filter::Linear;
+                    break;
+            }
+        }
+
+        SamplerMinFilter minFilter;
+        if (aMaterial->Get<SamplerMinFilter>(AI_MATKEY_GLTF_MAPPINGFILTER_MIN(textureType, idx), minFilter) == aiReturn_SUCCESS)
+        {
+            switch (minFilter)
+            {
+                case SamplerMinFilter::SamplerMinFilter_Nearest:
+                    sampler.MinFilter = Filter::Point;
+                    sampler.MipFilter = Filter::Point;
+                    sampler.MinLod = 0;
+                    sampler.MaxLod = 0.25;
+                    break;
+                case SamplerMinFilter::SamplerMinFilter_Linear:
+                    sampler.MinFilter = Filter::Linear;
+                    sampler.MipFilter = Filter::Linear;
+                    sampler.MinLod = 0;
+                    sampler.MaxLod = 0.25;
+                    break;
+                case SamplerMinFilter::SamplerMinFilter_Nearest_Mipmap_Nearest:
+                    sampler.MinFilter = Filter::Point;
+                    sampler.MipFilter = Filter::Point;
+                    break;
+                case SamplerMinFilter::SamplerMinFilter_Linear_Mipmap_Nearest:
+                    sampler.MinFilter = Filter::Linear;
+                    sampler.MipFilter = Filter::Point;
+                    break;
+                case SamplerMinFilter::SamplerMinFilter_Nearest_Mipmap_Linear:
+                    sampler.MinFilter = Filter::Point;
+                    sampler.MipFilter = Filter::Linear;
+                    break;
+                case SamplerMinFilter::SamplerMinFilter_Linear_Mipmap_Linear:
+                    sampler.MinFilter = Filter::Linear;
+                    sampler.MipFilter = Filter::Linear;
+                    break;
             }
         }
     }
 
-    std::tuple<String, Mesh, dx::BoundingBox> SceneLoader::ParseMesh(const aiMesh *aMesh, const LoadingContext &context)
+    SharedPtr<Image> SceneLoader::ParseImage(const aiTexture *aTexture, const LoadingContext &context)
     {
-        Mesh mesh;
-        mesh.indexBuffer = MakeShared<Memory::IndexBuffer>();
-        mesh.vertexBuffer = MakeShared<Memory::VertexBuffer>();
+        std::vector<Byte> buffer;
+        buffer.resize(aTexture->mWidth);
+        memcpy(buffer.data(), aTexture->pcData, aTexture->mWidth);
+        String name = context.RootPath + "\\" + aTexture->mFilename.C_Str();
+        SharedPtr<Scene::Image> image = Scene::Image::LoadImageFromData(buffer, aTexture->achFormatHint, name);
+
+        return image;
+    }
+
+    std::optional<Index> SceneLoader::GetImage(const aiString &path, LoadingContext &context)
+    {
+        if (path.C_Str()[0] != '*')
+        {
+            std::filesystem::path filePath = context.RootPath + "\\" + path.C_Str();
+
+            String filePathStr = filePath.string();
+            auto iter = context.imagesIndexMap.find(filePathStr);
+            if (iter != context.imagesIndexMap.end())
+            {
+                return iter->second;
+            }
+            else
+            {
+                if (std::filesystem::exists(filePath))
+                {
+                    auto image = Scene::Image::LoadImageFromFile(filePathStr);
+                    SharedPtr<Texture> texture = MakeShared<Texture>(StringToWString(image->GetName()));
+                    texture->SetImage(image);
+                    auto index = context.sceneDTO->ImageResources.size();
+                    context.imagesIndexMap[filePathStr] = index;
+                    context.sceneDTO->ImageResources.push_back({image});
+
+                    return index;
+                }
+            }
+        }
+        else
+        {
+            int index = atoi(path.C_Str() + 1);
+            return { index };
+        }
+
+        return std::nullopt;
+    }
+
+	bool SceneLoader::IsLightNode(const aiNode* aNode, const LoadingContext& context)
+	{
+		auto iter = context.lightsIndexMap.find(aNode->mName.C_Str());
+        return iter != context.lightsIndexMap.end();
+	}
+
+	bool SceneLoader::IsMeshNode(const aiNode* aNode, const LoadingContext& context)
+	{
+        return aNode->mNumMeshes > 0;
+	}
+
+    bool SceneLoader::IsCameraNode(const aiNode* aNode, const LoadingContext& context)
+	{
+		auto iter = context.camerasIndexMap.find(aNode->mName.C_Str());
+        return iter != context.camerasIndexMap.end();
+	}
+
+    CameraDto SceneLoader::ParseCamera(const aiCamera* aCamera)
+    {
+        CameraDto camera;
+
+        camera.Name = aCamera->mName.C_Str();
+        camera.FoV = aCamera->mHorizontalFOV;
+        camera.FarPlane = aCamera->mClipPlaneFar;
+        camera.NearPlane = aCamera->mClipPlaneNear;
+        camera.Type = CameraType::Perspective;
+
+        return camera;
+    }
+
+    LightDto SceneLoader::ParseLight(const aiLight* aLight)
+    {
+        LightDto light;
+        light.Name = aLight->mName.C_Str();
+
+        switch (aLight->mType)
+        {
+            case aiLightSource_DIRECTIONAL:
+                light.LightType = LightType::DirectionalLight;
+                break;
+            case aiLightSource_POINT:
+                light.LightType = LightType::PointLight;
+                break;
+            case aiLightSource_SPOT:
+                light.LightType = LightType::SpotLight;
+                break;
+            default:
+                // add ambient light
+                light.LightType = LightType::SpotLight;
+                break;
+        }
+
+        DirectX::XMFLOAT3 direction{aLight->mDirection.x, aLight->mDirection.z, aLight->mDirection.y};
+        light.Direction = direction;
+
+        float intensity = std::max(1.0f, std::max(aLight->mColorDiffuse.r, std::max(aLight->mColorDiffuse.g, aLight->mColorDiffuse.b)));
+        DirectX::XMFLOAT3 color{aLight->mColorDiffuse.r / intensity, aLight->mColorDiffuse.g / intensity, aLight->mColorDiffuse.b / intensity};
+        light.Color = color;
+        light.Intensity = intensity;
+
+        light.ConstantAttenuation = aLight->mAttenuationConstant;
+        light.LinearAttenuation = aLight->mAttenuationLinear;
+        light.QuadraticAttenuation = aLight->mAttenuationQuadratic;
+
+        light.InnerConeAngle = aLight->mAngleInnerCone;
+        light.OuterConeAngle = aLight->mAngleOuterCone;
+
+        return light;
+    }
+
+    MeshDto SceneLoader::ParseMesh(const aiMesh* aMesh)
+    {
+        MeshDto mesh;
+        mesh.Name = aMesh->mName.C_Str();
+
         std::vector<Vertex> vertices;
         vertices.reserve(aMesh->mNumVertices);
 
@@ -269,11 +484,11 @@ namespace Engine::Scene::Loader
             if (aMesh->mTangents != nullptr && aMesh->mBitangents != nullptr)
             {
                 auto tangent = *reinterpret_cast<DirectX::XMFLOAT3 *>(&aMesh->mTangents[i]);
-                auto bitnagent = *reinterpret_cast<DirectX::XMFLOAT3 *>(&aMesh->mBitangents[i]);
+                auto biTangent = *reinterpret_cast<DirectX::XMFLOAT3 *>(&aMesh->mBitangents[i]);
                 float32 symmetry = +1.0f;
                 if (DirectX::XMVectorGetX(DirectX::XMVector3Dot(
                         DirectX::XMVector3Cross(DirectX::XMLoadFloat3(&vertex.Normal), DirectX::XMLoadFloat3(&tangent)),
-                        DirectX::XMLoadFloat3(&bitnagent))) < 0.0f)
+                        DirectX::XMLoadFloat3(&biTangent))) < 0.0f)
                 {
                     symmetry = -1.0f;
                 }
@@ -283,10 +498,9 @@ namespace Engine::Scene::Loader
             vertices.emplace_back(vertex);
         }
 
-        mesh.vertexBuffer->SetData(vertices);
-        mesh.vertexBuffer->SetName(StringToWString("Vertices: " + (std::string)(aMesh->mName.C_Str())));
+        mesh.Vertices = std::move(vertices) ;
 
-        std::vector<uint16> indices;
+        std::vector<uint32> indices;
         indices.reserve(aMesh->mNumFaces * 3);
         for (uint32 i = 0; i < aMesh->mNumFaces; ++i)
         {
@@ -296,22 +510,21 @@ namespace Engine::Scene::Loader
             indices.push_back(face.mIndices[2]);
         }
 
-        mesh.indexBuffer->SetData(indices);
-        mesh.indexBuffer->SetName(StringToWString("Indices: " + (std::string)(aMesh->mName.C_Str())));
+        mesh.Indices = std::move(indices);
 
-        mesh.material = context.materials[aMesh->mMaterialIndex];
+        mesh.MaterialIndex = aMesh->mMaterialIndex;
 
         switch (aMesh->mPrimitiveTypes)
         {
             case aiPrimitiveType_POINT:
-                mesh.primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
+                mesh.PrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
                 break;
             case aiPrimitiveType_LINE:
-                mesh.primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_LINELIST;
+                mesh.PrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_LINELIST;
                 break;
             case aiPrimitiveType_TRIANGLE:
             default:
-                mesh.primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+                mesh.PrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
                 break;
         }
 
@@ -320,16 +533,18 @@ namespace Engine::Scene::Loader
 
         dx::BoundingBox boundingBox;
         dx::BoundingBox::CreateFromPoints(
-            boundingBox, 
-            dx::XMVectorSet(aabbMin.x, aabbMin.y, aabbMin.z, 0.0),
-            dx::XMVectorSet(aabbMax.x, aabbMax.y, aabbMax.z, 0.0));
-        
-        return std::make_tuple(aMesh->mName.C_Str(), mesh, boundingBox);
+                boundingBox,
+                dx::XMVectorSet(aabbMin.x, aabbMin.y, aabbMin.z, 0.0),
+                dx::XMVectorSet(aabbMax.x, aabbMax.y, aabbMax.z, 0.0));
+
+        mesh.AABB = boundingBox;
+
+        return mesh;
     }
 
-    SharedPtr<Material> SceneLoader::ParseMaterial(const aiMaterial *aMaterial, LoadingContext &context)
+    MaterialDto SceneLoader::ParseMaterial(const aiMaterial* aMaterial, LoadingContext& context)
     {
-        SharedPtr<Material> material = MakeShared<Material>();
+        MaterialDto material;
         MaterialProperties properties;
 
         aiString name;
@@ -352,7 +567,7 @@ namespace Engine::Scene::Loader
         {
             properties.metallicRaughness.roughnessFactor = roughnessFactor;
         }
-        
+
         aiColor3D emissiveFactor;
         if (aMaterial->Get(AI_MATKEY_COLOR_EMISSIVE, emissiveFactor) == aiReturn_SUCCESS)
         {
@@ -399,17 +614,16 @@ namespace Engine::Scene::Loader
         if (aMaterial->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_TEXTURE, &albedoTexturePath) == aiReturn_SUCCESS)
         {
             ParseSampler(aMaterial, AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_TEXTURE);
-            auto albedoTexture = GetTexture(albedoTexturePath, context);
-            albedoTexture->SetSRGB(true);
-            material->SetBaseColorTexture(albedoTexture);
+            auto albedoTextureIndex = GetImage(albedoTexturePath, context);
+            material.BaseColorTextureIndex = albedoTextureIndex;
         }
 
         aiString normalTexturePath;
         if (aMaterial->GetTexture(aiTextureType_NORMALS, 0, &normalTexturePath) == aiReturn_SUCCESS)
         {
             ParseSampler(aMaterial, aiTextureType_NORMALS, 0);
-            auto normalTexture = GetTexture(normalTexturePath, context);
-            material->SetNormalTexture(normalTexture);
+            auto normalTextureIndex = GetImage(normalTexturePath, context);
+            material.NormalTextureIndex = normalTextureIndex;
 
             float32 scale;
             if (aMaterial->Get(AI_MATKEY_GLTF_TEXTURE_SCALE(aiTextureType_NORMALS, 0), scale) == aiReturn_SUCCESS)
@@ -422,24 +636,24 @@ namespace Engine::Scene::Loader
         if (aMaterial->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE, &metallicRoughnessTexturePath) == aiReturn_SUCCESS)
         {
             ParseSampler(aMaterial, AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE);
-            auto metallicRoughnessTexture = GetTexture(metallicRoughnessTexturePath, context);
-            material->SetMetallicRoughnessTexture(metallicRoughnessTexture);
+            auto metallicRoughnessTextureIndex = GetImage(metallicRoughnessTexturePath, context);
+            material.MetallicRoughnessTextureIndex = metallicRoughnessTextureIndex;
         }
 
         aiString ambientOcclusionTexturePath;
         if (aMaterial->GetTexture(aiTextureType_LIGHTMAP, 0, &ambientOcclusionTexturePath) == aiReturn_SUCCESS)
         {
             ParseSampler(aMaterial, aiTextureType_LIGHTMAP, 0);
-            auto aoTexture = GetTexture(ambientOcclusionTexturePath, context);
-            material->SetAmbientOcclusionTexture(aoTexture);
+            auto aoTextureIndex = GetImage(ambientOcclusionTexturePath, context);
+            material.AmbientOcclusionTextureIndex = aoTextureIndex;
         }
 
         aiString emissiveTexturePath;
         if (aMaterial->GetTexture(aiTextureType_EMISSIVE, 0, &emissiveTexturePath) == aiReturn_SUCCESS)
         {
             ParseSampler(aMaterial, aiTextureType_EMISSIVE, 0);
-            auto emissiveTexture = GetTexture(emissiveTexturePath, context);
-            material->SetEmissiveTexture(emissiveTexture);
+            auto emissiveTextureIndex = GetImage(emissiveTexturePath, context);
+            material.EmissiveTextureIndex = emissiveTextureIndex;
 
             float32 strength;
             if (aMaterial->Get(AI_MATKEY_GLTF_TEXTURE_STRENGTH(aiTextureType_EMISSIVE, 0), strength) == aiReturn_SUCCESS)
@@ -448,289 +662,9 @@ namespace Engine::Scene::Loader
             }
         }
 
-        material->SetProperties(properties);
+        material.MaterialProperties = properties;
 
         return material;
-    }
-
-    void SceneLoader::ParseSampler(const aiMaterial* aMaterial, aiTextureType textureType, unsigned int idx)
-    {
-        aiTextureMapMode wrapS;
-        if (aMaterial->Get<aiTextureMapMode>(AI_MATKEY_MAPPINGMODE_U(textureType, idx), wrapS) == aiReturn_SUCCESS)
-        {
-        }
-
-        aiTextureMapMode wrapT;
-        if (aMaterial->Get<aiTextureMapMode>(AI_MATKEY_MAPPINGMODE_V(textureType, idx), wrapT) == aiReturn_SUCCESS)
-        {
-        }
-
-        SamplerMagFilter magFilter;
-        if (aMaterial->Get<SamplerMagFilter>(AI_MATKEY_GLTF_MAPPINGFILTER_MAG(textureType, idx), magFilter) == aiReturn_SUCCESS)
-        {
-        }
-
-        SamplerMinFilter minFilter;
-        if (aMaterial->Get<SamplerMinFilter>(AI_MATKEY_GLTF_MAPPINGFILTER_MIN(textureType, idx), minFilter) == aiReturn_SUCCESS)
-        {
-        }
-    }
-
-    SharedPtr<Texture> SceneLoader::GetTexture(const aiTexture *aTexture, const LoadingContext &context)
-    {
-        std::vector<Byte> buffer;
-        buffer.resize(aTexture->mWidth);
-        memcpy(buffer.data(), aTexture->pcData, aTexture->mWidth);
-        String name = context.RootPath + "\\" + aTexture->mFilename.C_Str();
-        SharedPtr<Scene::Image> image = Scene::Image::LoadImageFromData(buffer, aTexture->achFormatHint, name);
-
-        SharedPtr<Texture> texture = MakeShared<Texture>(StringToWString(image->GetName()));
-        texture->SetImage(image);
-        
-        return texture;
-    }
-
-    SharedPtr<Texture> SceneLoader::GetTexture(const aiString &path, LoadingContext &context)
-    {
-        if (path.C_Str()[0] != '*')
-        {
-            std::filesystem::path filePath = context.RootPath + "\\" + path.C_Str();
-
-            String filePathStr = filePath.string();
-            auto iter = context.fileTextures.find(filePathStr);
-            if (iter != context.fileTextures.end())
-            {
-                return iter->second;
-            }
-            else
-            {
-                if (std::filesystem::exists(filePath))
-                {
-                    auto image = Scene::Image::LoadImageFromFile(filePathStr);
-                    SharedPtr<Texture> texture = MakeShared<Texture>(StringToWString(image->GetName()));
-                    texture->SetImage(image);        
-                    context.fileTextures[filePathStr] = texture;
-
-                    return texture;
-                }
-            }
-        }
-        else
-        {
-            int index = atoi(path.C_Str() + 1);
-            return context.dataTextures[index];
-        }
-
-        return nullptr;
-    }
-
-	bool SceneLoader::IsLightNode(const aiNode* aNode, const LoadingContext& context)
-	{
-		auto iter = context.lightsMap.find(aNode->mName.C_Str());
-        return iter != context.lightsMap.end();
-	}
-
-	bool SceneLoader::IsMeshNode(const aiNode* aNode, const LoadingContext& context)
-	{
-        return aNode->mNumMeshes > 0;
-	}
-
-    bool SceneLoader::IsCameraNode(const aiNode* aNode, const LoadingContext& context)
-	{
-		auto iter = context.camerasMap.find(aNode->mName.C_Str());
-        return iter != context.camerasMap.end();
-	}
-
-    void SceneLoader::CreateLightNode(const aiNode* aNode, const LoadingContext &context, entt::entity entity)
-    {
-		auto iter = context.lightsMap.find(aNode->mName.C_Str());
-        aiLight* aLight = iter->second;
-
-        PunctualLight light;
-
-        light.SetEnabled(true);
-
-        switch (aLight->mType)
-        {
-        case aiLightSource_DIRECTIONAL:
-            light.SetLightType(LightType::DirectionalLight);
-            break;
-        case aiLightSource_POINT:
-            light.SetLightType(LightType::PointLight);
-            break;
-        case aiLightSource_SPOT:
-            light.SetLightType(LightType::SpotLight);
-            break;
-        }
-
-        DirectX::XMFLOAT3 direction{aLight->mDirection.x, aLight->mDirection.z, aLight->mDirection.y};
-        light.SetDirection(direction);
-
-        float intensity = std::max(1.0f, std::max(aLight->mColorDiffuse.r, std::max(aLight->mColorDiffuse.g, aLight->mColorDiffuse.b)));
-        DirectX::XMFLOAT3 color{aLight->mColorDiffuse.r / intensity, aLight->mColorDiffuse.g / intensity, aLight->mColorDiffuse.b / intensity};
-        light.SetColor(color);
-        light.SetIntensity(intensity);
-
-        light.SetConstantAttenuation(aLight->mAttenuationConstant);
-        light.SetLinearAttenuation(aLight->mAttenuationLinear);
-        light.SetQuadraticAttenuation(aLight->mAttenuationQuadratic);
-
-        light.SetInnerConeAngle(aLight->mAngleInnerCone);
-        light.SetOuterConeAngle(aLight->mAngleOuterCone);
-
-        Components::LightComponent lightComponent;
-        lightComponent.light = light;
-
-        context.registry->emplace<Components::LightComponent>(entity, lightComponent);
-        context.registry->emplace<Components::CameraComponent>(entity, Camera());
-
-    }
-
-    void SceneLoader::CreateMeshNode(const aiNode* aNode, const LoadingContext& context, entt::entity entity, Engine::Scene::Components::RelationshipComponent* relationship)
-    {
-        entt::entity nextEntity = context.registry->create();;
-        relationship->first = nextEntity;
-        relationship->childsCount = aNode->mNumMeshes;
-
-		for (uint32 i = 0; i < aNode->mNumMeshes; ++i)
-		{
-			int32 meshIndex = aNode->mMeshes[i];
-			auto meshData = context.meshes[meshIndex];
-
-            auto meshEntity = nextEntity;
-            if (i < (aNode->mNumMeshes - 1))
-            {
-                nextEntity = context.registry->create();
-            }
-            else
-            {
-                nextEntity = entt::null;
-            }
-
-            context.registry->emplace<Components::LocalTransformComponent>(meshEntity, DirectX::XMMatrixIdentity());
-
-            context.registry->emplace<Components::NameComponent>(meshEntity, std::get<0>(meshData));
-
-            Components::RelationshipComponent meshRelationship;
-            meshRelationship.next = nextEntity;
-            meshRelationship.parent = entity;
-            meshRelationship.depth = relationship->depth + 1;
-            context.registry->emplace<Components::RelationshipComponent>(meshEntity, meshRelationship);
-
-            Components::MeshComponent meshComponent;
-            meshComponent.mesh = std::get<1>(meshData);
-
-            context.registry->emplace<Components::MeshComponent>(meshEntity, meshComponent);
-
-            Components::AABBComponent aabbComponent = {};
-            aabbComponent.originalBoundingBox = std::get<2>(meshData);
-            aabbComponent.boundingBox = std::get<2>(meshData);
-            context.registry->emplace<Components::AABBComponent>(meshEntity, aabbComponent);
-		}
-    }
-
-    void SceneLoader::CreateCameraNode(const aiNode* aNode, LoadingContext& context, entt::entity entity)
-    {
-        auto iter = context.camerasMap.find(aNode->mName.C_Str());
-
-        aiCamera* aCamera = iter->second;
-
-        Camera camera;
-
-        camera.SetNearPlane(aCamera->mClipPlaneNear);
-        camera.SetFarPlane(aCamera->mClipPlaneFar);
-        camera.SetFoV(aCamera->mHorizontalFOV);
-
-        Components::CameraComponent cameraComponent;
-        cameraComponent.camera = camera;
-
-        context.registry->emplace<Components::CameraComponent>(entity, cameraComponent);
-
-        if (!context.isMainCameraAssigned)
-        {
-            context.isMainCameraAssigned = true;
-            context.registry->emplace<Components::MainCameraComponent>(entity);
-        }
-    }
-
-    void SceneLoader::AddCubeMapToScene(SceneObject* scene, String texturePath)
-    {
-        if (!std::filesystem::exists(texturePath))
-        {
-            return;
-        }
-
-        CubeMap cubeMap;
-        auto image = Scene::Image::LoadImageFromFile(texturePath);
-        SharedPtr<Texture> texture = MakeShared<Texture>(StringToWString(image->GetName()));
-        texture->SetImage(image);
-        texture->SetSRGB(true);
-
-        cubeMap.texture = texture;
-        cubeMap.primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-
-        cubeMap.indexBuffer = MakeShared<Memory::IndexBuffer>(L"CubeMap Indices");
-        cubeMap.vertexBuffer = MakeShared<Memory::VertexBuffer>(L"CubeMap Vertices");
-
-        std::vector<Vertex> vertices = {};
-        vertices.reserve(8);
-        vertices.assign(8, {});
-
-        auto* v = vertices.data();
-
-        float w = 1.0f;
-        float h = 1.0f;
-        float d = 1.0f;
-
-        // Fill in the front face vertex data.
-        v[0].Vertex = {-w, -h, -d};
-        v[1].Vertex = {-w, +h, -d};
-        v[2].Vertex = {+w, +h, -d};
-        v[3].Vertex = {+w, -h, -d};
-
-        // Fill in the back face vertex data.
-        v[4].Vertex = {-w, -h, +d};
-        v[5].Vertex = {+w, -h, +d};
-        v[6].Vertex = {+w, +h, +d};
-        v[7].Vertex = {-w, +h, +d};
-
-        std::vector<uint16> indices = {};
-        indices.reserve(36);
-        indices.assign(36, 0);
-
-        auto* i = indices.data();
-
-        // Fill in the front face index data
-        i[0] = 0; i[1] = 1; i[2] = 2;
-        i[3] = 0; i[4] = 2; i[5] = 3;
-
-        // Fill in the back face index data
-        i[6] = 4; i[7]  = 5; i[8]  = 6;
-        i[9] = 4; i[10] = 6; i[11] = 7;
-
-        // Fill in the top face index data
-        i[12] = 1; i[13] =  7; i[14] = 6;
-        i[15] = 1; i[16] = 6; i[17] = 2;
-
-        // Fill in the bottom face index data
-        i[18] = 0;  i[19] = 3; i[20] = 5;
-        i[21] = 0;  i[22] = 5; i[23] = 4;
-
-        // Fill in the left face index data
-        i[24] = 4; i[25] = 7; i[26] = 1;
-        i[27] = 4; i[28] = 1;  i[29] = 0;
-
-        // Fill in the right face index data
-        i[30] = 3;  i[31] = 2;  i[32] = 6;
-        i[33] = 3;  i[34] = 6; i[35] = 5;
-
-        cubeMap.vertexBuffer->SetData(vertices);
-
-        cubeMap.indexBuffer->SetData(indices);
-
-        auto cubeMapEntity = scene->GetRegistry().create();
-
-        scene->GetRegistry().emplace<Components::CubeMapComponent>(cubeMapEntity, cubeMap);
     }
 
 } // namespace Engine::Scene::Loader

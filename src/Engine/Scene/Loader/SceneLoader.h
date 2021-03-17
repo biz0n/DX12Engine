@@ -4,6 +4,7 @@
 
 #include <Scene/SceneForwards.h>
 #include <Scene/Components/ComponentsForwards.h>
+#include <Scene/Loader/SceneDto.h>
 
 #include <d3d12.h>
 #include <DirectXMath.h>
@@ -12,7 +13,6 @@
 #include <tuple>
 #include <unordered_map>
 
-#include <entt/fwd.hpp>
 
 struct aiScene;
 struct aiNode;
@@ -32,18 +32,17 @@ namespace Engine::Scene::Loader
         struct LoadingContext
         {
             String RootPath;
-            std::vector<std::tuple<String, Mesh, dx::BoundingBox>> meshes;
-            std::vector<SharedPtr<Material>> materials;
-            std::vector<SharedPtr<Texture>> dataTextures;
-            std::unordered_map<String, SharedPtr<Scene::Texture>> fileTextures;
-            std::unordered_map<String, aiLight*> lightsMap;
-            std::unordered_map<String, aiCamera*> camerasMap;
-            bool isMainCameraAssigned;
 
-            entt::registry* registry;
+            std::unordered_map<String, Index> imagesIndexMap;
+
+            std::unordered_map<String, Index> lightsIndexMap;
+
+            std::unordered_map<String, Index> camerasIndexMap;
+
+            SceneDto* sceneDTO;
         };
 
-            //! Values for the Sampler::magFilter field
+    //! Values for the Sampler::magFilter field
     enum class SamplerMagFilter : unsigned int
     {
         UNSET = 0,
@@ -64,22 +63,22 @@ namespace Engine::Scene::Loader
     };
 
     public:
-        UniquePtr<SceneObject> LoadScene(String path, Optional<float32> scale = {});
-
-        void AddCubeMapToScene(SceneObject* scene, String texturePath);
+        SceneDto LoadScene(String path, Optional<float32> scale = {});
 
     private:
-        void ParseNode(const aiScene* aScene, const aiNode* aNode, LoadingContext& context, entt::entity entity, Engine::Scene::Components::RelationshipComponent* relationship);
-        SharedPtr<Texture> GetTexture(const aiString& path, LoadingContext& context);
-        SharedPtr<Texture> GetTexture(const aiTexture* aTexture, const LoadingContext& context);
-        SharedPtr<Material> ParseMaterial(const aiMaterial* aMaterial, LoadingContext& context);
-        void ParseSampler(const aiMaterial* aMaterial, aiTextureType textureType, unsigned int idx);
-        std::tuple<String, Mesh, dx::BoundingBox> ParseMesh(const aiMesh* aMesh, const LoadingContext& context);
+        Node ParseNode(const aiNode* aNode, LoadingContext& context);
+
         bool IsLightNode(const aiNode* aNode, const LoadingContext& context);
         bool IsMeshNode(const aiNode* aNode, const LoadingContext& context);
         bool IsCameraNode(const aiNode* aNode, const LoadingContext& context);
-        void CreateLightNode(const aiNode* aNode, const LoadingContext& context, entt::entity entity);
-        void CreateMeshNode(const aiNode* aNode, const LoadingContext& context, entt::entity entity, Engine::Scene::Components::RelationshipComponent* relationship);
-        void CreateCameraNode(const aiNode* aNode, LoadingContext& context, entt::entity entity);
+
+        std::optional<Index> GetImage(const aiString& path, LoadingContext& context);
+
+        SharedPtr<Image> ParseImage(const aiTexture* aTexture, const LoadingContext& context);
+        CameraDto ParseCamera(const aiCamera* aCamera);
+        LightDto ParseLight(const aiLight* aLight);
+        MeshDto ParseMesh(const aiMesh* aMesh);
+        MaterialDto ParseMaterial(const aiMaterial* aMaterial, LoadingContext& context);
+        void ParseSampler(const aiMaterial* aMaterial, aiTextureType textureType, unsigned int idx);
     }; 
 } // namespace Engine::Scene

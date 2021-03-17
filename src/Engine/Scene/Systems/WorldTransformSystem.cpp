@@ -51,7 +51,7 @@ namespace Engine::Scene::Systems
             const auto& local = registry.get<Scene::Components::LocalTransformComponent>(e);
             const auto& relationship = registry.get<Scene::Components::RelationshipComponent>(e);
 
-            DirectX::XMMATRIX worldTransform;
+            DirectX::XMMATRIX worldTransform{};
             if (relationship.parent == entt::null)
             {
                 worldTransform = local.transform;                

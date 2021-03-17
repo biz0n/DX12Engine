@@ -57,22 +57,24 @@ namespace Engine::UI::ComponentRenderers
 
                 auto cameraEntity = registry.view<Scene::Components::CameraComponent, Scene::Components::MainCameraComponent>().front();
                 auto camera = registry.get<Scene::Components::CameraComponent>(cameraEntity);
-                
 
-                dx::XMFLOAT4X4 m;
-                dx::XMStoreFloat4x4(&m, matrix);   
-
-                auto delta = EditTransform(camera, m);
-
-                using namespace dx;
-
-                if (!dx::XMMatrixIsIdentity(dx::XMLoadFloat4x4(&delta)))
+                dx::XMMATRIX parentWorldTransform = dx::XMMatrixIdentity();
+                auto parentEntity = registry.get<Scene::Components::RelationshipComponent>(entity).parent;
+                if (parentEntity != entt::null)
                 {
-                    registry.emplace_or_replace<Scene::Components::LocalTransformComponent>(entity, localTransform.transform * dx::XMLoadFloat4x4(&delta));
+                    parentWorldTransform = registry.get<Scene::Components::WorldTransformComponent>(parentEntity).transform;
                 }
+
+                dx::XMFLOAT4X4 localMatrix;
+                dx::XMStoreFloat4x4(&localMatrix, localTransform.transform);
+
+                auto result = EditTransform(camera, localMatrix, parentWorldTransform);
+
+                registry.emplace_or_replace<Scene::Components::LocalTransformComponent>(entity, dx::XMLoadFloat4x4(&result));
+
             }
 
-            dx::XMFLOAT4X4 EditTransform(const Scene::Components::CameraComponent& camera, dx::XMFLOAT4X4& matrix)
+            dx::XMFLOAT4X4 EditTransform(const Scene::Components::CameraComponent& camera, dx::XMFLOAT4X4& matrix, const dx::XMMATRIX& parentWorldTransform)
             {
                 static ImGuizmo::OPERATION mCurrentGizmoOperation(ImGuizmo::ROTATE);
                 const static ImGuizmo::MODE mCurrentGizmoMode(ImGuizmo::LOCAL);
@@ -105,7 +107,7 @@ namespace Engine::UI::ComponentRenderers
 
                 ImGui::Checkbox("", &useSnap);
                 ImGui::SameLine();
-                dx::XMFLOAT3 snap;
+                static dx::XMFLOAT3 snap;
                 switch (mCurrentGizmoOperation)
                 {
                 case ImGuizmo::TRANSLATE:
@@ -117,7 +119,7 @@ namespace Engine::UI::ComponentRenderers
                     ImGui::InputFloat("Angle Snap", &snap.x);
                     break;
                 case ImGuizmo::SCALE:
-                    snap.x = 0.1f;
+                    snap.x = 0.001f;
                     ImGui::InputFloat("Scale Snap", &snap.x);
                     break;
                 }
@@ -126,15 +128,9 @@ namespace Engine::UI::ComponentRenderers
                 dx::XMFLOAT4X4 view;
                 dx::XMFLOAT4X4 projection;
 
-                dx::XMStoreFloat4x4(&view, camera.view);
+                using namespace dx;
+                dx::XMStoreFloat4x4(&view, camera.view * parentWorldTransform);
                 dx::XMStoreFloat4x4(&projection, camera.projection);
-
-                dx::XMFLOAT4X4 delta = {
-                    1, 0, 0, 0,
-                    0, 1, 0, 0,
-                    0, 0, 1, 0,
-                    0, 0, 0, 1
-                };
 
                 ImGuizmo::Manipulate(
                     static_cast<float*>((void*)&view),
@@ -142,10 +138,10 @@ namespace Engine::UI::ComponentRenderers
                     mCurrentGizmoOperation,
                     mCurrentGizmoMode,
                     static_cast<float*>((void*)&matrix),
-                    static_cast<float*>((void*)&delta),
+                    nullptr,
                     useSnap ? &snap.x : NULL);
 
-                return delta;
+                return matrix;
             }
     };
 }
