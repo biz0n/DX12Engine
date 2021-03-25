@@ -3,6 +3,7 @@
 #include <Render/UIRenderContext.h>
 #include <Render/RenderContext.h>
 #include <Render/SwapChain.h>
+#include <Memory/Texture.h>
 
 #include <Scene/SceneObject.h>
 #include <Scene/Components/NameComponent.h>
@@ -10,7 +11,6 @@
 #include <Scene/Components/MeshComponent.h>
 #include <Scene/Components/WorldTransformComponent.h>
 #include <Scene/Components/CameraComponent.h>
-#include <Scene/Texture.h>
 
 #include <UI/ComponentRenderers/StateComponentsRenderer.h>
 #include <UI/ComponentRenderers/WorldTransformComponentRenderer.h>

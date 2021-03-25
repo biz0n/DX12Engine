@@ -36,9 +36,7 @@ namespace Engine::UI::ComponentRenderers
                 {
                     auto texture = meshComponent.mesh.material->GetBaseColorTexture();
 
-                    auto srv = texture->GetShaderResourceView(
-                        mRenderContext->Device(),
-                        mRenderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+                    auto srv = texture->GetSRDescriptor().GetCPUDescriptor();
                     auto textureId = mUIRenderContext->GetTextureId(srv);
 
                     ImGui::Image(textureId, {256, 256});
@@ -48,9 +46,7 @@ namespace Engine::UI::ComponentRenderers
                 {
                     auto texture = meshComponent.mesh.material->GetNormalTexture();
 
-                    auto srv = texture->GetShaderResourceView(
-                        mRenderContext->Device(),
-                        mRenderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+                    auto srv = texture->GetSRDescriptor().GetCPUDescriptor();
                     auto textureId = mUIRenderContext->GetTextureId(srv);
 
                     ImGui::Image(textureId, {256, 256});
@@ -60,9 +56,7 @@ namespace Engine::UI::ComponentRenderers
                 {
                     auto texture = meshComponent.mesh.material->GetMetallicRoughnessTexture();
 
-                    auto srv = texture->GetShaderResourceView(
-                        mRenderContext->Device(),
-                        mRenderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+                    auto srv = texture->GetSRDescriptor().GetCPUDescriptor();
                     auto textureId = mUIRenderContext->GetTextureId(srv);
 
                     ImGui::Image(textureId, {256, 256});
@@ -72,9 +66,7 @@ namespace Engine::UI::ComponentRenderers
                 {
                     auto texture = meshComponent.mesh.material->GetEmissiveTexture();
 
-                    auto srv = texture->GetShaderResourceView(
-                        mRenderContext->Device(),
-                        mRenderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+                    auto srv = texture->GetSRDescriptor().GetCPUDescriptor();
                     auto textureId = mUIRenderContext->GetTextureId(srv);
 
                     ImGui::Image(textureId, {256, 256});
@@ -84,9 +76,7 @@ namespace Engine::UI::ComponentRenderers
                 {
                     auto texture = meshComponent.mesh.material->GetAmbientOcclusionTexture();
 
-                    auto srv = texture->GetShaderResourceView(
-                        mRenderContext->Device(),
-                        mRenderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+                    auto srv = texture->GetSRDescriptor().GetCPUDescriptor();
                     auto textureId = mUIRenderContext->GetTextureId(srv);
 
                     ImGui::Image(textureId, {256, 256});

@@ -20,7 +20,7 @@ namespace Engine::Render::Passes
     {
     public:
         DepthPass();
-        virtual ~DepthPass();
+        ~DepthPass() override;
 
         void PrepareResources(Render::ResourcePlanner* planner) override;
 

@@ -33,7 +33,7 @@ namespace Engine::Render
         void PrepareFrame();
         void RenderPasses(Scene::SceneObject* scene, const Timer& timer);
         void RenderPass(RenderPassBase* pass, Scene::SceneObject* scene, const Timer& timer);
-        void UploadResources(Scene::SceneObject *scene, SharedPtr<RenderContext> renderContext, SharedPtr<Memory::UploadBuffer> uploadBuffer);
+        void UploadResources(SharedPtr<RenderContext> renderContext);
     private:
         FrameTransientContext mFrameContexts[EngineConfig::SwapChainBufferCount];
 

@@ -19,7 +19,7 @@ namespace Engine::Scene
         std::map<std::string, std::string> scenes;
         std::string scenePath;
 
-        std::future<std::unique_ptr<SceneObject>> sceneFuture;
+        std::future<Loader::SceneDto> sceneFuture;
 
         void DrawSelector()
         {

@@ -3,7 +3,6 @@
 #include <StringUtils.h>
 
 #include <Scene/CubeMap.h>
-#include <Scene/Texture.h>
 #include <Scene/SceneObject.h>
 #include <Scene/Components/MeshComponent.h>
 #include <Scene/Components/CubeMapComponent.h>
@@ -21,10 +20,13 @@
 #include <Render/RenderPassBase.h>
 #include <Render/PassCommandRecorder.h>
 
+#include <Memory/Texture.h>
 #include <Memory/UploadBuffer.h>
 #include <Memory/IndexBuffer.h>
 #include <Memory/VertexBuffer.h>
 #include <Memory/DynamicDescriptorHeap.h>
+#include <Memory/ResourceFactory.h>
+#include <Memory/ResourceCopyManager.h>
 
 #include <entt/entt.hpp>
 #include <d3d12.h>
@@ -43,11 +45,11 @@ namespace Engine::Render
         auto cbvSrvUavDescriptorSize = mRenderContext->Device()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         for (Size i = 0; i < std::size(mFrameContexts); ++i)
         {
-            mFrameContexts[i].uploadBuffer = MakeShared<Memory::UploadBuffer>(mRenderContext->Device().Get(), 500 * 1024 * 1024);
+            mFrameContexts[i].uploadBuffer = mRenderContext->GetResourceFactory()->CreateUploadBuffer(500 * 1024 * 1024);
             mFrameContexts[i].dynamicDescriptorHeap = MakeShared<Memory::DynamicDescriptorHeap>(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, cbvSrvUavDescriptorSize);
         }
 
-        mFrameResourceProvider = MakeUnique<FrameResourceProvider>(mRenderContext->Device(), mRenderContext->GetGlobalResourceStateTracker().get());
+        mFrameResourceProvider = MakeUnique<FrameResourceProvider>(mRenderContext->Device(), mRenderContext->GetResourceFactory());
     }
 
     void Renderer::Deinitialize()
@@ -64,7 +66,7 @@ namespace Engine::Render
         auto currentBackbufferIndex = mRenderContext->GetCurrentBackBufferIndex();
         mFrameContexts[currentBackbufferIndex].Reset();
 
-        UploadResources(scene, mRenderContext, mFrameContexts[currentBackbufferIndex].uploadBuffer);
+        UploadResources(mRenderContext);
 
         PrepareFrame();
 
@@ -88,7 +90,7 @@ namespace Engine::Render
                     creationInfo.description.Height = mRenderContext->GetSwapChain()->GetHeight();
                 }
 
-                mFrameResourceProvider->CreateResource(resource.name, resource.creationInfo);
+                mFrameResourceProvider->CreateResource(resource.name, resource.creationInfo, resource.state);
             }
 
             pass->CreateRootSignatures(mRenderContext->GetRootSignatureProvider());
@@ -163,60 +165,21 @@ namespace Engine::Render
     }
 
 
-    /// TODO: find better solution for uploading scene resources to GPU memory
-    /// Let's stay this logic here for now.
-    void Renderer::UploadResources(Scene::SceneObject *scene, SharedPtr<RenderContext> renderContext, SharedPtr<Memory::UploadBuffer> uploadBuffer)
+    void Renderer::UploadResources(SharedPtr<RenderContext> renderContext)
     {
-        const auto &meshView = scene->GetRegistry().view<Scene::Components::MeshComponent>();
-        const auto &cubeMapView = scene->GetRegistry().view<Scene::Components::CubeMapComponent>();
-
-        auto stateTracker = MakeShared<ResourceStateTracker>(renderContext->GetGlobalResourceStateTracker());
-
-        auto commandList = renderContext->CreateCopyCommandList();
-
+        auto stateTracker = MakeUnique<ResourceStateTracker>(renderContext->GetGlobalResourceStateTracker());
+        auto commandList = renderContext->CreateGraphicsCommandList();
         commandList->SetName(L"Uploading resources List");
 
-        uploadBuffer->Reset();
-        bool anythingToLoad = false;
+        auto copyManager = mRenderContext->GetResourceCopyManager();
 
-        for (auto &&[entity, meshComponent] : meshView.each())
-        {
-            auto mesh = meshComponent.mesh;
-            if (!mesh.vertexBuffer->GetD3D12Resource())
-            {
-                anythingToLoad = true;
-                CommandListUtils::UploadVertexBuffer(renderContext, commandList, stateTracker, *mesh.vertexBuffer, uploadBuffer);
-            }
-            if (!mesh.indexBuffer->GetD3D12Resource())
-            {
-                anythingToLoad = true;
-                CommandListUtils::UploadIndexBuffer(renderContext, commandList, stateTracker, *mesh.indexBuffer, uploadBuffer);
-            }
-            anythingToLoad = CommandListUtils::UploadMaterialTextures(renderContext, commandList, stateTracker, mesh.material, uploadBuffer) || anythingToLoad;
-        }
+        bool anythingToLoad = copyManager->Copy(commandList.Get(), stateTracker.get());
+        stateTracker->FlushBarriers(commandList);
 
-        for (auto &&[entity, cubeComponent] : cubeMapView.each())
-        {
-            if (!cubeComponent.cubeMap.vertexBuffer->GetD3D12Resource())
-            {
-                anythingToLoad = true;
-                CommandListUtils::UploadVertexBuffer(renderContext, commandList, stateTracker, *cubeComponent.cubeMap.vertexBuffer, uploadBuffer);
-            }
-            if (!cubeComponent.cubeMap.indexBuffer->GetD3D12Resource())
-            {
-                anythingToLoad = true;
-                CommandListUtils::UploadIndexBuffer(renderContext, commandList, stateTracker, *cubeComponent.cubeMap.indexBuffer, uploadBuffer);
-            }
-            if (!cubeComponent.cubeMap.texture->GetD3D12Resource())
-            {
-                anythingToLoad = true;
-                CommandListUtils::UploadTexture(renderContext, commandList, stateTracker, cubeComponent.cubeMap.texture.get(), uploadBuffer);
-            }
-        }
 
         std::vector<ID3D12CommandList *> commandLists;
 
-        auto barriersCommandList = renderContext->CreateCopyCommandList();
+        auto barriersCommandList = renderContext->CreateGraphicsCommandList();
 
         auto barriers = stateTracker->FlushPendingBarriers(barriersCommandList);
         stateTracker->CommitFinalResourceStates();
@@ -231,14 +194,14 @@ namespace Engine::Render
 
         if (anythingToLoad)
         {
-            commandLists.push_back(commandList.Get());
+            commandLists.emplace_back(commandList.Get());
         }
 
-        if (commandLists.size() > 0)
+        if (!commandLists.empty())
         {
-            uint64 fenceValue = renderContext->GetCopyCommandQueue()->ExecuteCommandLists(commandLists.size(), commandLists.data());
+            uint64 fenceValue = renderContext->GetGraphicsCommandQueue()->ExecuteCommandLists(commandLists.size(), commandLists.data());
 
-            renderContext->GetGraphicsCommandQueue()->InsertWaitForQueue(renderContext->GetCopyCommandQueue(), fenceValue);
+            renderContext->GetGraphicsCommandQueue()->InsertWaitForQueue(renderContext->GetGraphicsCommandQueue(), fenceValue);
         }
     }
 }

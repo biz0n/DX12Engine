@@ -73,17 +73,26 @@ namespace Engine
             { "s_test", R"(Resources\Scenes\shadow\test1.gltf)" }
         };
 
-        mSceneLoadingInfo->scenePath = mSceneLoadingInfo->scenes["Corset"];
+        mSceneLoadingInfo->scenePath = mSceneLoadingInfo->scenes["Sponza"];
         mSceneLoadingInfo->loadScene = true;
     }
 
-    void Application::InitScene(UniquePtr<Scene::SceneObject> scene)
+    void Application::InitScene(Scene::Loader::SceneDto sceneDto)
     {
+        UniquePtr<Scene::SceneObject> scene = MakeUnique<Scene::SceneObject>();
+
+        Scene::SceneToRegisterLoader toRegisterLoader{mRenderContext->GetResourceFactory(), mRenderContext->GetResourceCopyManager()};
+        toRegisterLoader.LoadSceneToRegistry(scene->GetRegistry(), sceneDto);
+        toRegisterLoader.AddCubeMapToScene(scene->GetRegistry(), R"(Resources\Scenes\cubemaps\snowcube1024.dds)");
+
         auto renderer = MakeShared<Render::Renderer>(mRenderContext);
 
         auto& registry = scene->GetRegistry();
         auto [cameraEntity, camera] = scene->GetMainCamera();
-        registry.emplace<Scene::Components::MovingComponent>(cameraEntity, Scene::Components::MovingComponent());
+        if (cameraEntity != entt::null)
+        {
+            registry.emplace<Scene::Components::MovingComponent>(cameraEntity, Scene::Components::MovingComponent());
+        }
 
         scene->AddSystem(MakeUnique<Scene::Systems::WorldTransformSystem>());
 
@@ -100,6 +109,8 @@ namespace Engine
         scene->AddSystem(MakeUnique<UI::Systems::UISystem>(mRenderContext, mRenderContext->GetUIContext()));
 
         scene->AddSystem(MakeUnique<Scene::Systems::MovingSystem>(mKeyboard));
+
+
 
         mScene = std::move(scene);
     }
@@ -129,18 +140,15 @@ namespace Engine
                 mSceneLoadingInfo->sceneFuture = std::async(std::launch::async, [this]()
                 {    
                     CoInitialize(nullptr);
-                    UniquePtr<Scene::SceneObject> scene = MakeUnique<Scene::SceneObject>();
+
 
                     Scene::Loader::SceneLoader loader;
-                    Scene::SceneToRegisterLoader toRegisterLoader;
 
-                    const auto sceneDto = loader.LoadScene(mSceneLoadingInfo->scenePath);
 
-                    toRegisterLoader.LoadSceneToRegistry(scene->GetRegistry(), sceneDto);
+                    auto sceneDto = loader.LoadScene(mSceneLoadingInfo->scenePath);
 
-                    toRegisterLoader.AddCubeMapToScene(scene->GetRegistry(), R"(Resources\Scenes\cubemaps\snowcube1024.dds)");
 
-                    return std::move(scene);
+                    return sceneDto;
                 });
             }
 

@@ -20,11 +20,11 @@ namespace Engine::Render
     class SwapChain
     {
     public:
-        SwapChain(View view, const Graphics* graphis, SharedPtr<GlobalResourceStateTracker> resourceStateTracker, ID3D12CommandQueue* commandQueue);
+        SwapChain(View view, const Graphics* graphis, Memory::ResourceFactory* resourceFactory, ID3D12CommandQueue* commandQueue);
         ~SwapChain();
 
         uint32 GetCurrentBackBufferIndex() const;
-        Texture* GetCurrentBackBufferTexture();
+        Memory::Texture* GetCurrentBackBufferTexture();
 
         uint32 GetWidth() const { return mWidth; }
         uint32 GetHeight() const { return mHeight; }
@@ -41,9 +41,9 @@ namespace Engine::Render
     private:
         bool mIsTearingSupported;
         ComPtr<IDXGISwapChain4> mSwapChain;
-        UniquePtr<Texture> mBackBufferTextures[EngineConfig::SwapChainBufferCount];
+        SharedPtr<Memory::Texture> mBackBufferTextures[EngineConfig::SwapChainBufferCount];
 
-        SharedPtr<GlobalResourceStateTracker> mResourceStateTracker;
+        Memory::ResourceFactory* mResourceFactory;
 
         uint32 mCurrentBackBufferIndex;
 

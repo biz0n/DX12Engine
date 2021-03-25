@@ -3,6 +3,7 @@
 namespace Engine::Scene::Loader
 {
     class SceneLoader;
+    class SceneDto;
 }
 
 namespace Engine::Scene
@@ -15,7 +16,6 @@ namespace Engine::Scene
     class PunctualLight;
     class Texture;
     class Image;
-    class Texture;
 
     struct SceneLoadingInfo;
     struct Vertex;

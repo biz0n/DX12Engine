@@ -17,7 +17,6 @@
 #include <Render/CommandQueue.h>
 #include <Render/RootSignatureBuilder.h>
 #include <Render/CommandListUtils.h>
-#include <Render/Texture.h>
 #include <Render/TextureCreationInfo.h>
 #include <Render/PassContext.h>
 #include <Render/PipelineStateStream.h>
@@ -30,6 +29,7 @@
 #include <Render/ResourcePlanner.h>
 #include <Render/PassCommandRecorder.h>
 
+#include <Memory/Texture.h>
 #include <Memory/UploadBuffer.h>
 #include <Memory/MemoryForwards.h>
 #include <Memory/DescriptorAllocation.h>
@@ -99,12 +99,20 @@ namespace Engine::Render::Passes
         optimizedClearValue.DepthStencil = {1.0f, 0};
 
         Render::TextureCreationInfo dsTexture = {
-            .description = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, 0, 0, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
+            .description = CD3DX12_RESOURCE_DESC::Tex2D(
+                    DXGI_FORMAT_D32_FLOAT,
+                    0,
+                    0,
+                    1,
+                    1,
+                    1,
+                    0,
+                    D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE),
             .clearValue = optimizedClearValue
         };
         planner->NewDepthStencil(ResourceNames::ForwardDepth, dsTexture);
 
-        float clear[4] = {0};
+        float clear[4] = {0, 0, 0, 0};
         Render::TextureCreationInfo rtTexture = {
             .description = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R16G16B16A16_FLOAT, 0, 0, 1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET),
             .clearValue = CD3DX12_CLEAR_VALUE(DXGI_FORMAT_R16G16B16A16_FLOAT, clear)
@@ -196,16 +204,9 @@ namespace Engine::Render::Passes
 
         auto* depth = passContext.frameResourceProvider->GetTexture(ResourceNames::ShadowDepth);
 
-        CommandListUtils::TransitionBarrier(passContext.resourceStateTracker, depth->D3D12ResourceCom(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        CommandListUtils::TransitionBarrier(passContext.resourceStateTracker, depth->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-        D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
-        desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-        desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-        desc.TextureCube.MostDetailedMip = 0;
-        desc.TextureCube.MipLevels = depth->D3D12Resource()->GetDesc().MipLevels;
-        desc.TextureCube.ResourceMinLODClamp = 0.0f;
-        desc.Format = DXGI_FORMAT_R32_FLOAT;
-        auto srv = depth->GetSRDescriptor(renderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV).get(), &desc);
+        auto srv = depth->GetSRDescriptor().GetCPUDescriptor();
 
         passContext.frameContext->dynamicDescriptorHeap->StageDescriptor(9, 0, 1, srv);
 

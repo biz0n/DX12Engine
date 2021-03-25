@@ -9,7 +9,6 @@
 #include <assimp/pbrmaterial.h>
 
 #include <Scene/Image.h>
-#include <Scene/Texture.h>
 #include <Scene/Material.h>
 #include <Scene/Vertex.h>
 #include <Scene/CubeMap.h>
@@ -398,8 +397,6 @@ namespace Engine::Scene::Loader
                 if (std::filesystem::exists(filePath))
                 {
                     auto image = Scene::Image::LoadImageFromFile(filePathStr);
-                    SharedPtr<Texture> texture = MakeShared<Texture>(StringToWString(image->GetName()));
-                    texture->SetImage(image);
                     auto index = context.sceneDTO->ImageResources.size();
                     context.imagesIndexMap[filePathStr] = index;
                     context.sceneDTO->ImageResources.push_back({image});

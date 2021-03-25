@@ -28,7 +28,7 @@ namespace Engine
         void OnResize(int32 width, int32 height);
 
     private:
-        void InitScene(UniquePtr<Scene::SceneObject> scene);
+        void InitScene(Scene::Loader::SceneDto scene);
 
     private:
         SharedPtr<Render::RenderContext> mRenderContext;

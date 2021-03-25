@@ -2,6 +2,7 @@
 
 #include <Types.h>
 #include <Scene/SceneForwards.h>
+#include <Memory/Texture.h>
 #include <DirectXMath.h>
 
 namespace Engine::Scene
@@ -68,17 +69,17 @@ namespace Engine::Scene
         void SetProperties(const MaterialProperties &properties) { mMaterialProperties = properties; }
         const MaterialProperties &GetProperties() const { return mMaterialProperties; }
 
-        void SetBaseColorTexture(const SharedPtr<Texture> &texture) { mBaseColorTexture = texture; }
-        void SetNormalTexture(const SharedPtr<Texture> &texture) { mNormalTexture = texture; }
-        void SetMetallicRoughnessTexture(const SharedPtr<Texture> &texture) { mMetallicRoughnessTexture = texture; }
-        void SetAmbientOcclusionTexture(const SharedPtr<Texture> &texture) { mAmbientOcclusionTexture = texture; }
-        void SetEmissiveTexture(const SharedPtr<Texture> &texture) { mEmissiveTexture = texture; }
+        void SetBaseColorTexture(const SharedPtr<Memory::Texture> &texture) { mBaseColorTexture = texture; }
+        void SetNormalTexture(const SharedPtr<Memory::Texture> &texture) { mNormalTexture = texture; }
+        void SetMetallicRoughnessTexture(const SharedPtr<Memory::Texture> &texture) { mMetallicRoughnessTexture = texture; }
+        void SetAmbientOcclusionTexture(const SharedPtr<Memory::Texture> &texture) { mAmbientOcclusionTexture = texture; }
+        void SetEmissiveTexture(const SharedPtr<Memory::Texture> &texture) { mEmissiveTexture = texture; }
 
-        const SharedPtr<Texture> GetBaseColorTexture() const { return mBaseColorTexture; }
-        const SharedPtr<Texture> GetNormalTexture() const { return mNormalTexture; }
-        const SharedPtr<Texture> GetMetallicRoughnessTexture() const { return mMetallicRoughnessTexture; }
-        const SharedPtr<Texture> GetAmbientOcclusionTexture() const { return mAmbientOcclusionTexture; }
-        const SharedPtr<Texture> GetEmissiveTexture() const { return mEmissiveTexture; }
+        SharedPtr<Memory::Texture> GetBaseColorTexture() const { return mBaseColorTexture; }
+        SharedPtr<Memory::Texture> GetNormalTexture() const { return mNormalTexture; }
+        SharedPtr<Memory::Texture> GetMetallicRoughnessTexture() const { return mMetallicRoughnessTexture; }
+        SharedPtr<Memory::Texture> GetAmbientOcclusionTexture() const { return mAmbientOcclusionTexture; }
+        SharedPtr<Memory::Texture> GetEmissiveTexture() const { return mEmissiveTexture; }
 
         bool HasBaseColorTexture() const { return mBaseColorTexture != nullptr; }
         bool HasNormalTexture() const { return mNormalTexture != nullptr; }
@@ -88,11 +89,11 @@ namespace Engine::Scene
 
     private:
         MaterialProperties mMaterialProperties;
-        SharedPtr<Texture> mBaseColorTexture;
-        SharedPtr<Texture> mNormalTexture;
-        SharedPtr<Texture> mMetallicRoughnessTexture;
-        SharedPtr<Texture> mAmbientOcclusionTexture;
-        SharedPtr<Texture> mEmissiveTexture;
+        SharedPtr<Memory::Texture> mBaseColorTexture;
+        SharedPtr<Memory::Texture> mNormalTexture;
+        SharedPtr<Memory::Texture> mMetallicRoughnessTexture;
+        SharedPtr<Memory::Texture> mAmbientOcclusionTexture;
+        SharedPtr<Memory::Texture> mEmissiveTexture;
     };
 
 } // namespace Engine::Scene

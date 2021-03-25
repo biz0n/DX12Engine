@@ -1,7 +1,7 @@
 #include "UIRenderContext.h"
 
 #include <View.h>
-#include <Scene/Texture.h>
+#include <Memory/Texture.h>
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_dx12.h>
 #include <imgui/imgui_impl_win32.h>

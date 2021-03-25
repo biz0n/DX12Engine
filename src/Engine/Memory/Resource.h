@@ -3,28 +3,33 @@
 #include <Types.h>
 #include <d3d12.h>
 
+#include <Memory/ResourceCopyManager.h>
+
 namespace Engine::Memory
 {
     class Resource
     {
     public:
-        Resource(const std::wstring &name);
-        Resource(ComPtr<ID3D12Resource> resource, const std::wstring &name);
+        Resource();
         virtual ~Resource();
 
-        virtual void Reset();
+        void SetName(const std::string &name);
+        std::string GetName() const { return mResourceName; }
 
-        void SetName(const std::wstring &name);
-        std::wstring GetName() const { return mResourceName; }
+        ComPtr<ID3D12Resource> D3DResourceCom() const { return mResource; }
+        ID3D12Resource* D3DResource() const { return mResource.Get(); }
 
-        ComPtr<ID3D12Resource> GetD3D12Resource() const { return mResource; }
-        void SetD3D12Resource(ComPtr<ID3D12Resource> resource);
+        const D3D12_RESOURCE_DESC& GetDescription() const { return mDescription; }
 
-        D3D12_RESOURCE_DESC GetResourceDescription() const { return mResource->GetDesc(); }
+        virtual Size GetSubresourcesCount() const = 0;
 
+        virtual CopyCommandFunction GetCopyCommandFunction() const = 0;
     protected:
         ComPtr<ID3D12Resource> mResource;
-        std::wstring mResourceName;
+        D3D12_RESOURCE_DESC mDescription;
+
+    private:
+        std::string mResourceName;
     };
 
 } // namespace Engine::Memory

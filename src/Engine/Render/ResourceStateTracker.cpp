@@ -72,6 +72,11 @@ namespace Engine::Render
 
     void ResourceStateTracker::FlushBarriers(ComPtr<ID3D12GraphicsCommandList> commandList)
     {
+        FlushBarriers(commandList.Get());
+    }
+
+    void ResourceStateTracker::FlushBarriers(ID3D12GraphicsCommandList* commandList)
+    {
         uint32 numBarriers = static_cast<uint32>(mBarriers.size());
         if (numBarriers > 0)
         {

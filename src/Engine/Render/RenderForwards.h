@@ -19,7 +19,6 @@ namespace Engine::Render
     class RootSignatureProvider;
     class ShaderProvider;
     class SwapChain;
-    class Texture;
     class FrameTransientContext;
     class RenderPassBase;
     template <class TPassData> class RenderPassBaseWithData;

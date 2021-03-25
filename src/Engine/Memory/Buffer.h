@@ -1,43 +1,64 @@
 #pragma once
 
 #include <Types.h>
+#include <Exceptions.h>
 #include <Memory/Resource.h>
+#include <Memory/DescriptorAllocatorPool.h>
+#include <Memory/ResourceAllocator.h>
+#include <Render/RenderForwards.h>
+#include <Memory/ResourceCopyManager.h>
 
 #include <vector>
+#include <d3d12.h>
+#include <d3dx12.h>
 
 namespace Engine::Memory
 {
     class Buffer : public Resource
     {
     public:
-        Buffer(const std::wstring &name);
-        virtual ~Buffer();
+        Buffer(ID3D12Device *device,
+               ResourceAllocator *resourceFactory,
+               DescriptorAllocatorPool *descriptorAllocator,
+               Engine::Render::GlobalResourceStateTracker* stateTracker,
+               Size stride,
+               D3D12_RESOURCE_DESC desc,
+               D3D12_RESOURCE_STATES state,
+               D3D12_HEAP_TYPE heapType);
 
-        template <typename T>
-        void SetData(const std::vector<T> &data)
-        {
-            mElementsCount = data.size();
-            mElementSize = sizeof(T);
-            Size size = mElementSize * mElementsCount;
+        ~Buffer() override;
 
-            mBuffer.reserve(size);
+        const NewDescriptorAllocation &GetCBDescriptor() const;
 
-            memcpy(mBuffer.data(), data.data(), size);
-        }
+        const NewDescriptorAllocation &GetSRDescriptor() const;
 
-        void SetData(Size elementsCount, Size elementSize, const std::vector<Byte> &data);
+        const NewDescriptorAllocation &GetUADescriptor() const;
 
-        Size GetElementsCount() const { return mElementsCount; }
-        Size GetElementSize() const { return mElementSize; }
+        Size GetStride() const { return mStride; }
 
-        const void *GetData() const { return mBuffer.data(); }
+        Size GetAlignment() const { return mAlignment; }
 
-    protected:
-        Size mElementsCount;
-        Size mElementSize;
+        Size GetSubresourcesCount() const override;
+
+        CopyCommandFunction GetCopyCommandFunction() const override;
+
+        static void ScheduleUploading(
+                ResourceFactory *resourceFactory,
+                ResourceCopyManager* copyManager,
+                Buffer* buffer,
+                const void* data,
+                Size size,
+                D3D12_RESOURCE_STATES finalState);
 
     private:
-        std::vector<Byte> mBuffer;
-    };
+        DescriptorAllocatorPool *mDescriptorAllocator;
+        Engine::Render::GlobalResourceStateTracker* mStateTracker;
+        Size mStride;
+        Size mAlignment;
+        Size mSize;
 
-} // namespace Engine::Memory
+        mutable NewDescriptorAllocation mCBDescriptor;
+        mutable NewDescriptorAllocation mSRDescriptor;
+        mutable NewDescriptorAllocation mUADescriptor;
+    };
+}

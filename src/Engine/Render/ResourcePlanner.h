@@ -18,6 +18,7 @@ namespace Engine::Render
             {
                 Name name;
                 TextureCreationInfo creationInfo;
+                D3D12_RESOURCE_STATES state;
             };
             
         public:

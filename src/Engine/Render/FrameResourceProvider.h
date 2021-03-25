@@ -3,6 +3,7 @@
 #include <Types.h>
 #include <Name.h>
 
+#include <Memory/MemoryForwards.h>
 #include <Render/RenderForwards.h>
 
 #include <d3d12.h>
@@ -13,15 +14,15 @@ namespace Engine::Render
     class FrameResourceProvider
     {
     public:
-        FrameResourceProvider(ComPtr<ID3D12Device> device, GlobalResourceStateTracker* stateTracker);
+        FrameResourceProvider(ComPtr<ID3D12Device> device, Memory::ResourceFactory* resourceFactory);
         ~FrameResourceProvider();
 
-        void CreateResource(const Name& name, const TextureCreationInfo& textureInfo);
+        void CreateResource(const Name& name, const TextureCreationInfo& textureInfo, D3D12_RESOURCE_STATES state);
 
-        Texture* GetTexture(const Name& name) const;
+        Memory::Texture* GetTexture(const Name& name) const;
     private:
         ComPtr<ID3D12Device> mDevice;
-        GlobalResourceStateTracker* mStateTracker;
+        Memory::ResourceFactory* mResourceFactory;
 
         struct ResourceData;
 
@@ -30,7 +31,7 @@ namespace Engine::Render
         struct ResourceData
         {
             size_t hash;
-            UniquePtr<Texture> texture;
+            SharedPtr<Memory::Texture> texture;
         };
     };
     

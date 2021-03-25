@@ -22,7 +22,7 @@ namespace Engine::Render::Passes
     {
     public:
         ForwardPass();
-        virtual ~ForwardPass();
+        ~ForwardPass() override;
 
         void PrepareResources(Render::ResourcePlanner* planner) override;
 

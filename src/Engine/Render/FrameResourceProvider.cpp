@@ -3,20 +3,21 @@
 #include <DirectXHashes.h>
 
 #include <Render/ResourceStateTracker.h>
-#include <Render/Texture.h>
+#include <Memory/Texture.h>
+#include <Memory/ResourceFactory.h>
 #include <Render/TextureCreationInfo.h>
 
 #include <tuple>
 
 namespace Engine::Render
 {
-    FrameResourceProvider::FrameResourceProvider(ComPtr<ID3D12Device> device, GlobalResourceStateTracker* stateTracker)
-        : mDevice{device}, mStateTracker(stateTracker)
+    FrameResourceProvider::FrameResourceProvider(ComPtr<ID3D12Device> device, Memory::ResourceFactory* resourceFactory)
+        : mDevice{device}, mResourceFactory(resourceFactory)
     {
     }
     FrameResourceProvider::~FrameResourceProvider() = default;
 
-    void FrameResourceProvider::CreateResource(const Name &name, const TextureCreationInfo &textureInfo)
+    void FrameResourceProvider::CreateResource(const Name &name, const TextureCreationInfo &textureInfo, D3D12_RESOURCE_STATES state)
     {
         auto iter = mResources.find(name);
         size_t hash = std::hash<TextureCreationInfo>{}(textureInfo);
@@ -26,21 +27,19 @@ namespace Engine::Render
             if (iter->second.hash != hash)
             {
                 iter->second.hash = hash;
-                iter->second.texture = MakeUnique<Texture>(mDevice, name.string(), textureInfo);
-                mStateTracker->TrackResource(iter->second.texture->D3D12Resource(), D3D12_RESOURCE_STATE_COMMON);
+                iter->second.texture = mResourceFactory->CreateTexture(textureInfo.description, state, &textureInfo.clearValue);
             }
         }
         else
         {
             FrameResourceProvider::ResourceData data = {};
             data.hash = hash;
-            data.texture = MakeUnique<Texture>(mDevice, name.string(), textureInfo);
-            mStateTracker->TrackResource(data.texture->D3D12Resource(), D3D12_RESOURCE_STATE_COMMON);
+            data.texture = mResourceFactory->CreateTexture(textureInfo.description, state, &textureInfo.clearValue);
             mResources.emplace(name, std::move(data));
         }
     }
 
-    Texture* FrameResourceProvider::GetTexture(const Name &name) const
+    Memory::Texture* FrameResourceProvider::GetTexture(const Name &name) const
     {
         return  mResources.at(name).texture.get();
     }

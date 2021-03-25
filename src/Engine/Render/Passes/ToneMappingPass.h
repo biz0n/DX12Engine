@@ -8,7 +8,7 @@ namespace Engine::Render::Passes
     {
     public:
         ToneMappingPass();
-        virtual ~ToneMappingPass();
+        ~ToneMappingPass() override;
 
         void PrepareResources(Render::ResourcePlanner* planner) override;
 

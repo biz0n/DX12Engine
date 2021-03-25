@@ -13,16 +13,6 @@
 
 namespace Engine::Render::CommandListUtils
 {
-    void UploadVertexBuffer(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, Memory::VertexBuffer &vertexBuffer, SharedPtr<Memory::UploadBuffer> uploadBuffer);
-
-    void UploadIndexBuffer(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, Memory::IndexBuffer &indexBuffer, SharedPtr<Memory::UploadBuffer> uploadBuffer);
-
-    void UploadBuffer(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, Memory::Buffer &buffer, SharedPtr<Memory::UploadBuffer> uploadBuffer, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE);
-
-    void UploadTexture(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, Scene::Texture *texture, SharedPtr<Memory::UploadBuffer> uploadBuffer);
-
-    bool UploadMaterialTextures(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, SharedPtr<Scene::Material> material, SharedPtr<Memory::UploadBuffer> uploadBuffer);
-
     void BindVertexBuffer(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, Memory::VertexBuffer &vertexBuffer);
     void BindIndexBuffer(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, Memory::IndexBuffer &indexBuffer);
 
@@ -35,6 +25,9 @@ namespace Engine::Render::CommandListUtils
 
     void TransitionBarrier(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, ComPtr<ID3D12Resource> resource, D3D12_RESOURCE_STATES targetState, bool forceFlush = false);
     void TransitionBarrier(SharedPtr<ResourceStateTracker> stateTracker, ComPtr<ID3D12Resource> resource, D3D12_RESOURCE_STATES targetState);
+
+    void TransitionBarrier(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, ID3D12Resource* resource, D3D12_RESOURCE_STATES targetState, bool forceFlush = false);
+    void TransitionBarrier(SharedPtr<ResourceStateTracker> stateTracker, ID3D12Resource* resource, D3D12_RESOURCE_STATES targetState);
 
     void ClearCache();
 } // namespace Engine::RenderUtils

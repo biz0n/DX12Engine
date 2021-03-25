@@ -8,6 +8,11 @@ namespace Engine::Memory
     class Resource;
     class UploadBuffer;
     class VertexBuffer;
+    class Texture;
+
+    class ResourceFactory;
+    class ResourceAllocator;
+    class ResourceCopyManager;
     
     class DynamicDescriptorHeap;
 
@@ -19,4 +24,6 @@ namespace Engine::Memory
 
     class DescriptorHeap;
     class IndexPool;
+
+    struct ResourceCopyData;
 } // namespace Engine::Memory

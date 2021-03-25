@@ -40,6 +40,14 @@ struct PixelShaderOutput
     float4 Color : SV_TARGET0;
 };
 
+float3 SRGBToLinear(float3 sRGBCol)
+{
+    float3 linearRGBLo = sRGBCol / 12.92;
+    float3 linearRGBHi = pow((sRGBCol + 0.055) / 1.055, 2.4);
+    float3 linearRGB = (sRGBCol <= 0.04045) ? linearRGBLo : linearRGBHi;
+    return linearRGB;
+}
+
 float ShadowCalculation(float4 fragPosLightSpace)
 {
     float3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
@@ -101,6 +109,7 @@ PixelShaderOutput mainPS(VertexShaderOutput IN)
     if (MaterialCB.HasBaseColorTexture)
     {
         baseColor = baseColorTexture.Sample(gsamPointWrap, IN.TextureCoord);
+        baseColor = float4(SRGBToLinear(baseColor.rgb), baseColor.a);
     }
 
     clip(baseColor.a - MaterialCB.Cutoff);

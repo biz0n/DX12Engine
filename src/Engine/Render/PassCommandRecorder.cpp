@@ -4,11 +4,11 @@
 #include <Render/SwapChain.h>
 #include <Render/FrameResourceProvider.h>
 #include <Render/CommandListUtils.h>
-#include <Render/Texture.h>
 #include <Render/RootSignatureProvider.h>
 #include <Render/FrameTransientContext.h>
 #include <Render/PipelineStateProvider.h>
 
+#include <Memory/Texture.h>
 #include <Memory/DescriptorAllocator.h>
 #include <Memory/DescriptorAllocation.h>
 #include <Memory/DynamicDescriptorHeap.h>
@@ -55,11 +55,11 @@ namespace Engine::Render
 
         if (depthStencil.isValid())
         {
-            Render::Texture* dsTexture = mFrameResourceProvider->GetTexture(depthStencil);
+            Memory::Texture* dsTexture = mFrameResourceProvider->GetTexture(depthStencil);
             
-            CommandListUtils::TransitionBarrier(stateTrackerSharedPtr, dsTexture->D3D12Resource(), D3D12_RESOURCE_STATE_DEPTH_WRITE);
+            CommandListUtils::TransitionBarrier(stateTrackerSharedPtr, dsTexture->D3DResource(), D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
-            dsDescriptor = dsTexture->GetDSDescriptor(mRenderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_DSV).get());
+            dsDescriptor = dsTexture->GetDSDescriptor().GetCPUDescriptor();
         }
 
         std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> renderTargetDescriptors;
@@ -67,11 +67,11 @@ namespace Engine::Render
 
         for (auto renderTargetName : renderTargets)
         {
-            Render::Texture* rtTexture = mFrameResourceProvider->GetTexture(renderTargetName);
+            Memory::Texture* rtTexture = mFrameResourceProvider->GetTexture(renderTargetName);
 
-            CommandListUtils::TransitionBarrier(stateTrackerSharedPtr, rtTexture->D3D12Resource(), D3D12_RESOURCE_STATE_RENDER_TARGET);
+            CommandListUtils::TransitionBarrier(stateTrackerSharedPtr, rtTexture->D3DResource(), D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-            auto rtDescriptor = rtTexture->GetRTDescriptor(mRenderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_RTV).get());
+            auto rtDescriptor = rtTexture->GetRTDescriptor().GetCPUDescriptor();
 
             renderTargetDescriptors.push_back(rtDescriptor);
         }
@@ -84,10 +84,10 @@ namespace Engine::Render
         SharedPtr<ResourceStateTracker> stateTrackerSharedPtr(mResourceStateTracker, [](ResourceStateTracker const*){}); //temporary solution
 
         auto backBufferTexture = mRenderContext->GetSwapChain()->GetCurrentBackBufferTexture();
-        auto backBuffer = backBufferTexture->D3D12ResourceCom();
-        CommandListUtils::TransitionBarrier(stateTrackerSharedPtr, backBuffer.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET);
+        auto backBuffer = backBufferTexture->D3DResource();
+        CommandListUtils::TransitionBarrier(stateTrackerSharedPtr, backBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-        auto rtv = backBufferTexture->GetRTDescriptor(mRenderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_RTV).get());
+        auto rtv = backBufferTexture->GetRTDescriptor().GetCPUDescriptor();
 
         mCommandList->OMSetRenderTargets(1, &rtv, false, nullptr);
     }
@@ -98,9 +98,9 @@ namespace Engine::Render
 
         for (auto renderTargetName : renderTargets)
         {
-            Render::Texture* rtTexture = mFrameResourceProvider->GetTexture(renderTargetName);
+            Memory::Texture* rtTexture = mFrameResourceProvider->GetTexture(renderTargetName);
 
-            auto rtDescriptor = rtTexture->GetRTDescriptor(mRenderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_RTV).get());
+            auto rtDescriptor = rtTexture->GetRTDescriptor().GetCPUDescriptor();
 
             mCommandList->ClearRenderTargetView(rtDescriptor, clearColor, 0, nullptr);
         }
@@ -108,8 +108,8 @@ namespace Engine::Render
 
     void PassCommandRecorder::ClearDepthStencil(const Name& depthStencil)
     {
-        Render::Texture* dsTexture = mFrameResourceProvider->GetTexture(depthStencil);
-        auto dsDescriptor = dsTexture->GetDSDescriptor(mRenderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_DSV).get());
+        Memory::Texture* dsTexture = mFrameResourceProvider->GetTexture(depthStencil);
+        auto dsDescriptor = dsTexture->GetDSDescriptor().GetCPUDescriptor();
 
         mCommandList->ClearDepthStencilView(dsDescriptor, D3D12_CLEAR_FLAG_DEPTH, 1.f, 0, 0, nullptr);
     }

@@ -16,7 +16,7 @@ namespace Engine::Render::Passes
     {
     public:
         CubePass();
-        virtual ~CubePass();
+        ~CubePass() override;
 
         void PrepareResources(Render::ResourcePlanner* planner) override;
 

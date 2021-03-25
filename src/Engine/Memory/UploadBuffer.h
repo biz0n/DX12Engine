@@ -5,9 +5,13 @@
 
 #include <vector>
 
+#include <Memory/Buffer.h>
+#include <Memory/ResourceAllocator.h>
+#include <Render/RenderForwards.h>
+
 namespace Engine::Memory
 {
-    class UploadBuffer
+    class UploadBuffer : public Buffer
     {
     public:
         struct Allocation
@@ -28,11 +32,20 @@ namespace Engine::Memory
             {
                 memcpy(CPU, v.data(), sizeof(T) * v.size());
             }
+
+            void CopyTo(const void* data, Size size)
+            {
+                memcpy(CPU, data, size);
+            }
         };
 
     public:
-        UploadBuffer(ID3D12Device *device, Size size);
-        ~UploadBuffer();
+        UploadBuffer(ID3D12Device *device,
+                     ResourceAllocator *resourceFactory,
+                     DescriptorAllocatorPool *descriptorAllocator,
+                     Engine::Render::GlobalResourceStateTracker* stateTracker,
+                     Size size);
+        ~UploadBuffer() override;
 
         Allocation Allocate(Size sizeInBytes, Size alignment = D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
 
@@ -41,10 +54,7 @@ namespace Engine::Memory
             mOffset = 0;
         }
 
-        ID3D12Resource *GetD3D12Resource() const { return mBuffer.Get(); }
-
     private:
-        ComPtr<ID3D12Resource> mBuffer;
         Byte *mMappedData;
         D3D12_GPU_VIRTUAL_ADDRESS mGpuAddress;
         Size mSize;

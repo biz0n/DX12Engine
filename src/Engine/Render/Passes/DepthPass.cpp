@@ -6,12 +6,10 @@
 
 #include <Scene/Mesh.h>
 #include <Scene/Material.h>
-#include <Scene/Texture.h>
 #include <Scene/Vertex.h>
 
 #include <Render/RootSignatureBuilder.h>
 #include <Render/CommandListUtils.h>
-#include <Render/Texture.h>
 #include <Render/TextureCreationInfo.h>
 #include <Render/ResourcePlanner.h>
 #include <Render/RootSignatureProvider.h>
@@ -24,6 +22,7 @@
 #include <Render/FrameTransientContext.h>
 #include <Render/PassCommandRecorder.h>
 
+#include <Memory/Texture.h>
 #include <Memory/IndexBuffer.h>
 #include <Memory/DynamicDescriptorHeap.h>
 #include <Memory/UploadBuffer.h>
@@ -43,7 +42,7 @@ namespace Engine::Render::Passes
         optimizedClearValue.DepthStencil = {1.0f, 0};
 
         Render::TextureCreationInfo dsTexture = {
-            .description = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, EngineConfig::ShadowWidth, EngineConfig::ShadowHeight, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
+            .description = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, EngineConfig::ShadowWidth, EngineConfig::ShadowHeight, 1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
             .clearValue = optimizedClearValue
         };
         planner->NewDepthStencil(ResourceNames::ShadowDepth, dsTexture);
@@ -146,9 +145,9 @@ namespace Engine::Render::Passes
 
         if (mesh.material->HasBaseColorTexture())
         {
-            CommandListUtils::TransitionBarrier(resourceStateTracker, mesh.material->GetBaseColorTexture()->GetD3D12Resource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+            CommandListUtils::TransitionBarrier(resourceStateTracker, mesh.material->GetBaseColorTexture()->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-            dynamicDescriptorHeap->StageDescriptor(3, 0, 1, mesh.material->GetBaseColorTexture()->GetShaderResourceView(device, descriptorAllocator));
+            dynamicDescriptorHeap->StageDescriptor(3, 0, 1, mesh.material->GetBaseColorTexture()->GetSRDescriptor().GetCPUDescriptor());
         }
 
         CommandListUtils::BindVertexBuffer(commandList, resourceStateTracker, *mesh.vertexBuffer);

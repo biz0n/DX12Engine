@@ -1,33 +1,39 @@
 #include "UploadBuffer.h"
+
 #include <Exceptions.h>
+#include <MathUtils.h>
 #include <d3dx12.h>
 #include <new>
 
 namespace Engine::Memory
 {
-    UploadBuffer::UploadBuffer(ID3D12Device *device, Size size)
-        : mOffset(0), mSize(size)
+    UploadBuffer::UploadBuffer(ID3D12Device *device,
+                               ResourceAllocator *resourceFactory,
+                               DescriptorAllocatorPool *descriptorAllocator,
+                               Engine::Render::GlobalResourceStateTracker* stateTracker,
+                               Size size)
+        : Buffer(
+                device,
+                resourceFactory,
+                descriptorAllocator,
+                stateTracker,
+                1,
+                CD3DX12_RESOURCE_DESC::Buffer(size),
+                D3D12_RESOURCE_STATE_GENERIC_READ,
+                D3D12_HEAP_TYPE_UPLOAD),
+         mOffset(0),
+         mSize(size),
+         mMappedData(nullptr)
     {
-        CD3DX12_HEAP_PROPERTIES properties {D3D12_HEAP_TYPE_UPLOAD};
-        D3D12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(size);
-        ThrowIfFailed(device->CreateCommittedResource(
-            &properties,
-            D3D12_HEAP_FLAG_NONE,
-            &bufferDesc,
-            D3D12_RESOURCE_STATE_GENERIC_READ,
-            nullptr,
-            IID_PPV_ARGS(&mBuffer)));
-        ThrowIfFailed(mBuffer->Map(0, nullptr, reinterpret_cast<void **>(&mMappedData)));
-
-        mBuffer->SetName(L"Upload Buffer");
-        mGpuAddress = mBuffer->GetGPUVirtualAddress();
+        mGpuAddress = D3DResource()->GetGPUVirtualAddress();
+        ThrowIfFailed(D3DResource()->Map(0, nullptr, reinterpret_cast<void **>(&mMappedData)));
     }
 
     UploadBuffer::~UploadBuffer()
     {
-        if (mBuffer != nullptr)
+        if (D3DResource() != nullptr)
         {
-            mBuffer->Unmap(0, nullptr);
+            D3DResource()->Unmap(0, nullptr);
         }
         mGpuAddress = D3D12_GPU_VIRTUAL_ADDRESS(0);
         mMappedData = nullptr;
@@ -35,15 +41,15 @@ namespace Engine::Memory
 
     UploadBuffer::Allocation UploadBuffer::Allocate(Size sizeInBytes, Size alignment)
     {
-        Size alignedSize = (sizeInBytes + (alignment - 1)) & ~(alignment - 1);
-        Size alignedOffset = (mOffset + (alignment - 1)) & ~(alignment - 1);
+        Size alignedSize = Math::AlignUp(sizeInBytes, alignment);
+        Size alignedOffset = Math::AlignUp(mOffset, alignment);
 
         if (alignedOffset + alignedSize > mSize)
         {
             throw std::bad_alloc();
         }
 
-        Allocation allocation;
+        Allocation allocation{};
         allocation.CPU = mMappedData + alignedOffset;
         allocation.GPU = mGpuAddress + alignedOffset;
         allocation.bufferSize = alignedSize;

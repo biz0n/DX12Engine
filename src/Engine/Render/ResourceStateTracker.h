@@ -32,6 +32,7 @@ namespace Engine::Render
         void ResourceBarrier(const D3D12_RESOURCE_BARRIER &barrier);
 
         void FlushBarriers(ComPtr<ID3D12GraphicsCommandList> commandList);
+        void FlushBarriers(ID3D12GraphicsCommandList* commandList);
 
         uint32 FlushPendingBarriers(ComPtr<ID3D12GraphicsCommandList> commandList);
 

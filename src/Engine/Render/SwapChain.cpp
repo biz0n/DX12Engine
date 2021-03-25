@@ -6,22 +6,23 @@
 
 #include <Memory/DescriptorAllocator.h>
 #include <Memory/DescriptorAllocation.h>
+#include <Memory/ResourceFactory.h>
 
 #include <Render/ResourceStateTracker.h>
-#include <Render/Texture.h>
+#include <Memory/Texture.h>
 
 namespace Engine::Render
 {
     SwapChain::SwapChain(
         View view,
         const Graphics* graphics,
-        SharedPtr<GlobalResourceStateTracker> resourceStateTracker,
+        Memory::ResourceFactory* resourceFactory,
         ID3D12CommandQueue* commandQueue)
         : mView(view)
         , mWidth(view.width)
         , mHeight(view.height)
         , mGraphics(graphics)
-        , mResourceStateTracker(resourceStateTracker)
+        , mResourceFactory(resourceFactory)
         , mCurrentBackBufferIndex(0)
     {
         mIsTearingSupported = CheckTearing();
@@ -36,7 +37,7 @@ namespace Engine::Render
         return mCurrentBackBufferIndex;
     }
 
-    Texture* SwapChain::GetCurrentBackBufferTexture()
+    Memory::Texture* SwapChain::GetCurrentBackBufferTexture()
     {
         return mBackBufferTextures[mCurrentBackBufferIndex].get();
     }
@@ -60,7 +61,6 @@ namespace Engine::Render
 
         for (uint32 i = 0; i < EngineConfig::SwapChainBufferCount; ++i)
         {
-            mResourceStateTracker->UntrackResource(mBackBufferTextures[i]->D3D12Resource());
             mBackBufferTextures[i].reset();
         }
 
@@ -113,9 +113,9 @@ namespace Engine::Render
             ComPtr<ID3D12Resource> backBuffer;
             ThrowIfFailed(mSwapChain->GetBuffer(i, IID_PPV_ARGS(&backBuffer)));
 
-            mBackBufferTextures[i] = MakeUnique<Texture>(mGraphics->GetDevice(), backBuffer, "BackBuffer" + std::to_string(i));
-
-            mResourceStateTracker->TrackResource(backBuffer.Get(), D3D12_RESOURCE_STATE_COMMON);
+            auto texture = mResourceFactory->CreateTexture(backBuffer, D3D12_RESOURCE_STATE_COMMON);
+            texture->SetName("BackBuffer" + std::to_string(i));
+            mBackBufferTextures[i] = texture;
         }
     }
 

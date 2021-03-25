@@ -23,6 +23,8 @@ namespace Engine::UI::ComponentRenderers
         public:
             ComponentRenderer(const std::string& name) : ComponentRendererBase(name) {}
 
+            ~ComponentRenderer() override = default;
+
             bool HasComponent(entt::registry& registry, entt::entity entity) const override
             {
                 return registry.has<TComponent>(entity);

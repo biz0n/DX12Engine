@@ -3,6 +3,9 @@
 #include <Memory/DescriptorAllocatorPage.h>
 #include <Memory/DescriptorAllocation.h>
 
+#include <cassert>
+#include <vector>
+
 namespace Engine::Memory
 {
 	DescriptorAllocator::DescriptorAllocator(ComPtr<ID3D12Device> device, D3D12_DESCRIPTOR_HEAP_TYPE type, SharedPtr<DescriptorAllocatorPool> newPool, uint32 numDescriptorsPerPage)

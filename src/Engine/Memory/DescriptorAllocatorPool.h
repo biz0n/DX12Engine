@@ -64,7 +64,6 @@ namespace Engine::Memory
         
         public:
             void SetCurrentFrame(uint64 frameNumber) { mCurrentFrameNumber = frameNumber; };
-            void Free(NewDescriptorAllocation &&descriptorHandle);
 
             void ReleaseStaleDescriptors(uint64 frameNumber);
 

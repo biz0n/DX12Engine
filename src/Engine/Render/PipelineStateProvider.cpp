@@ -1,6 +1,7 @@
 #include "PipelineStateProvider.h"
 
 #include <Exceptions.h>
+#include <StringUtils.h>
 
 #include <Render/PipelineStateStream.h>
 #include <Render/RootSignatureProvider.h>
@@ -57,7 +58,10 @@ namespace Engine::Render
         stateStream.rootSignature = mRootSignatureProvider->GetRootSignature(pipelineStateProxy.rootSignatureName)->GetD3D12RootSignature().Get();
         stateStream.rtvFormats = rtFormats;
 
-        mPipelineStates.emplace(name, std::move(CreatePipelineState(stateStream)));
+        auto pipelineState = CreatePipelineState(stateStream);
+        pipelineState->SetName(StringToWString(name.string()).c_str());
+
+        mPipelineStates.emplace(name, std::move(pipelineState));
     }
 
     ComPtr<ID3D12PipelineState> PipelineStateProvider::GetPipelineState(const Name& name)

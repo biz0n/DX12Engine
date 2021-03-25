@@ -4,7 +4,6 @@
 
 #include <Render/RootSignatureBuilder.h>
 #include <Render/CommandListUtils.h>
-#include <Render/Texture.h>
 #include <Render/TextureCreationInfo.h>
 #include <Render/ResourcePlanner.h>
 #include <Render/RootSignatureProvider.h>
@@ -17,6 +16,7 @@
 #include <Render/FrameTransientContext.h>
 #include <Render/PassCommandRecorder.h>
 
+#include <Memory/Texture.h>
 #include <Memory/IndexBuffer.h>
 #include <Memory/DynamicDescriptorHeap.h>
 #include <Memory/UploadBuffer.h>
@@ -87,9 +87,9 @@ namespace Engine::Render::Passes
         commandRecorder->SetPipelineState(PSONames::ToneMapping);
         
         auto* color = passContext.frameResourceProvider->GetTexture(ResourceNames::ForwardOutput);
-        auto colorSRV = color->GetSRDescriptor(renderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV).get());
+        auto colorSRV = color->GetSRDescriptor().GetCPUDescriptor();
 
-        CommandListUtils::TransitionBarrier(passContext.resourceStateTracker, color->D3D12ResourceCom(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        CommandListUtils::TransitionBarrier(passContext.resourceStateTracker, color->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
         passContext.frameContext->dynamicDescriptorHeap->StageDescriptor(0, 0, 1, colorSRV);
 
@@ -113,16 +113,9 @@ namespace Engine::Render::Passes
 
         auto* depth = passContext.frameResourceProvider->GetTexture(ResourceNames::ShadowDepth);
 
-        CommandListUtils::TransitionBarrier(passContext.resourceStateTracker, depth->D3D12ResourceCom(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        CommandListUtils::TransitionBarrier(passContext.resourceStateTracker, depth->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-        D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
-        desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-        desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-        desc.TextureCube.MostDetailedMip = 0;
-        desc.TextureCube.MipLevels = depth->D3D12Resource()->GetDesc().MipLevels;
-        desc.TextureCube.ResourceMinLODClamp = 0.0f;
-        desc.Format = DXGI_FORMAT_R32_FLOAT;
-        auto srv = depth->GetSRDescriptor(renderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV).get(), &desc);
+        auto srv = depth->GetSRDescriptor().GetCPUDescriptor();
 
         ImGui::Begin("ShadowMap");
         ImGui::Image(passContext.renderContext->GetUIContext()->GetTextureId(srv), {512, 512});

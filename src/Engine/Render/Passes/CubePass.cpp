@@ -3,10 +3,9 @@
 #include <ShaderTypes.h>
 
 #include <Render/Passes/Names.h>
-
 #include <Render/RootSignatureBuilder.h>
 #include <Render/CommandListUtils.h>
-#include <Render/Texture.h>
+
 #include <Render/TextureCreationInfo.h>
 #include <Render/ResourcePlanner.h>
 #include <Render/RootSignatureProvider.h>
@@ -20,11 +19,11 @@
 #include <Render/PassCommandRecorder.h>
 
 #include <Scene/Vertex.h>
-#include <Scene/Texture.h>
 #include <Scene/SceneObject.h>
 #include <Scene/CubeMap.h>
 #include <Scene/Camera.h>
 
+#include <Memory/Texture.h>
 #include <Memory/IndexBuffer.h>
 #include <Memory/UploadBuffer.h>
 #include <Memory/DynamicDescriptorHeap.h>
@@ -119,14 +118,7 @@ namespace Engine::Render::Passes
 
         auto cubeTexture = cubeMap.texture;
 
-        D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
-        desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-        desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-        desc.TextureCube.MostDetailedMip = 0;
-        desc.TextureCube.MipLevels = cubeTexture->GetResourceDescription().MipLevels;
-        desc.TextureCube.ResourceMinLODClamp = 0.0f;
-        desc.Format = cubeTexture->GetResourceDescription().Format;
-        auto srv = cubeTexture->GetShaderResourceView(renderContext->Device(), renderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV), &desc);
+        auto srv = cubeTexture->GetCubeSRDescriptor().GetCPUDescriptor();
 
         passContext.frameContext->dynamicDescriptorHeap->StageDescriptor(1, 0, 1, srv);
 
@@ -135,7 +127,7 @@ namespace Engine::Render::Passes
         CommandListUtils::BindIndexBuffer(commandList, resourceStateTracker, *cubeMap.indexBuffer);
 
         passContext.frameContext->dynamicDescriptorHeap->CommitStagedDescriptors(renderContext->Device(), commandList);
-        
+
         commandList->DrawIndexedInstanced(static_cast<uint32>(cubeMap.indexBuffer->GetElementsCount()), 1, 0, 0, 0);
     }
 } // namespace Engine::Render::Passes

@@ -13,7 +13,7 @@ namespace Engine::Scene
     public:
         SharedPtr<Memory::IndexBuffer> indexBuffer;
         SharedPtr<Memory::VertexBuffer> vertexBuffer;
-        SharedPtr<Texture> texture;
+        SharedPtr<Memory::Texture> texture;
         D3D_PRIMITIVE_TOPOLOGY primitiveTopology;
     };
 }

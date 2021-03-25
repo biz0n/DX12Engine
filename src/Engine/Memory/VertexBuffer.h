@@ -2,6 +2,8 @@
 
 #include <Types.h>
 #include <Memory/Buffer.h>
+#include <Memory/ResourceAllocator.h>
+#include <Render/RenderForwards.h>
 #include <d3d12.h>
 
 namespace Engine::Memory
@@ -9,8 +11,14 @@ namespace Engine::Memory
     class VertexBuffer : public Buffer
     {
     public:
-        VertexBuffer(const std::wstring &name = L"");
-        virtual ~VertexBuffer();
+        VertexBuffer(ID3D12Device *device,
+                     ResourceAllocator *resourceFactory,
+                     DescriptorAllocatorPool *descriptorAllocator,
+                     Engine::Render::GlobalResourceStateTracker* stateTracker,
+                     Size elementsCount,
+                     Size stride,
+                     D3D12_RESOURCE_STATES state);
+        ~VertexBuffer() ;
 
         D3D12_VERTEX_BUFFER_VIEW GetVertexBufferView();
 

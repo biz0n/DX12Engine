@@ -40,6 +40,9 @@ namespace Engine::Render
         Render::ShaderProvider *GetShaderProvider() { return mShaderProvider.get(); }
         Render::RootSignatureProvider *GetRootSignatureProvider() { return mRootSignatureProvider.get(); }
 
+        Memory::ResourceFactory* GetResourceFactory() { return mResourceFactory.get(); }
+        Memory::ResourceCopyManager* GetResourceCopyManager() { return mResourceCopyManager.get(); }
+
         EventTracker &GetEventTracker() { return mEventTracker; }
 
         uint64 GetFrameCount() const { return mFrameCount; }
@@ -69,7 +72,7 @@ namespace Engine::Render
 
         UniquePtr<Graphics> mGraphics;
 
-        SharedPtr<CommandQueue> mDirrectCommandQueue;
+        SharedPtr<CommandQueue> mDirectCommandQueue;
         SharedPtr<CommandQueue> mComputeCommandQueue;
         SharedPtr<CommandQueue> mCopyCommandQueue;
 
@@ -82,6 +85,11 @@ namespace Engine::Render
         UniquePtr<Render::PipelineStateProvider> mPipelineStateProvider;
         UniquePtr<Render::ShaderProvider> mShaderProvider;
         UniquePtr<Render::RootSignatureProvider> mRootSignatureProvider;
+
+        UniquePtr<Memory::ResourceAllocator> mResourceAllocator;
+        UniquePtr<Memory::ResourceFactory> mResourceFactory;
+        UniquePtr<Memory::ResourceCopyManager> mResourceCopyManager;
+
 
         EventTracker mEventTracker;
 

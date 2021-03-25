@@ -9,6 +9,10 @@
 
 #include <Memory/DescriptorAllocatorPool.h>
 #include <Memory/NewDescriptorAllocator.h>
+#include <Memory/Texture.h>
+#include <Memory/ResourceAllocator.h>
+#include <Memory/ResourceFactory.h>
+#include <Memory/ResourceCopyManager.h>
 
 #include <Render/SwapChain.h>
 #include <Render/UIRenderContext.h>
@@ -19,7 +23,6 @@
 #include <Render/ShaderProvider.h>
 #include <Render/RootSignatureProvider.h>
 #include <Render/ResourceStateTracker.h>
-#include <Render/Texture.h>
 
 namespace Engine::Render
 {
@@ -35,32 +38,42 @@ namespace Engine::Render
             mDescriptorAllocators[i] = MakeShared<Memory::DescriptorAllocator>(Device(), type, mDescriptorAllocatorPool);
         }
 
-        mDirrectCommandQueue = MakeShared<CommandQueue>(Device(), D3D12_COMMAND_LIST_TYPE_DIRECT);
+        mDirectCommandQueue = MakeShared<CommandQueue>(Device(), D3D12_COMMAND_LIST_TYPE_DIRECT);
         mComputeCommandQueue = MakeShared<CommandQueue>(Device(), D3D12_COMMAND_LIST_TYPE_COMPUTE);
         mCopyCommandQueue = MakeShared<CommandQueue>(Device(), D3D12_COMMAND_LIST_TYPE_COPY);
 
-        mDirrectCommandQueue->D3D12CommandQueue()->SetName(L"Render Queue");
+        mDirectCommandQueue->D3D12CommandQueue()->SetName(L"Render Queue");
         mComputeCommandQueue->D3D12CommandQueue()->SetName(L"Compute Queue");
         mCopyCommandQueue->D3D12CommandQueue()->SetName(L"Copy Queue");
 
         mGlobalResourceStateTracker = MakeUnique<GlobalResourceStateTracker>();
 
-        mSwapChain = MakeShared<SwapChain>(
-            view,
-            mGraphics.get(),
-            mGlobalResourceStateTracker,
-            mDirrectCommandQueue->D3D12CommandQueue());
+        mResourceAllocator = MakeUnique<Memory::ResourceAllocator>(Device().Get());
+        mResourceFactory = MakeUnique<Memory::ResourceFactory>(
+                Device().Get(),
+                mResourceAllocator.get(),
+                mDescriptorAllocatorPool.get(),
+                mGlobalResourceStateTracker.get());
 
-        for (auto frameIndex = 0; frameIndex < EngineConfig::SwapChainBufferCount; ++frameIndex)
+        mResourceCopyManager = MakeUnique<Memory::ResourceCopyManager>();
+
+
+        mSwapChain = MakeShared<SwapChain>(
+                view,
+                mGraphics.get(),
+                mResourceFactory.get(),
+                mDirectCommandQueue->D3D12CommandQueue());
+
+        for (auto & mCommandAllocator : mCommandAllocators)
         {
-            mCommandAllocators[frameIndex] = MakeUnique<Memory::CommandAllocatorPool>(Device(), 0);
+            mCommandAllocator = MakeUnique<Memory::CommandAllocatorPool>(Device(), 0);
         }
 
         mUIRenderContext = MakeShared<UIRenderContext>(
             view,
             Device(),
             EngineConfig::SwapChainBufferCount,
-            mSwapChain->GetCurrentBackBufferTexture()->D3D12Resource()->GetDesc().Format);
+            mSwapChain->GetCurrentBackBufferTexture()->D3DResource()->GetDesc().Format);
 
         mShaderProvider = MakeUnique<Render::ShaderProvider>();
         mRootSignatureProvider = MakeUnique<Render::RootSignatureProvider>(Device());
@@ -89,7 +102,7 @@ namespace Engine::Render
         switch (type)
         {
         case D3D12_COMMAND_LIST_TYPE_DIRECT:
-            return mDirrectCommandQueue;
+            return mDirectCommandQueue;
         case D3D12_COMMAND_LIST_TYPE_COMPUTE:
             return mComputeCommandQueue;
         case D3D12_COMMAND_LIST_TYPE_COPY:
@@ -129,6 +142,9 @@ namespace Engine::Render
             GetDescriptorAllocator(type)->ReleaseStaleDescriptors(mFrameValues[currentBackBufferIndex]);
         }
 
+        mDescriptorAllocatorPool->ReleaseStaleDescriptors(mFrameValues[currentBackBufferIndex]);
+        mDescriptorAllocatorPool->SetCurrentFrame(mFrameValues[currentBackBufferIndex]);
+
         mCommandAllocators[currentBackBufferIndex]->Reset();
 
         ++mFrameCount;
@@ -145,9 +161,9 @@ namespace Engine::Render
         uiCommandList->SetName(L"UI Render List");
         mEventTracker.StartGPUEvent("Render UI", uiCommandList);
 
-        CommandListUtils::TransitionBarrier(resourceStateTracker, mSwapChain->GetCurrentBackBufferTexture()->D3D12ResourceCom(), D3D12_RESOURCE_STATE_RENDER_TARGET);
+        CommandListUtils::TransitionBarrier(resourceStateTracker, mSwapChain->GetCurrentBackBufferTexture()->D3DResource(), D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-        auto rtv = mSwapChain->GetCurrentBackBufferTexture()->GetRTDescriptor(GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_RTV).get());
+        auto rtv = mSwapChain->GetCurrentBackBufferTexture()->GetRTDescriptor().GetCPUDescriptor();
         uiCommandList->OMSetRenderTargets(1, &rtv, false, nullptr);
 
         //resourceStateTracker->FlushBarriers(uiCommandList);
@@ -178,7 +194,7 @@ namespace Engine::Render
         auto postPassCommandList = CreateGraphicsCommandList();
         postPassCommandList->SetName(L"Transition BackBuffer");
         mEventTracker.StartGPUEvent("Transition BackBuffer", postPassCommandList);
-        CommandListUtils::TransitionBarrier(resourceStateTracker, mSwapChain->GetCurrentBackBufferTexture()->D3D12ResourceCom(), D3D12_RESOURCE_STATE_PRESENT);
+        CommandListUtils::TransitionBarrier(resourceStateTracker, mSwapChain->GetCurrentBackBufferTexture()->D3DResource(), D3D12_RESOURCE_STATE_PRESENT);
         resourceStateTracker->FlushPendingBarriers(postPassCommandList);
         resourceStateTracker->CommitFinalResourceStates();
         mEventTracker.EndGPUEvent(postPassCommandList);
@@ -189,7 +205,7 @@ namespace Engine::Render
         mFenceValues[currentBackBufferIndex] = GetGraphicsCommandQueue()->ExecuteCommandLists(commandLists.size(), commandLists.data());
         mFrameValues[currentBackBufferIndex] = GetFrameCount();
 
-        currentBackBufferIndex = mSwapChain->Present();
+        mSwapChain->Present();
     }
 
     void RenderContext::WaitForIdle()

@@ -9,17 +9,16 @@
 #include <Memory/IndexBuffer.h>
 #include <Memory/VertexBuffer.h>
 #include <Memory/UploadBuffer.h>
+#include <Memory/Texture.h>
 
 #include <Render/RenderContext.h>
 #include <Render/ResourceStateTracker.h>
 
 #include <Scene/Loader/SceneLoader.h>
 #include <Scene/Image.h>
-#include <Scene/Texture.h>
 #include <Scene/Material.h>
 #include <Scene/PunctualLight.h>
 #include <Scene/Camera.h>
-#include <Scene/Texture.h>
 
 #include <DirectXTex.h>
 #include <DirectXMath.h>
@@ -29,148 +28,9 @@
 
 namespace Engine::Render::CommandListUtils
 {
-    void UploadVertexBuffer(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, Memory::VertexBuffer &vertexBuffer, SharedPtr<Memory::UploadBuffer> uploadBuffer)
-    {
-        UploadBuffer(renderContext, commandList, stateTracker, vertexBuffer, uploadBuffer);
-    }
-
-    void UploadIndexBuffer(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, Memory::IndexBuffer &indexBuffer, SharedPtr<Memory::UploadBuffer> uploadBuffer)
-    {
-        UploadBuffer(renderContext, commandList, stateTracker, indexBuffer, uploadBuffer);
-    }
-
-    void UploadBuffer(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, Memory::Buffer &buffer, SharedPtr<Memory::UploadBuffer> uploadBuffer, D3D12_RESOURCE_FLAGS flags)
-    {
-        auto device = renderContext->Device();
-        auto resourceTracker = stateTracker;
-        Size bufferSize = buffer.GetElementsCount() * buffer.GetElementSize();
-
-        ComPtr<ID3D12Resource> destinationResource;
-
-        auto allocation = uploadBuffer->Allocate(bufferSize, 1U);
-        CD3DX12_HEAP_PROPERTIES props{D3D12_HEAP_TYPE_DEFAULT};
-        auto bufferSesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize, flags);
-        ThrowIfFailed(device->CreateCommittedResource(
-            &props,
-            D3D12_HEAP_FLAG_NONE,
-            &bufferSesc,
-            D3D12_RESOURCE_STATE_COMMON,
-            nullptr,
-            IID_PPV_ARGS(&destinationResource)));
-
-        D3D12_SUBRESOURCE_DATA subresource;
-        subresource.pData = buffer.GetData();
-        subresource.SlicePitch = bufferSize;
-        subresource.RowPitch = bufferSize;
-
-        resourceTracker->TrackResource(destinationResource.Get(), D3D12_RESOURCE_STATE_COMMON);
-        TransitionBarrier(commandList, resourceTracker, destinationResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, true);
-
-        UpdateSubresources(commandList.Get(), destinationResource.Get(), uploadBuffer->GetD3D12Resource(), allocation.offset, 0, 1, &subresource);
-
-        
-        buffer.SetD3D12Resource(destinationResource);
-    }
-
-    void UploadTexture(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, Scene::Texture *texture, SharedPtr<Memory::UploadBuffer> uploadBuffer)
-    {
-        if (texture->GetD3D12Resource() != nullptr)
-        {
-            return;
-        }
-
-        auto device = renderContext->Device();
-        auto resourceTracker = stateTracker;
-
-        std::filesystem::path filename = texture->GetName();
-
-        auto image = texture->GetImage();
-        auto &metadata = image->GetImage()->GetMetadata();
-        const DirectX::Image *images = image->GetImage()->GetImages();
-        Size imageCount = image->GetImage()->GetImageCount();
-
-        ComPtr<ID3D12Resource> textureResource;
-
-        D3D12_RESOURCE_DESC desc = image->GetDescription(texture->IsSRGB());
-
-        CD3DX12_HEAP_PROPERTIES props{D3D12_HEAP_TYPE_DEFAULT};
-        ThrowIfFailed(device->CreateCommittedResource(
-            &props,
-            D3D12_HEAP_FLAG_NONE,
-            &desc,
-            D3D12_RESOURCE_STATE_COMMON,
-            nullptr,
-            IID_PPV_ARGS(&textureResource)));
-
-        std::vector<D3D12_SUBRESOURCE_DATA> subresources;
-        ThrowIfFailed(PrepareUpload(
-            device.Get(),
-            images,
-            imageCount,
-            metadata,
-            subresources));
-
-        const uint64 uploadBufferSize = GetRequiredIntermediateSize(
-            textureResource.Get(),
-            0,
-            static_cast<unsigned int>(subresources.size()));
-
-        auto allocation = uploadBuffer->Allocate(uploadBufferSize, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
-
-        resourceTracker->TrackResource(textureResource.Get(), D3D12_RESOURCE_STATE_COMMON);
-        TransitionBarrier(commandList, resourceTracker, textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, true);
-
-        UpdateSubresources(
-            commandList.Get(),
-            textureResource.Get(),
-            uploadBuffer->GetD3D12Resource(),
-            allocation.offset,
-            0,
-            static_cast<unsigned int>(subresources.size()),
-            subresources.data());
-
-        texture->SetD3D12Resource(textureResource);
-    }
-
-    bool UploadMaterialTextures(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, SharedPtr<Scene::Material> material, SharedPtr<Memory::UploadBuffer> uploadBuffer)
-    {
-        bool anythingToLoad = false;
-        if (material->HasBaseColorTexture() && !material->GetBaseColorTexture()->GetD3D12Resource())
-        {
-            anythingToLoad = true;
-            UploadTexture(renderContext, commandList, stateTracker, material->GetBaseColorTexture().get(), uploadBuffer);
-        }
-
-        if (material->HasMetallicRoughnessTexture() && !material->GetMetallicRoughnessTexture()->GetD3D12Resource())
-        {
-            anythingToLoad = true;
-            UploadTexture(renderContext, commandList, stateTracker, material->GetMetallicRoughnessTexture().get(), uploadBuffer);
-        }
-
-        if (material->HasNormalTexture() && !material->GetNormalTexture()->GetD3D12Resource())
-        {
-            anythingToLoad = true;
-            UploadTexture(renderContext, commandList, stateTracker, material->GetNormalTexture().get(), uploadBuffer);
-        }
-
-        if (material->HasEmissiveTexture() && !material->GetEmissiveTexture()->GetD3D12Resource())
-        {
-            anythingToLoad = true;
-            UploadTexture(renderContext, commandList, stateTracker, material->GetEmissiveTexture().get(), uploadBuffer);
-        }
-
-        if (material->HasAmbientOcclusionTexture() && !material->GetAmbientOcclusionTexture()->GetD3D12Resource())
-        {
-            anythingToLoad = true;
-            UploadTexture(renderContext, commandList, stateTracker, material->GetAmbientOcclusionTexture().get(), uploadBuffer);
-        }
-
-        return anythingToLoad;
-    }
-
     void BindVertexBuffer(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, Memory::VertexBuffer &vertexBuffer)
     {
-        TransitionBarrier(stateTracker, vertexBuffer.GetD3D12Resource(), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+        TransitionBarrier(stateTracker, vertexBuffer.D3DResource(), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
         auto vbv = vertexBuffer.GetVertexBufferView();
         commandList->IASetVertexBuffers(0, 1, &vbv);
@@ -178,7 +38,7 @@ namespace Engine::Render::CommandListUtils
 
     void BindIndexBuffer(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, Memory::IndexBuffer &indexBuffer)
     {
-        TransitionBarrier(stateTracker, indexBuffer.GetD3D12Resource(), D3D12_RESOURCE_STATE_INDEX_BUFFER);
+        TransitionBarrier(stateTracker, indexBuffer.D3DResource(), D3D12_RESOURCE_STATE_INDEX_BUFFER);
 
         auto ibv = indexBuffer.GetIndexBufferView();
         commandList->IASetIndexBuffer(&ibv);
@@ -272,38 +132,38 @@ namespace Engine::Render::CommandListUtils
 
         if (material->HasBaseColorTexture())
         {
-            CommandListUtils::TransitionBarrier(stateTracker, material->GetBaseColorTexture()->GetD3D12Resource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+            CommandListUtils::TransitionBarrier(stateTracker, material->GetBaseColorTexture()->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-            dynamicDescriptorHeap->StageDescriptor(4, 0, 1, material->GetBaseColorTexture()->GetShaderResourceView(device, descriptorAllocator));
+            dynamicDescriptorHeap->StageDescriptor(4, 0, 1, material->GetBaseColorTexture()->GetSRDescriptor().GetCPUDescriptor());
         }
 
         if (material->HasMetallicRoughnessTexture())
         {
-            CommandListUtils::TransitionBarrier(stateTracker, material->GetMetallicRoughnessTexture()->GetD3D12Resource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+            CommandListUtils::TransitionBarrier(stateTracker, material->GetMetallicRoughnessTexture()->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-            dynamicDescriptorHeap->StageDescriptor(5, 0, 1, material->GetMetallicRoughnessTexture()->GetShaderResourceView(device, descriptorAllocator));
+            dynamicDescriptorHeap->StageDescriptor(5, 0, 1, material->GetMetallicRoughnessTexture()->GetSRDescriptor().GetCPUDescriptor());
         }
 
         if (material->HasNormalTexture())
         {
-            CommandListUtils::TransitionBarrier(stateTracker, material->GetNormalTexture()->GetD3D12Resource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+            CommandListUtils::TransitionBarrier(stateTracker, material->GetNormalTexture()->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-            dynamicDescriptorHeap->StageDescriptor(6, 0, 1, material->GetNormalTexture()->GetShaderResourceView(device, descriptorAllocator));
+            dynamicDescriptorHeap->StageDescriptor(6, 0, 1, material->GetNormalTexture()->GetSRDescriptor().GetCPUDescriptor());
         }
 
         
         if (material->HasEmissiveTexture())
         {
-            CommandListUtils::TransitionBarrier(stateTracker, material->GetEmissiveTexture()->GetD3D12Resource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+            CommandListUtils::TransitionBarrier(stateTracker, material->GetEmissiveTexture()->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-            dynamicDescriptorHeap->StageDescriptor(7, 0, 1, material->GetEmissiveTexture()->GetShaderResourceView(device, descriptorAllocator));
+            dynamicDescriptorHeap->StageDescriptor(7, 0, 1, material->GetEmissiveTexture()->GetSRDescriptor().GetCPUDescriptor());
         }
 
         if (material->HasAmbientOcclusionTexture())
         {
-            CommandListUtils::TransitionBarrier(stateTracker, material->GetAmbientOcclusionTexture()->GetD3D12Resource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+            CommandListUtils::TransitionBarrier(stateTracker, material->GetAmbientOcclusionTexture()->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-            dynamicDescriptorHeap->StageDescriptor(8, 0, 1, material->GetAmbientOcclusionTexture()->GetShaderResourceView(device, descriptorAllocator));
+            dynamicDescriptorHeap->StageDescriptor(8, 0, 1, material->GetAmbientOcclusionTexture()->GetSRDescriptor().GetCPUDescriptor());
         }
     }
 
@@ -323,6 +183,25 @@ namespace Engine::Render::CommandListUtils
             resource.Get(),
             D3D12_RESOURCE_STATE_COMMON,
             targetState);
+        stateTracker->ResourceBarrier(barrier);
+    }
+
+    void TransitionBarrier(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, ID3D12Resource* resource, D3D12_RESOURCE_STATES targetState, bool forceFlush)
+    {
+        TransitionBarrier(stateTracker, resource, targetState);
+
+        if (forceFlush)
+        {
+            stateTracker->FlushBarriers(commandList);
+        }
+    }
+
+    void TransitionBarrier(SharedPtr<ResourceStateTracker> stateTracker, ID3D12Resource* resource, D3D12_RESOURCE_STATES targetState)
+    {
+        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+                resource,
+                D3D12_RESOURCE_STATE_COMMON,
+                targetState);
         stateTracker->ResourceBarrier(barrier);
     }
 
