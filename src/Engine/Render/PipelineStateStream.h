@@ -29,6 +29,14 @@ namespace Engine::Render
         auto operator<=>(const PipelineStateProxy& other) const = default;
     };
 
+    struct ComputePipelineStateProxy
+    {
+        Name rootSignatureName;
+        std::string computeShaderName;
+
+        auto operator<=>(const ComputePipelineStateProxy& other) const = default;
+    };
+
     struct PipelineStateStream
     {
         CD3DX12_PIPELINE_STATE_STREAM_ROOT_SIGNATURE rootSignature;
@@ -43,6 +51,14 @@ namespace Engine::Render
 
         auto operator<=>(const PipelineStateStream& other) const = default;
     };
+
+    struct ComputePipelineStateStream
+    {
+        CD3DX12_PIPELINE_STATE_STREAM_ROOT_SIGNATURE rootSignature;
+        CD3DX12_PIPELINE_STATE_STREAM_CS CS;
+
+        auto operator<=>(const ComputePipelineStateStream& other) const = default;
+    };
 }
 
 namespace std
@@ -53,7 +69,7 @@ namespace std
         size_t operator()(const Engine::Render::PipelineStateStream& key) const
         {    
             return std::hash_combine(
-                //key.rootSignature,
+                key.rootSignature,
                 key.inputLayout,
                 key.primitiveTopologyType,
                 key.VS,
@@ -81,6 +97,30 @@ namespace std
                 std::hash_combine(key.rtvFormats.begin(), key.rtvFormats.end()),
                 key.rasterizer,
                 key.depthStencil
+               );
+        }
+    };
+
+    template<>
+    struct hash<Engine::Render::ComputePipelineStateStream>
+    {
+        size_t operator()(const Engine::Render::ComputePipelineStateStream& key) const
+        {    
+            return std::hash_combine(
+                key.rootSignature,
+                key.CS
+               );
+        }
+    };
+
+    template<>
+    struct hash<Engine::Render::ComputePipelineStateProxy>
+    {
+        size_t operator()(const Engine::Render::ComputePipelineStateProxy& key) const
+        {    
+            return std::hash_combine(
+                key.rootSignatureName,
+                key.computeShaderName
                );
         }
     };

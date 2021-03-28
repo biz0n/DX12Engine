@@ -53,7 +53,9 @@ struct MaterialUniform
 
     float Cutoff;
 
-    float2 Padding;
+    int BaseColorIndex;
+
+    float Padding;
 };
 
 struct LightUniform
@@ -80,5 +82,12 @@ struct FrameUniform
     float3 EyePos;
     int LightsCount;
 };
+
+struct GlobalDataType
+{
+    int Padding;
+};
+
+#define FrameDataType FrameUniform
 
 #endif

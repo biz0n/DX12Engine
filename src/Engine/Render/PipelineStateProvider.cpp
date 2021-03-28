@@ -20,16 +20,11 @@ namespace Engine::Render
 
     PipelineStateProvider::~PipelineStateProvider() = default;
 
-    ComPtr<ID3D12PipelineState> PipelineStateProvider::CreatePipelineState(const PipelineStateStream& pipelineStateStream)
+    ComPtr<ID3D12PipelineState> PipelineStateProvider::CreatePipelineState(const D3D12_PIPELINE_STATE_STREAM_DESC& pipelineStateStream)
     {
         ComPtr<ID3D12PipelineState> pipelineState;    
 
-        auto stream = pipelineStateStream;
-        D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc = { 
-            sizeof(PipelineStateStream), 
-            &stream};
-
-        ThrowIfFailed(mDevice->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&pipelineState)));
+        ThrowIfFailed(mDevice->CreatePipelineState(&pipelineStateStream, IID_PPV_ARGS(&pipelineState)));
         return pipelineState;
     }
 
@@ -58,7 +53,32 @@ namespace Engine::Render
         stateStream.rootSignature = mRootSignatureProvider->GetRootSignature(pipelineStateProxy.rootSignatureName)->GetD3D12RootSignature().Get();
         stateStream.rtvFormats = rtFormats;
 
-        auto pipelineState = CreatePipelineState(stateStream);
+        D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc = { 
+            sizeof(PipelineStateStream), 
+            &stateStream};
+
+        auto pipelineState = CreatePipelineState(pipelineStateStreamDesc);
+        pipelineState->SetName(StringToWString(name.string()).c_str());
+
+        mPipelineStates.emplace(name, std::move(pipelineState));
+    }
+
+    void PipelineStateProvider::CreatePipelineState(const Name& name, const ComputePipelineStateProxy& pipelineStateProxy)
+    {
+        if (mPipelineStates.contains(name))
+        {
+            return;
+        }
+
+        ComputePipelineStateStream stateStream;
+        stateStream.rootSignature = mRootSignatureProvider->GetRootSignature(pipelineStateProxy.rootSignatureName)->GetD3D12RootSignature().Get();
+        stateStream.CS = CD3DX12_SHADER_BYTECODE(mShaderProvider->GetShader({pipelineStateProxy.computeShaderName, "mainCS", "cs_5_1"}).Get());
+
+        D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc = { 
+            sizeof(ComputePipelineStateStream), 
+            &stateStream};
+
+        auto pipelineState = CreatePipelineState(pipelineStateStreamDesc);
         pipelineState->SetName(StringToWString(name.string()).c_str());
 
         mPipelineStates.emplace(name, std::move(pipelineState));

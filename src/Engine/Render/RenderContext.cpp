@@ -72,6 +72,7 @@ namespace Engine::Render
         mUIRenderContext = MakeShared<UIRenderContext>(
             view,
             Device(),
+            mDescriptorAllocatorPool.get(),
             EngineConfig::SwapChainBufferCount,
             mSwapChain->GetCurrentBackBufferTexture()->D3DResource()->GetDesc().Format);
 
@@ -135,12 +136,6 @@ namespace Engine::Render
         auto currentBackBufferIndex = mSwapChain->GetCurrentBackBufferIndex();
 
         GetGraphicsCommandQueue()->WaitForFenceCPU(mFenceValues[currentBackBufferIndex]);
-
-        for (uint32 i = 0; i < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES; ++i)
-        {
-            D3D12_DESCRIPTOR_HEAP_TYPE type = (D3D12_DESCRIPTOR_HEAP_TYPE)i;
-            GetDescriptorAllocator(type)->ReleaseStaleDescriptors(mFrameValues[currentBackBufferIndex]);
-        }
 
         mDescriptorAllocatorPool->ReleaseStaleDescriptors(mFrameValues[currentBackBufferIndex]);
         mDescriptorAllocatorPool->SetCurrentFrame(mFrameValues[currentBackBufferIndex]);

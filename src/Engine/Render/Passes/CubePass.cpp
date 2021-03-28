@@ -26,7 +26,6 @@
 #include <Memory/Texture.h>
 #include <Memory/IndexBuffer.h>
 #include <Memory/UploadBuffer.h>
-#include <Memory/DynamicDescriptorHeap.h>
 
 #include <d3d12.h>
 
@@ -118,15 +117,13 @@ namespace Engine::Render::Passes
 
         auto cubeTexture = cubeMap.texture;
 
-        auto srv = cubeTexture->GetCubeSRDescriptor().GetCPUDescriptor();
+        auto cubeDescriptor = cubeTexture->GetCubeSRDescriptor().GetGPUDescriptor();
 
-        passContext.frameContext->dynamicDescriptorHeap->StageDescriptor(1, 0, 1, srv);
+        commandList->SetGraphicsRootDescriptorTable(1, cubeDescriptor);
 
         commandList->IASetPrimitiveTopology(cubeMap.primitiveTopology);
         CommandListUtils::BindVertexBuffer(commandList, resourceStateTracker, *cubeMap.vertexBuffer);
         CommandListUtils::BindIndexBuffer(commandList, resourceStateTracker, *cubeMap.indexBuffer);
-
-        passContext.frameContext->dynamicDescriptorHeap->CommitStagedDescriptors(renderContext->Device(), commandList);
 
         commandList->DrawIndexedInstanced(static_cast<uint32>(cubeMap.indexBuffer->GetElementsCount()), 1, 0, 0, 0);
     }

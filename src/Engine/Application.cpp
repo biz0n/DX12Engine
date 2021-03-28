@@ -106,7 +106,7 @@ namespace Engine
 
         scene->AddSystem(MakeUnique<Render::Systems::RenderSystem>(renderer));
 
-        scene->AddSystem(MakeUnique<UI::Systems::UISystem>(mRenderContext, mRenderContext->GetUIContext()));
+        scene->AddSystem(MakeUnique<UI::Systems::UISystem>(mRenderContext));
 
         scene->AddSystem(MakeUnique<Scene::Systems::MovingSystem>(mKeyboard));
 

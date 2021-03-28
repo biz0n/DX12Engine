@@ -24,12 +24,12 @@
 
 namespace Engine::UI::Systems
 {
-    UISystem::UISystem(SharedPtr<Render::RenderContext> renderContext, SharedPtr<Render::UIRenderContext> uiRenderContext)
-        : System(), mUIRenderContext(uiRenderContext), mRenderContext(renderContext)
+    UISystem::UISystem(SharedPtr<Render::RenderContext> renderContext)
+        : System(), mRenderContext(renderContext)
     {
         mComponentRenderers.push_back(MakeUnique<UI::ComponentRenderers::StateComponentsRenderer>());
         mComponentRenderers.push_back(MakeUnique<UI::ComponentRenderers::WorldTransformComponentRenderer>());
-        mComponentRenderers.push_back(MakeUnique<UI::ComponentRenderers::MeshComponentRenderer>(renderContext, uiRenderContext));
+        mComponentRenderers.push_back(MakeUnique<UI::ComponentRenderers::MeshComponentRenderer>());
         mComponentRenderers.push_back(MakeUnique<UI::ComponentRenderers::LightComponentRenderer>());
         mComponentRenderers.push_back(MakeUnique<UI::ComponentRenderers::CameraComponentRenderer>());
     }

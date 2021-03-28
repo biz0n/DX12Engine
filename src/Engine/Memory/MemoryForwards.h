@@ -13,8 +13,6 @@ namespace Engine::Memory
     class ResourceFactory;
     class ResourceAllocator;
     class ResourceCopyManager;
-    
-    class DynamicDescriptorHeap;
 
     class DescriptorAllocatorPage;
     class DescriptorAllocator;

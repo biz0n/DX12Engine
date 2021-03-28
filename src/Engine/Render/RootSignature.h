@@ -3,12 +3,22 @@
 #include <Types.h>
 #include <d3d12.h>
 
+#include <unordered_map>
+#include <tuple>
 #include <d3dx12.h>
 
 namespace Engine::Render
 {
     class RootSignature
     {
+    public:
+        enum class RegisterType : uint32
+        {
+            ConstantBuffer = 0,
+            ShaderResource = 1,
+            UnorderedAccess = 2,
+            Sampler = 3
+        };
     public:
         RootSignature(ComPtr<ID3D12Device> device, const CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC *description);
         ~RootSignature();
@@ -21,6 +31,8 @@ namespace Engine::Render
 
         uint32 GetNumDescriptorsPerTable(uint32 index) const;
 
+        uint32 GetIndex(RegisterType type, uint32 registerIndex, uint32 registerSpace) const;
+
         static const uint32 MaxDescriptorTables = 32;
 
     private:
@@ -29,6 +41,7 @@ namespace Engine::Render
         uint32 mNumDescriptorsPerTable[MaxDescriptorTables];
         uint32 mDescriptorTableBitMask;
         uint32 mSamplerTableBitMask;
+        std::unordered_map<size_t, uint32> mIndexMap;
     };
 
 } // namespace Engine::Render

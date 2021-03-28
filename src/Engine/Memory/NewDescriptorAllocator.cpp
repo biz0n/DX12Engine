@@ -27,8 +27,8 @@ namespace Engine::Memory
             device, 
             D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 
             {
-                heapSizes.ShaderResourceViewRange,
                 heapSizes.ConstantBufferViewRange,
+                heapSizes.ShaderResourceViewRange,
                 heapSizes.UnorderedAccessViewRange
             }
         },
@@ -251,6 +251,14 @@ namespace Engine::Memory
         auto destCpu = mSrvCbvUavHeap.GetCpuAddress(heapIndex, DescriptorAllocatorConfig::SRVRange);
         auto destGpu = mSrvCbvUavHeap.GetGpuAddress(heapIndex, DescriptorAllocatorConfig::SRVRange);
         mDevice->CreateShaderResourceView(resource, &desc, destCpu);
+
+        return Descriptor { destCpu, destGpu, heapIndex };
+    }
+
+    Descriptor NewDescriptorAllocator::AllocateSRDescriptor(Index heapIndex, uint32 strideSize)
+    {
+        auto destCpu = mSrvCbvUavHeap.GetCpuAddress(heapIndex, DescriptorAllocatorConfig::SRVRange);
+        auto destGpu = mSrvCbvUavHeap.GetGpuAddress(heapIndex, DescriptorAllocatorConfig::SRVRange);
 
         return Descriptor { destCpu, destGpu, heapIndex };
     }

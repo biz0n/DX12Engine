@@ -26,6 +26,8 @@ namespace Engine::Render
 
     struct PipelineStateProxy;
     struct PipelineStateStream;
+    struct ComputePipelineStateProxy;
+    struct ComputePipelineStateStream;
     struct ShaderCreationInfo;
     struct TextureCreationInfo;
 

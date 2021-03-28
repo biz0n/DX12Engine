@@ -4,7 +4,7 @@ ConstantBuffer<FrameUniform> FrameCB : register(b0);
 
 TextureCube cubeTexture : register(t0);
 
-SamplerState gsamPointWrap : register(s0);
+#include "BaseLayout.hlsl"
 
 struct VertexPosColor
 {
@@ -25,6 +25,14 @@ struct PixelShaderOutput
     float4 Color : SV_TARGET0;
 };
 
+float3 SRGBToLinear(float3 sRGBCol)
+{
+    float3 linearRGBLo = sRGBCol / 12.92;
+    float3 linearRGBHi = pow((sRGBCol + 0.055) / 1.055, 2.4);
+    float3 linearRGB = (sRGBCol <= 0.04045) ? linearRGBLo : linearRGBHi;
+    return linearRGB;
+}
+
 VertexShaderOutput mainVS(VertexPosColor IN)
 {
     VertexShaderOutput OUT;
@@ -40,7 +48,9 @@ PixelShaderOutput mainPS(VertexShaderOutput IN)
 {
     PixelShaderOutput OUT;
 
-    OUT.Color = cubeTexture.Sample(gsamPointWrap, IN.TextureCoord);
+    float4 baseColor = cubeTexture.Sample(gsamPointWrap, IN.TextureCoord);
+    baseColor = float4(SRGBToLinear(baseColor.rgb), baseColor.a);
+    OUT.Color = baseColor;
 
     return OUT;
 }

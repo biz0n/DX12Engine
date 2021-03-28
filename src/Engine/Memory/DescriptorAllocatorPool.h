@@ -56,6 +56,7 @@ namespace Engine::Memory
             NewDescriptorAllocation AllocateRTDescriptor(ID3D12Resource* resource, uint32 mipSlice = 0);
             NewDescriptorAllocation AllocateDSDescriptor(ID3D12Resource* resource, uint32 mipSlice = 0);
             NewDescriptorAllocation AllocateSRDescriptor(ID3D12Resource* resource, uint32 strideSize);
+            NewDescriptorAllocation AllocateSRDescriptor(uint32 strideSize);
             NewDescriptorAllocation AllocateSRCubeDescriptor(ID3D12Resource* resource);
             NewDescriptorAllocation AllocateSRRaytracingASDescriptor(ID3D12Resource* resource);
             NewDescriptorAllocation AllocateCBDescriptor(ID3D12Resource* resource, uint32 strideSize);
@@ -66,6 +67,13 @@ namespace Engine::Memory
             void SetCurrentFrame(uint64 frameNumber) { mCurrentFrameNumber = frameNumber; };
 
             void ReleaseStaleDescriptors(uint64 frameNumber);
+
+            D3D12_GPU_DESCRIPTOR_HANDLE GetSRDescriptorHandle() const { return mAllocator.GetSrvCbvUavHeap().GetRange(DescriptorAllocatorConfig::SRVRange).GpuAddress; }
+            D3D12_GPU_DESCRIPTOR_HANDLE GetUADescriptorHandle() const { return mAllocator.GetSrvCbvUavHeap().GetRange(DescriptorAllocatorConfig::UAVRange).GpuAddress; }
+            D3D12_GPU_DESCRIPTOR_HANDLE GetSamplerDescriptorHandle() const { return mAllocator.GetSamplerHeap().GetRange().GpuAddress; }
+
+            ID3D12DescriptorHeap* GetCbvSrvUavDescriptorHeap() const { return mAllocator.GetSrvCbvUavHeap().D3DHeap(); }
+            ID3D12DescriptorHeap* GetSamplerDescriptorHeap() const { return mAllocator.GetSamplerHeap().D3DHeap(); }
 
         private:
             NewDescriptorAllocator mAllocator;

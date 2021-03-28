@@ -24,7 +24,6 @@
 #include <Memory/UploadBuffer.h>
 #include <Memory/IndexBuffer.h>
 #include <Memory/VertexBuffer.h>
-#include <Memory/DynamicDescriptorHeap.h>
 #include <Memory/ResourceFactory.h>
 #include <Memory/ResourceCopyManager.h>
 
@@ -45,8 +44,7 @@ namespace Engine::Render
         auto cbvSrvUavDescriptorSize = mRenderContext->Device()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         for (Size i = 0; i < std::size(mFrameContexts); ++i)
         {
-            mFrameContexts[i].uploadBuffer = mRenderContext->GetResourceFactory()->CreateUploadBuffer(500 * 1024 * 1024);
-            mFrameContexts[i].dynamicDescriptorHeap = MakeShared<Memory::DynamicDescriptorHeap>(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, cbvSrvUavDescriptorSize);
+            mFrameContexts[i].uploadBuffer = mRenderContext->GetResourceFactory()->CreateUploadBuffer(10 * 1024 * 1024);
         }
 
         mFrameResourceProvider = MakeUnique<FrameResourceProvider>(mRenderContext->Device(), mRenderContext->GetResourceFactory());

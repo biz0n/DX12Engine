@@ -70,3 +70,5 @@ inline UniquePtr<T> MakeUnique(Args &&... args)
 
 template <typename T>
 using WeakPtr = std::weak_ptr<T>;
+
+#define IMGUI_TEXTURE_ID(descriptor) ((ImTextureID)descriptor.ptr)

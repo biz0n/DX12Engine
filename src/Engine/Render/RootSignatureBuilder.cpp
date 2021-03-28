@@ -54,7 +54,7 @@ namespace Engine::Render
     RootSignatureBuilder& RootSignatureBuilder::AddSRVDescriptorTableParameter(uint32 registerIndex, uint32 registerSpace, D3D12_SHADER_VISIBILITY visibility, uint32 numDescriptors)
     {
         CD3DX12_DESCRIPTOR_RANGE1 table;
-        table.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, numDescriptors, registerIndex, registerSpace);
+        table.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, numDescriptors, registerIndex, registerSpace, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
 
         CD3DX12_ROOT_PARAMETER1 parameter;
         parameter.InitAsDescriptorTable(1, &table, visibility);
@@ -66,7 +66,19 @@ namespace Engine::Render
     RootSignatureBuilder& RootSignatureBuilder::AddUAVDescriptorTableParameter(uint32 registerIndex, uint32 registerSpace, D3D12_SHADER_VISIBILITY visibility, uint32 numDescriptors)
     {
         CD3DX12_DESCRIPTOR_RANGE1 table;
-        table.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, numDescriptors, registerIndex, registerSpace);
+        table.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, numDescriptors, registerIndex, registerSpace, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
+
+        CD3DX12_ROOT_PARAMETER1 parameter;
+        parameter.InitAsDescriptorTable(1, &table, visibility);
+        mParameters.push_back({parameter, table});
+
+        return *this;
+    }
+
+    RootSignatureBuilder& RootSignatureBuilder::AddSamplerDescriptorTableParameter(uint32 registerIndex, uint32 registerSpace, D3D12_SHADER_VISIBILITY visibility, uint32 numDescriptors)
+    {
+        CD3DX12_DESCRIPTOR_RANGE1 table;
+        table.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, numDescriptors, registerIndex, registerSpace, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
 
         CD3DX12_ROOT_PARAMETER1 parameter;
         parameter.InitAsDescriptorTable(1, &table, visibility);

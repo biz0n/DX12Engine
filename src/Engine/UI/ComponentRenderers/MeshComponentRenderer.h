@@ -20,12 +20,9 @@ namespace Engine::UI::ComponentRenderers
     
     class MeshComponentRenderer : public ComponentRenderer<Engine::Scene::Components::MeshComponent>
     {
-        private:
-            SharedPtr<Render::RenderContext> mRenderContext;
-            SharedPtr<Render::UIRenderContext> mUIRenderContext;
         public:
-            MeshComponentRenderer(SharedPtr<Render::RenderContext> renderContext, SharedPtr<Render::UIRenderContext> uiRenderContext)
-                : ComponentRenderer("Mesh Component"), mRenderContext(renderContext), mUIRenderContext(uiRenderContext)
+            MeshComponentRenderer()
+                : ComponentRenderer("Mesh Component")
              {}
             ~MeshComponentRenderer() override = default;
 
@@ -36,50 +33,45 @@ namespace Engine::UI::ComponentRenderers
                 {
                     auto texture = meshComponent.mesh.material->GetBaseColorTexture();
 
-                    auto srv = texture->GetSRDescriptor().GetCPUDescriptor();
-                    auto textureId = mUIRenderContext->GetTextureId(srv);
+                    auto srv = texture->GetSRDescriptor().GetGPUDescriptor();
 
-                    ImGui::Image(textureId, {256, 256});
+                    ImGui::Image(IMGUI_TEXTURE_ID(srv), {256, 256});
                 }
 
                 if (meshComponent.mesh.material->HasNormalTexture())
                 {
                     auto texture = meshComponent.mesh.material->GetNormalTexture();
 
-                    auto srv = texture->GetSRDescriptor().GetCPUDescriptor();
-                    auto textureId = mUIRenderContext->GetTextureId(srv);
+                    auto srv = texture->GetSRDescriptor().GetGPUDescriptor();
 
-                    ImGui::Image(textureId, {256, 256});
+                    ImGui::Image(IMGUI_TEXTURE_ID(srv), {256, 256});
                 }
 
                 if (meshComponent.mesh.material->HasMetallicRoughnessTexture())
                 {
                     auto texture = meshComponent.mesh.material->GetMetallicRoughnessTexture();
 
-                    auto srv = texture->GetSRDescriptor().GetCPUDescriptor();
-                    auto textureId = mUIRenderContext->GetTextureId(srv);
+                    auto srv = texture->GetSRDescriptor().GetGPUDescriptor();
 
-                    ImGui::Image(textureId, {256, 256});
+                    ImGui::Image(IMGUI_TEXTURE_ID(srv), {256, 256});
                 }
 
                 if (meshComponent.mesh.material->HasEmissiveTexture())
                 {
                     auto texture = meshComponent.mesh.material->GetEmissiveTexture();
 
-                    auto srv = texture->GetSRDescriptor().GetCPUDescriptor();
-                    auto textureId = mUIRenderContext->GetTextureId(srv);
+                    auto srv = texture->GetSRDescriptor().GetGPUDescriptor();
 
-                    ImGui::Image(textureId, {256, 256});
+                    ImGui::Image(IMGUI_TEXTURE_ID(srv), {256, 256});
                 }
 
                 if (meshComponent.mesh.material->HasAmbientOcclusionTexture())
                 {
                     auto texture = meshComponent.mesh.material->GetAmbientOcclusionTexture();
 
-                    auto srv = texture->GetSRDescriptor().GetCPUDescriptor();
-                    auto textureId = mUIRenderContext->GetTextureId(srv);
+                    auto srv = texture->GetSRDescriptor().GetGPUDescriptor();
 
-                    ImGui::Image(textureId, {256, 256});
+                    ImGui::Image(IMGUI_TEXTURE_ID(srv), {256, 256});
                 }
             }
     };

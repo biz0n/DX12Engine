@@ -21,6 +21,8 @@ namespace Engine::Render
         void BuildRootSignature(const Name& name, RootSignatureBuilder& builder);
 
         RootSignature* GetRootSignature(const Name& name);
+    private:
+        void AddDefaultRegisters(RootSignatureBuilder& builder);
     };
     
     

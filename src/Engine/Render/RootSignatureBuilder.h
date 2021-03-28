@@ -17,6 +17,8 @@ namespace Engine::Render
     class RootSignatureBuilder
     {
     public:
+        inline const static uint32 UnboundedRangeSize = std::numeric_limits<uint32>::max();
+    public:
         RootSignatureBuilder();
         ~RootSignatureBuilder();
 
@@ -27,6 +29,7 @@ namespace Engine::Render
         RootSignatureBuilder& AddUAVParameter(uint32 registerIndex, uint32 registerSpace, D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL);
         RootSignatureBuilder& AddSRVDescriptorTableParameter(uint32 registerIndex, uint32 registerSpace, D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL, uint32 numDescriptors = 1);
         RootSignatureBuilder& AddUAVDescriptorTableParameter(uint32 registerIndex, uint32 registerSpace, D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL, uint32 numDescriptors = 1);
+        RootSignatureBuilder& AddSamplerDescriptorTableParameter(uint32 registerIndex, uint32 registerSpace, D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL, uint32 numDescriptors = 1);
 
         UniquePtr<RootSignature> Build(ComPtr<ID3D12Device2> device);
     private:

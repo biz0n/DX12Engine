@@ -34,7 +34,6 @@
 #include <Memory/MemoryForwards.h>
 #include <Memory/DescriptorAllocation.h>
 #include <Memory/IndexBuffer.h>
-#include <Memory/DynamicDescriptorHeap.h>
 
 #include <DirectXTex.h>
 #include <DirectXMath.h>
@@ -131,7 +130,6 @@ namespace Engine::Render::Passes
 
         commandList->SetGraphicsRootConstantBufferView(0, cbAllocation.GPU);
 
-        auto dynamicDescriptorHeap = passContext.frameContext->dynamicDescriptorHeap;
         auto resourceStateTracker = passContext.resourceStateTracker;
 
         if (mesh.material->GetProperties().doubleSided)
@@ -150,12 +148,9 @@ namespace Engine::Render::Passes
             commandList,
             resourceStateTracker,
             passContext.frameContext->uploadBuffer,
-            dynamicDescriptorHeap,
             mesh.material);
         CommandListUtils::BindVertexBuffer(commandList, resourceStateTracker, *mesh.vertexBuffer);
         CommandListUtils::BindIndexBuffer(commandList, resourceStateTracker, *mesh.indexBuffer);
-
-        dynamicDescriptorHeap->CommitStagedDescriptors(renderContext->Device(), commandList);
 
         commandList->DrawIndexedInstanced(static_cast<uint32>(mesh.indexBuffer->GetElementsCount()), 1, 0, 0, 0);
     }
@@ -206,9 +201,9 @@ namespace Engine::Render::Passes
 
         CommandListUtils::TransitionBarrier(passContext.resourceStateTracker, depth->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-        auto srv = depth->GetSRDescriptor().GetCPUDescriptor();
+        auto depthDescriptor = depth->GetSRDescriptor().GetGPUDescriptor();
 
-        passContext.frameContext->dynamicDescriptorHeap->StageDescriptor(9, 0, 1, srv);
+        commandList->SetGraphicsRootDescriptorTable(9, depthDescriptor);
 
         auto& meshes = PassData().meshes;
         for (auto &mesh : meshes)

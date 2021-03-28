@@ -22,9 +22,8 @@ Texture2D occlusionTexture : register(t4);
 
 Texture2D shadowTexture : register(t5);
 
-SamplerState gsamPointWrap : register(s0);
-SamplerComparisonState gsamShadow : register(s1);
- 
+#include "BaseLayout.hlsl"
+
 struct VertexShaderOutput
 {
     float3 PositionW : POSITION0;
@@ -108,7 +107,8 @@ PixelShaderOutput mainPS(VertexShaderOutput IN)
     float4 baseColor = MaterialCB.BaseColor;
     if (MaterialCB.HasBaseColorTexture)
     {
-        baseColor = baseColorTexture.Sample(gsamPointWrap, IN.TextureCoord);
+        //baseColor = baseColorTexture.Sample(gsamPointWrap, IN.TextureCoord);
+        baseColor = Textures2D[MaterialCB.BaseColorIndex].Sample(gsamPointWrap, IN.TextureCoord);
         baseColor = float4(SRGBToLinear(baseColor.rgb), baseColor.a);
     }
 

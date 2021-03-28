@@ -20,12 +20,12 @@ namespace Engine::Memory
     {
         Size RenderTargetHeapSize = 64;
         Size DepthStencilHeapSize = 32;
-        Size ShaderResourceViewRange = 1024;
         Size ConstantBufferViewRange = 1024;
+        Size ShaderResourceViewRange = 1024;
         Size UnorderedAccessViewRange = 1024;
         Size SamplerHeapSize = 64;
-        static constexpr Index SRVRange = 0;
-        static constexpr Index CBVRange = 1;
+        static constexpr Index CBVRange = 0;
+        static constexpr Index SRVRange = 1;
         static constexpr Index UAVRange = 2;
     };
 
@@ -39,6 +39,7 @@ namespace Engine::Memory
             Descriptor AllocateRTDescriptor(ID3D12Resource* resource, Index heapIndex, uint32 mipSlice = 0);
             Descriptor AllocateDSDescriptor(ID3D12Resource* resource, Index heapIndex, uint32 mipSlice = 0);
             Descriptor AllocateSRDescriptor(ID3D12Resource* resource, Index heapIndex, uint32 strideSize);
+            Descriptor AllocateSRDescriptor(Index heapIndex, uint32 strideSize);
             Descriptor AllocateSRCubeDescriptor(ID3D12Resource* resource, Index heapIndex);
             Descriptor AllocateSRRaytracingASDescriptor(ID3D12Resource* resource, Index heapIndex);
             Descriptor AllocateCBDescriptor(ID3D12Resource* resource, Index heapIndex, uint32 strideSize);

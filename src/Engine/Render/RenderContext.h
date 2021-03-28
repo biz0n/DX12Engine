@@ -25,7 +25,7 @@ namespace Engine::Render
 
         SharedPtr<CommandQueue> GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) const;
 
-        SharedPtr<Memory::DescriptorAllocator> GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE type) const { return mDescriptorAllocators[type]; }
+        SharedPtr<Memory::DescriptorAllocatorPool> GetDescriptorAllocator() const { return mDescriptorAllocatorPool; }
 
         ComPtr<ID3D12GraphicsCommandList> CreateCommandList(D3D12_COMMAND_LIST_TYPE type);
 

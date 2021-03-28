@@ -18,7 +18,6 @@
 
 #include <Memory/Texture.h>
 #include <Memory/IndexBuffer.h>
-#include <Memory/DynamicDescriptorHeap.h>
 #include <Memory/UploadBuffer.h>
 
 #include <imgui/imgui.h>
@@ -87,11 +86,11 @@ namespace Engine::Render::Passes
         commandRecorder->SetPipelineState(PSONames::ToneMapping);
         
         auto* color = passContext.frameResourceProvider->GetTexture(ResourceNames::ForwardOutput);
-        auto colorSRV = color->GetSRDescriptor().GetCPUDescriptor();
+        auto colorSRV = color->GetSRDescriptor().GetGPUDescriptor();
 
         CommandListUtils::TransitionBarrier(passContext.resourceStateTracker, color->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-        passContext.frameContext->dynamicDescriptorHeap->StageDescriptor(0, 0, 1, colorSRV);
+        commandList->SetGraphicsRootDescriptorTable(0, colorSRV);
 
         commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -104,8 +103,6 @@ namespace Engine::Render::Passes
         indexBufferView.SizeInBytes = 3 * sizeof(uint16);
         indexBufferView.BufferLocation = allocation.GPU;
 
-        passContext.frameContext->dynamicDescriptorHeap->CommitStagedDescriptors(renderContext->Device(), commandList);
-
         commandList->IASetIndexBuffer(&indexBufferView);
 
 
@@ -115,10 +112,10 @@ namespace Engine::Render::Passes
 
         CommandListUtils::TransitionBarrier(passContext.resourceStateTracker, depth->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-        auto srv = depth->GetSRDescriptor().GetCPUDescriptor();
+        auto depsDescriptor = depth->GetSRDescriptor().GetGPUDescriptor();
 
         ImGui::Begin("ShadowMap");
-        ImGui::Image(passContext.renderContext->GetUIContext()->GetTextureId(srv), {512, 512});
+        ImGui::Image(IMGUI_TEXTURE_ID(depsDescriptor), {512, 512});
         ImGui::End();
 
     }

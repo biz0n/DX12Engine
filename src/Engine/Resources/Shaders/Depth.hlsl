@@ -9,7 +9,7 @@ ConstantBuffer<MaterialUniform> MaterialCB : register(b2);
 
 Texture2D baseColorTexture : register(t0);
 
-SamplerState gsamPointWrap : register(s0);
+#include "BaseLayout.hlsl"
 
 struct VertexShaderOutput
 {

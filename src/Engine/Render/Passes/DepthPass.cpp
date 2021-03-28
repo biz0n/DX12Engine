@@ -24,7 +24,6 @@
 
 #include <Memory/Texture.h>
 #include <Memory/IndexBuffer.h>
-#include <Memory/DynamicDescriptorHeap.h>
 #include <Memory/UploadBuffer.h>
 
 namespace Engine::Render::Passes
@@ -125,7 +124,6 @@ namespace Engine::Render::Passes
 
         commandList->SetGraphicsRootConstantBufferView(0, cbAllocation.GPU);
 
-        auto dynamicDescriptorHeap = passContext.frameContext->dynamicDescriptorHeap;
         auto resourceStateTracker = passContext.resourceStateTracker;
 
         commandRecorder->SetPipelineState(PSONames::Depth);
@@ -135,7 +133,6 @@ namespace Engine::Render::Passes
         
 
         auto device = renderContext->Device();
-        auto descriptorAllocator = renderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
         MaterialUniform uniform = CommandListUtils::GetMaterialUniform(*mesh.material.get());
 
@@ -147,13 +144,11 @@ namespace Engine::Render::Passes
         {
             CommandListUtils::TransitionBarrier(resourceStateTracker, mesh.material->GetBaseColorTexture()->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-            dynamicDescriptorHeap->StageDescriptor(3, 0, 1, mesh.material->GetBaseColorTexture()->GetSRDescriptor().GetCPUDescriptor());
+            commandList->SetGraphicsRootDescriptorTable(3, mesh.material->GetBaseColorTexture()->GetSRDescriptor().GetGPUDescriptor());
         }
 
         CommandListUtils::BindVertexBuffer(commandList, resourceStateTracker, *mesh.vertexBuffer);
         CommandListUtils::BindIndexBuffer(commandList, resourceStateTracker, *mesh.indexBuffer);
-
-        dynamicDescriptorHeap->CommitStagedDescriptors(renderContext->Device(), commandList);
 
         commandList->DrawIndexedInstanced(static_cast<uint32>(mesh.indexBuffer->GetElementsCount()), 1, 0, 0, 0);
     }

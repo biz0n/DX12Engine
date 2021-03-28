@@ -1,5 +1,7 @@
 // copied from https://github.com/microsoft/DirectX-Graphics-Samples/blob/master/MiniEngine/Core/Shaders/ScreenQuadVS.hlsl
 
+#include "BaseLayout.hlsl"
+
 void mainVS(in uint VertID : SV_VertexID, out float4 Pos : SV_Position, out float2 Tex : TexCoord0)
 {
     // Texture coordinates range [0, 2], but only [0, 1] appears on screen.

@@ -5,7 +5,6 @@
 
 #include <Memory/DescriptorAllocator.h>
 #include <Memory/DescriptorAllocation.h>
-#include <Memory/DynamicDescriptorHeap.h>
 #include <Memory/IndexBuffer.h>
 #include <Memory/VertexBuffer.h>
 #include <Memory/UploadBuffer.h>
@@ -91,6 +90,11 @@ namespace Engine::Render::CommandListUtils
         uniform.HasOcclusionTexture = material.HasAmbientOcclusionTexture();
         uniform.HasEmissiveTexture = material.HasEmissiveTexture();
 
+        if (material.HasBaseColorTexture())
+        {
+            uniform.BaseColorIndex = material.GetBaseColorTexture()->GetSRDescriptor().GetIndex();
+        }
+
         return uniform;
     }
 
@@ -119,10 +123,9 @@ namespace Engine::Render::CommandListUtils
         return cb;
     }
 
-    void BindMaterial(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, SharedPtr<Memory::UploadBuffer> buffer, SharedPtr<Memory::DynamicDescriptorHeap> dynamicDescriptorHeap, SharedPtr<Scene::Material> material)
+    void BindMaterial(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, SharedPtr<Memory::UploadBuffer> buffer, SharedPtr<Scene::Material> material)
     {
         auto device = renderContext->Device();
-        auto descriptorAllocator = renderContext->GetDescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
         MaterialUniform uniform = CommandListUtils::GetMaterialUniform(*material.get());
 
@@ -134,36 +137,36 @@ namespace Engine::Render::CommandListUtils
         {
             CommandListUtils::TransitionBarrier(stateTracker, material->GetBaseColorTexture()->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-            dynamicDescriptorHeap->StageDescriptor(4, 0, 1, material->GetBaseColorTexture()->GetSRDescriptor().GetCPUDescriptor());
+            commandList->SetGraphicsRootDescriptorTable(4, material->GetBaseColorTexture()->GetSRDescriptor().GetGPUDescriptor());
         }
 
         if (material->HasMetallicRoughnessTexture())
         {
             CommandListUtils::TransitionBarrier(stateTracker, material->GetMetallicRoughnessTexture()->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-            dynamicDescriptorHeap->StageDescriptor(5, 0, 1, material->GetMetallicRoughnessTexture()->GetSRDescriptor().GetCPUDescriptor());
+            commandList->SetGraphicsRootDescriptorTable(5, material->GetMetallicRoughnessTexture()->GetSRDescriptor().GetGPUDescriptor());
         }
 
         if (material->HasNormalTexture())
         {
             CommandListUtils::TransitionBarrier(stateTracker, material->GetNormalTexture()->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-            dynamicDescriptorHeap->StageDescriptor(6, 0, 1, material->GetNormalTexture()->GetSRDescriptor().GetCPUDescriptor());
+            commandList->SetGraphicsRootDescriptorTable(6, material->GetNormalTexture()->GetSRDescriptor().GetGPUDescriptor());
+            
         }
 
-        
         if (material->HasEmissiveTexture())
         {
             CommandListUtils::TransitionBarrier(stateTracker, material->GetEmissiveTexture()->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-            dynamicDescriptorHeap->StageDescriptor(7, 0, 1, material->GetEmissiveTexture()->GetSRDescriptor().GetCPUDescriptor());
+            commandList->SetGraphicsRootDescriptorTable(7, material->GetEmissiveTexture()->GetSRDescriptor().GetGPUDescriptor());
         }
 
         if (material->HasAmbientOcclusionTexture())
         {
             CommandListUtils::TransitionBarrier(stateTracker, material->GetAmbientOcclusionTexture()->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-            dynamicDescriptorHeap->StageDescriptor(8, 0, 1, material->GetAmbientOcclusionTexture()->GetSRDescriptor().GetCPUDescriptor());
+            commandList->SetGraphicsRootDescriptorTable(8, material->GetAmbientOcclusionTexture()->GetSRDescriptor().GetGPUDescriptor());
         }
     }
 

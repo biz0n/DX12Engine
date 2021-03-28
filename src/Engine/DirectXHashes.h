@@ -157,6 +157,17 @@ namespace std
     };
 
     template <>
+    struct hash<CD3DX12_PIPELINE_STATE_STREAM_CS>
+    {
+        size_t operator()(const CD3DX12_PIPELINE_STATE_STREAM_CS &key) const
+        {
+            D3D12_SHADER_BYTECODE desc = key;
+
+            return std::hash<D3D12_SHADER_BYTECODE>{}(desc);
+        }
+    };
+
+    template <>
     struct hash<D3D12_DEPTH_STENCILOP_DESC>
     {
         size_t operator()(const D3D12_DEPTH_STENCILOP_DESC &desc) const

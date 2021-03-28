@@ -17,11 +17,12 @@ namespace Engine::Render
             ~PipelineStateProvider();
 
             void CreatePipelineState(const Name& name, const PipelineStateProxy& pipelineStateProxy);
+            void CreatePipelineState(const Name& name, const ComputePipelineStateProxy& pipelineStateProxy);
 
             ComPtr<ID3D12PipelineState> GetPipelineState(const Name& name);
 
         private:
-            ComPtr<ID3D12PipelineState> CreatePipelineState(const PipelineStateStream& pipelineStateStream);
+            ComPtr<ID3D12PipelineState> CreatePipelineState(const D3D12_PIPELINE_STATE_STREAM_DESC& pipelineStateStream);
 
         private:
             ComPtr<ID3D12Device2> mDevice;

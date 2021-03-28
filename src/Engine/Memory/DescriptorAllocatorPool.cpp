@@ -107,6 +107,16 @@ namespace Engine::Memory
         });
     }
 
+    NewDescriptorAllocation DescriptorAllocatorPool::AllocateSRDescriptor(uint32 strideSize)
+    {
+        const auto index = mSRIndexPool.GetIndex();
+        const auto descriptor = mAllocator.AllocateSRDescriptor(index, strideSize);
+        return NewDescriptorAllocation(descriptor, [this](NewDescriptorAllocation&& allocation)
+        {
+            mStaleDescriptors.emplace(allocation.GetIndex(), &mSRIndexPool, mCurrentFrameNumber);
+        });
+    }
+
     NewDescriptorAllocation DescriptorAllocatorPool::AllocateSRCubeDescriptor(ID3D12Resource* resource)
     {
         const auto index = mSRIndexPool.GetIndex();

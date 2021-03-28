@@ -7,11 +7,11 @@
 #include <Render/RootSignatureProvider.h>
 #include <Render/FrameTransientContext.h>
 #include <Render/PipelineStateProvider.h>
+#include <Render/RootSignature.h>
 
 #include <Memory/Texture.h>
 #include <Memory/DescriptorAllocator.h>
 #include <Memory/DescriptorAllocation.h>
-#include <Memory/DynamicDescriptorHeap.h>
 
 #include <d3dx12.h>
 
@@ -121,11 +121,38 @@ namespace Engine::Render
             return;
         }
 
+        ID3D12DescriptorHeap* heaps[2] = {
+            mRenderContext->GetDescriptorAllocator()->GetCbvSrvUavDescriptorHeap(), 
+            mRenderContext->GetDescriptorAllocator()->GetSamplerDescriptorHeap()
+        };
+        mCommandList->SetDescriptorHeaps(std::size(heaps), heaps);
+
         auto rs = mRenderContext->GetRootSignatureProvider()->GetRootSignature(rootSignature);
         mCommandList->SetGraphicsRootSignature(rs->GetD3D12RootSignature().Get());
 
-        mFrameTransientContext->dynamicDescriptorHeap->ParseRootSignature(rs);
         mLastRootSignature = rootSignature;
+
+        
+
+        auto srDescriptorHandle = mRenderContext->GetDescriptorAllocator()->GetSRDescriptorHandle();
+        auto auDescriptorHandle = mRenderContext->GetDescriptorAllocator()->GetUADescriptorHandle();
+        auto samplerDescriptorHandle = mRenderContext->GetDescriptorAllocator()->GetSamplerDescriptorHandle();
+
+
+        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::ShaderResource, 0, 10), srDescriptorHandle);
+        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::ShaderResource, 0, 11), srDescriptorHandle);
+        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::ShaderResource, 0, 12), srDescriptorHandle);
+        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::ShaderResource, 0, 13), srDescriptorHandle);
+        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::ShaderResource, 0, 14), srDescriptorHandle);
+
+        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::UnorderedAccess, 0, 10), auDescriptorHandle);
+        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::UnorderedAccess, 0, 11), auDescriptorHandle);
+        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::UnorderedAccess, 0, 12), auDescriptorHandle);
+        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::UnorderedAccess, 0, 13), auDescriptorHandle);
+        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::UnorderedAccess, 0, 14), auDescriptorHandle);
+        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::UnorderedAccess, 0, 15), auDescriptorHandle);
+
+        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::Sampler, 0, 10), samplerDescriptorHandle);
     }
 
     void PassCommandRecorder::SetPipelineState(const Name& pso)
