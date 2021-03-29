@@ -3,8 +3,6 @@
 #include <Exceptions.h>
 #include <d3dx12.h>
 
-#include <Memory/DescriptorAllocator.h>
-#include <Memory/DescriptorAllocation.h>
 #include <Memory/IndexBuffer.h>
 #include <Memory/VertexBuffer.h>
 #include <Memory/UploadBuffer.h>
@@ -48,7 +46,6 @@ namespace Engine::Render::CommandListUtils
         LightUniform light = {};
 
         light.LightType = lightNode.GetLightType();
-        light.Enabled = lightNode.IsEnabled();
         auto color = lightNode.GetColor();
         light.Color = { color.x * lightNode.GetIntensity(), color.y * lightNode.GetIntensity(), color.z * lightNode.GetIntensity() };
 
@@ -95,6 +92,26 @@ namespace Engine::Render::CommandListUtils
             uniform.BaseColorIndex = material.GetBaseColorTexture()->GetSRDescriptor().GetIndex();
         }
 
+        if (material.HasMetallicRoughnessTexture())
+        {
+            uniform.MetallicRoughnessIndex = material.GetMetallicRoughnessTexture()->GetSRDescriptor().GetIndex();
+        }
+
+        if (material.HasNormalTexture())
+        {
+            uniform.NormalIndex = material.GetNormalTexture()->GetSRDescriptor().GetIndex();
+        }
+
+        if (material.HasEmissiveTexture())
+        {
+            uniform.EmissiveIndex = material.GetEmissiveTexture()->GetSRDescriptor().GetIndex();
+        }
+
+        if (material.HasAmbientOcclusionTexture())
+        {
+            uniform.OcclusionIndex = material.GetAmbientOcclusionTexture()->GetSRDescriptor().GetIndex();
+        }
+
         return uniform;
     }
 
@@ -116,7 +133,7 @@ namespace Engine::Render::CommandListUtils
         auto d = DirectX::XMMatrixDeterminant(tWorld);
         DirectX::XMMATRIX tWorldInverseTranspose = DirectX::XMMatrixInverse(&d, tWorld);
         tWorldInverseTranspose = DirectX::XMMatrixTranspose(tWorldInverseTranspose);
-        MeshUniform cb;
+        MeshUniform cb{};
         DirectX::XMStoreFloat4x4(&cb.World, tWorld);
         DirectX::XMStoreFloat4x4(&cb.InverseTranspose, tWorldInverseTranspose);
 
@@ -133,41 +150,33 @@ namespace Engine::Render::CommandListUtils
         matAllocation.CopyTo(&uniform);
         commandList->SetGraphicsRootConstantBufferView(2, matAllocation.GPU);
 
+
         if (material->HasBaseColorTexture())
         {
             CommandListUtils::TransitionBarrier(stateTracker, material->GetBaseColorTexture()->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-
-            commandList->SetGraphicsRootDescriptorTable(4, material->GetBaseColorTexture()->GetSRDescriptor().GetGPUDescriptor());
         }
 
         if (material->HasMetallicRoughnessTexture())
         {
             CommandListUtils::TransitionBarrier(stateTracker, material->GetMetallicRoughnessTexture()->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-
-            commandList->SetGraphicsRootDescriptorTable(5, material->GetMetallicRoughnessTexture()->GetSRDescriptor().GetGPUDescriptor());
         }
 
         if (material->HasNormalTexture())
         {
             CommandListUtils::TransitionBarrier(stateTracker, material->GetNormalTexture()->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-
-            commandList->SetGraphicsRootDescriptorTable(6, material->GetNormalTexture()->GetSRDescriptor().GetGPUDescriptor());
             
         }
 
         if (material->HasEmissiveTexture())
         {
             CommandListUtils::TransitionBarrier(stateTracker, material->GetEmissiveTexture()->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-
-            commandList->SetGraphicsRootDescriptorTable(7, material->GetEmissiveTexture()->GetSRDescriptor().GetGPUDescriptor());
         }
 
         if (material->HasAmbientOcclusionTexture())
         {
             CommandListUtils::TransitionBarrier(stateTracker, material->GetAmbientOcclusionTexture()->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-
-            commandList->SetGraphicsRootDescriptorTable(8, material->GetAmbientOcclusionTexture()->GetSRDescriptor().GetGPUDescriptor());
         }
+
     }
 
     void TransitionBarrier(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<ResourceStateTracker> stateTracker, ComPtr<ID3D12Resource> resource, D3D12_RESOURCE_STATES targetState, bool forceFlush)

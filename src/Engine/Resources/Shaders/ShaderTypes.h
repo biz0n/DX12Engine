@@ -39,6 +39,7 @@ struct MaterialUniform
     float4 Ambient;
     float4 BaseColor;
     float4 Specular;
+
     float MetallicFactor;
     float RoughnessFactor;
     float SpecularPower;
@@ -50,11 +51,13 @@ struct MaterialUniform
     aligned_bool HasOcclusionTexture;
 
     aligned_bool HasEmissiveTexture;
-
-    float Cutoff;
-
     int BaseColorIndex;
+    int NormalIndex;
+    int MetallicRoughnessIndex;
 
+    int OcclusionIndex;
+    int EmissiveIndex;
+    float Cutoff;
     float Padding;
 };
 
@@ -64,7 +67,7 @@ struct LightUniform
     int LightType;
 
     float3 DirectionWS;
-    aligned_bool Enabled;
+    aligned_bool HasShadowTexture;
 
     float3 Color;
     float ConstantAttenuation;
@@ -73,6 +76,9 @@ struct LightUniform
     float QuadraticAttenuation;
     float InnerConeAngle;
     float OuterConeAngle;
+
+    int ShadowIndex;
+    float3 Padding;
 };
 
 struct FrameUniform

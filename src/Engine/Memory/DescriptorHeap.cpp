@@ -28,7 +28,7 @@ namespace Engine::Memory
             mGpu = mHeap->GetGPUDescriptorHandleForHeapStart();
         }
 
-        mHeap->SetName((L"DescriptorAllocator heap: " + std::to_wstring(type)).c_str());
+        mHeap->SetName((L"DescriptorAllocatorPool heap: " + std::to_wstring(type)).c_str());
 
         Size offset = 0;
         for (auto range : ranges)

@@ -10,8 +10,6 @@
 #include <Render/RootSignature.h>
 
 #include <Memory/Texture.h>
-#include <Memory/DescriptorAllocator.h>
-#include <Memory/DescriptorAllocation.h>
 
 #include <d3dx12.h>
 
@@ -144,6 +142,8 @@ namespace Engine::Render
         mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::ShaderResource, 0, 12), srDescriptorHandle);
         mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::ShaderResource, 0, 13), srDescriptorHandle);
         mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::ShaderResource, 0, 14), srDescriptorHandle);
+        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::ShaderResource, 0, 15), srDescriptorHandle);
+        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::ShaderResource, 0, 16), srDescriptorHandle);
 
         mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::UnorderedAccess, 0, 10), auDescriptorHandle);
         mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::UnorderedAccess, 0, 11), auDescriptorHandle);
@@ -153,6 +153,7 @@ namespace Engine::Render
         mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::UnorderedAccess, 0, 15), auDescriptorHandle);
 
         mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::Sampler, 0, 10), samplerDescriptorHandle);
+        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::Sampler, 0, 11), samplerDescriptorHandle);
     }
 
     void PassCommandRecorder::SetPipelineState(const Name& pso)

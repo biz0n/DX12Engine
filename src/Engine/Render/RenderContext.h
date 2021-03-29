@@ -67,7 +67,6 @@ namespace Engine::Render
     private:
         SharedPtr<GlobalResourceStateTracker> mGlobalResourceStateTracker;
 
-        SharedPtr<Memory::DescriptorAllocator> mDescriptorAllocators[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES];
         SharedPtr<Memory::DescriptorAllocatorPool> mDescriptorAllocatorPool;
 
         UniquePtr<Graphics> mGraphics;

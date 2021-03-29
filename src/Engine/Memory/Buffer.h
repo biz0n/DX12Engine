@@ -28,11 +28,11 @@ namespace Engine::Memory
 
         ~Buffer() override;
 
-        const NewDescriptorAllocation &GetCBDescriptor() const;
+        const DescriptorAllocation &GetCBDescriptor() const;
 
-        const NewDescriptorAllocation &GetSRDescriptor() const;
+        const DescriptorAllocation &GetSRDescriptor() const;
 
-        const NewDescriptorAllocation &GetUADescriptor() const;
+        const DescriptorAllocation &GetUADescriptor() const;
 
         Size GetStride() const { return mStride; }
 
@@ -57,8 +57,8 @@ namespace Engine::Memory
         Size mAlignment;
         Size mSize;
 
-        mutable NewDescriptorAllocation mCBDescriptor;
-        mutable NewDescriptorAllocation mSRDescriptor;
-        mutable NewDescriptorAllocation mUADescriptor;
+        mutable DescriptorAllocation mCBDescriptor;
+        mutable DescriptorAllocation mSRDescriptor;
+        mutable DescriptorAllocation mUADescriptor;
     };
 }

@@ -3,12 +3,10 @@
 #include <Exceptions.h>
 #include <EventTracker.h>
 
-#include <Memory/DescriptorAllocator.h>
-#include <Memory/DescriptorAllocation.h>
 #include <Memory/CommandAllocatorPool.h>
 
 #include <Memory/DescriptorAllocatorPool.h>
-#include <Memory/NewDescriptorAllocator.h>
+#include <Memory/DescriptorAllocator.h>
 #include <Memory/Texture.h>
 #include <Memory/ResourceAllocator.h>
 #include <Memory/ResourceFactory.h>
@@ -35,7 +33,6 @@ namespace Engine::Render
         {
             D3D12_DESCRIPTOR_HEAP_TYPE type = (D3D12_DESCRIPTOR_HEAP_TYPE)i;
             uint32 incrementalSize = Device()->GetDescriptorHandleIncrementSize(type);
-            mDescriptorAllocators[i] = MakeShared<Memory::DescriptorAllocator>(Device(), type, mDescriptorAllocatorPool);
         }
 
         mDirectCommandQueue = MakeShared<CommandQueue>(Device(), D3D12_COMMAND_LIST_TYPE_DIRECT);

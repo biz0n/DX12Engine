@@ -14,8 +14,6 @@ namespace Engine::Memory
     class ResourceAllocator;
     class ResourceCopyManager;
 
-    class DescriptorAllocatorPage;
-    class DescriptorAllocator;
     class DescriptorAllocatorPool;
 
     class UploadBuffer;

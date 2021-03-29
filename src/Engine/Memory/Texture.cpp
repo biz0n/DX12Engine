@@ -114,7 +114,7 @@ Engine::Memory::CopyCommandFunction Engine::Memory::Texture::GetCopyCommandFunct
     return copy;
 }
 
-const Engine::Memory::NewDescriptorAllocation &Engine::Memory::Texture::GetCBDescriptor() const
+const Engine::Memory::DescriptorAllocation &Engine::Memory::Texture::GetCBDescriptor() const
 {
     if (mCBDescriptor.IsNull())
     {
@@ -124,7 +124,7 @@ const Engine::Memory::NewDescriptorAllocation &Engine::Memory::Texture::GetCBDes
     return mCBDescriptor;
 }
 
-const Engine::Memory::NewDescriptorAllocation &Engine::Memory::Texture::GetSRDescriptor() const
+const Engine::Memory::DescriptorAllocation &Engine::Memory::Texture::GetSRDescriptor() const
 {
     if (mSRDescriptor.IsNull())
     {
@@ -133,7 +133,7 @@ const Engine::Memory::NewDescriptorAllocation &Engine::Memory::Texture::GetSRDes
     return mSRDescriptor;
 }
 
-const Engine::Memory::NewDescriptorAllocation &Engine::Memory::Texture::GetCubeSRDescriptor() const
+const Engine::Memory::DescriptorAllocation &Engine::Memory::Texture::GetCubeSRDescriptor() const
 {
     if (mCubeSRDescriptor.IsNull())
     {
@@ -142,7 +142,7 @@ const Engine::Memory::NewDescriptorAllocation &Engine::Memory::Texture::GetCubeS
     return mCubeSRDescriptor;
 }
 
-const Engine::Memory::NewDescriptorAllocation &Engine::Memory::Texture::GetUADescriptor(uint32 mipSlice) const
+const Engine::Memory::DescriptorAllocation &Engine::Memory::Texture::GetUADescriptor(uint32 mipSlice) const
 {
     if (mUADescriptor[mipSlice].IsNull())
     {
@@ -152,7 +152,7 @@ const Engine::Memory::NewDescriptorAllocation &Engine::Memory::Texture::GetUADes
     return mUADescriptor[mipSlice];
 }
 
-const Engine::Memory::NewDescriptorAllocation &Engine::Memory::Texture::GetRTDescriptor(uint32 mipSlice) const
+const Engine::Memory::DescriptorAllocation &Engine::Memory::Texture::GetRTDescriptor(uint32 mipSlice) const
 {
     if (mRTDescriptor[mipSlice].IsNull())
     {
@@ -162,7 +162,7 @@ const Engine::Memory::NewDescriptorAllocation &Engine::Memory::Texture::GetRTDes
     return mRTDescriptor[mipSlice];
 }
 
-const Engine::Memory::NewDescriptorAllocation &Engine::Memory::Texture::GetDSDescriptor(uint32 mipSlice) const
+const Engine::Memory::DescriptorAllocation &Engine::Memory::Texture::GetDSDescriptor(uint32 mipSlice) const
 {
     if (mDSDescriptor[mipSlice].IsNull())
     {

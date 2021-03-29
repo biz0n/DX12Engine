@@ -53,7 +53,7 @@ void Engine::Memory::ResourceCopyData::Execute(ID3D12GraphicsCommandList *copyCo
         mStateTracker->UntrackResource(mResource.Get());
     }
 
-    const Engine::Memory::NewDescriptorAllocation &Engine::Memory::Buffer::GetCBDescriptor() const
+    const Engine::Memory::DescriptorAllocation &Engine::Memory::Buffer::GetCBDescriptor() const
     {
         if (mCBDescriptor.IsNull())
         {
@@ -63,7 +63,7 @@ void Engine::Memory::ResourceCopyData::Execute(ID3D12GraphicsCommandList *copyCo
         return mCBDescriptor;
     }
 
-    const Engine::Memory::NewDescriptorAllocation &Engine::Memory::Buffer::GetSRDescriptor() const
+    const Engine::Memory::DescriptorAllocation &Engine::Memory::Buffer::GetSRDescriptor() const
     {
         if (mSRDescriptor.IsNull())
         {
@@ -72,7 +72,7 @@ void Engine::Memory::ResourceCopyData::Execute(ID3D12GraphicsCommandList *copyCo
         return mSRDescriptor;
     }
 
-    const Engine::Memory::NewDescriptorAllocation &Engine::Memory::Buffer::GetUADescriptor() const
+    const Engine::Memory::DescriptorAllocation &Engine::Memory::Buffer::GetUADescriptor() const
     {
         if (mUADescriptor.IsNull())
         {

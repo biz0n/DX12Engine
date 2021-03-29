@@ -32,7 +32,6 @@
 #include <Memory/Texture.h>
 #include <Memory/UploadBuffer.h>
 #include <Memory/MemoryForwards.h>
-#include <Memory/DescriptorAllocation.h>
 #include <Memory/IndexBuffer.h>
 
 #include <DirectXTex.h>
@@ -54,13 +53,7 @@ namespace Engine::Render::Passes
             .AddCBVParameter(0, 0, D3D12_SHADER_VISIBILITY_VERTEX)
             .AddCBVParameter(1, 0, D3D12_SHADER_VISIBILITY_ALL)
             .AddCBVParameter(2, 0, D3D12_SHADER_VISIBILITY_PIXEL)
-            .AddSRVParameter(0, 1, D3D12_SHADER_VISIBILITY_PIXEL)
-            .AddSRVDescriptorTableParameter(0, 0, D3D12_SHADER_VISIBILITY_PIXEL)
-            .AddSRVDescriptorTableParameter(1, 0, D3D12_SHADER_VISIBILITY_PIXEL)
-            .AddSRVDescriptorTableParameter(2, 0, D3D12_SHADER_VISIBILITY_PIXEL)
-            .AddSRVDescriptorTableParameter(3, 0, D3D12_SHADER_VISIBILITY_PIXEL)
-            .AddSRVDescriptorTableParameter(4, 0, D3D12_SHADER_VISIBILITY_PIXEL)
-            .AddSRVDescriptorTableParameter(5, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+            .AddSRVParameter(0, 1, D3D12_SHADER_VISIBILITY_PIXEL);
 
         rootSignatureProvider->BuildRootSignature(RootSignatureNames::Forward, builder);
     }
@@ -176,9 +169,15 @@ namespace Engine::Render::Passes
         std::vector<LightUniform> lights;
         lights.reserve(lightsData.size());
 
+        auto* depth = passContext.frameResourceProvider->GetTexture(ResourceNames::ShadowDepth);
         for (auto& lightData : lightsData)
         {
             LightUniform light = CommandListUtils::GetLightUniform(lightData.light, lightData.worldTransform);
+            if (light.LightType == DIRECTIONAL_LIGHT)
+            {
+                light.HasShadowTexture = true;
+                light.ShadowIndex = depth->GetSRDescriptor().GetIndex();
+            }
             lights.emplace_back(light);
         }
 
@@ -197,13 +196,7 @@ namespace Engine::Render::Passes
 
         commandList->SetGraphicsRootShaderResourceView(3, lightsAllocation.GPU);
 
-        auto* depth = passContext.frameResourceProvider->GetTexture(ResourceNames::ShadowDepth);
-
         CommandListUtils::TransitionBarrier(passContext.resourceStateTracker, depth->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-
-        auto depthDescriptor = depth->GetSRDescriptor().GetGPUDescriptor();
-
-        commandList->SetGraphicsRootDescriptorTable(9, depthDescriptor);
 
         auto& meshes = PassData().meshes;
         for (auto &mesh : meshes)

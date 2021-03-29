@@ -32,17 +32,17 @@ namespace Engine::Memory
 
         ~Texture() override;
 
-        const Engine::Memory::NewDescriptorAllocation &GetCBDescriptor() const;
+        const Engine::Memory::DescriptorAllocation &GetCBDescriptor() const;
 
-        const Engine::Memory::NewDescriptorAllocation &GetSRDescriptor() const;
+        const Engine::Memory::DescriptorAllocation &GetSRDescriptor() const;
 
-        const Engine::Memory::NewDescriptorAllocation &GetCubeSRDescriptor() const;
+        const Engine::Memory::DescriptorAllocation &GetCubeSRDescriptor() const;
 
-        const Engine::Memory::NewDescriptorAllocation &GetUADescriptor(uint32 mipSlice = 0) const;
+        const Engine::Memory::DescriptorAllocation &GetUADescriptor(uint32 mipSlice = 0) const;
 
-        const Engine::Memory::NewDescriptorAllocation &GetRTDescriptor(uint32 mipSlice = 0) const;
+        const Engine::Memory::DescriptorAllocation &GetRTDescriptor(uint32 mipSlice = 0) const;
 
-        const Engine::Memory::NewDescriptorAllocation &GetDSDescriptor(uint32 mipSlice = 0) const;
+        const Engine::Memory::DescriptorAllocation &GetDSDescriptor(uint32 mipSlice = 0) const;
 
 
 
@@ -58,12 +58,12 @@ namespace Engine::Memory
         Size mAlignment;
         Size mSize;
 
-        mutable Engine::Memory::NewDescriptorAllocation mCBDescriptor{};
-        mutable Engine::Memory::NewDescriptorAllocation mSRDescriptor{};
-        mutable Engine::Memory::NewDescriptorAllocation mCubeSRDescriptor{};
+        mutable Engine::Memory::DescriptorAllocation mCBDescriptor{};
+        mutable Engine::Memory::DescriptorAllocation mSRDescriptor{};
+        mutable Engine::Memory::DescriptorAllocation mCubeSRDescriptor{};
 
-        mutable std::vector<Engine::Memory::NewDescriptorAllocation> mUADescriptor;
-        mutable std::vector<Engine::Memory::NewDescriptorAllocation> mRTDescriptor;
-        mutable std::vector<Engine::Memory::NewDescriptorAllocation> mDSDescriptor;
+        mutable std::vector<Engine::Memory::DescriptorAllocation> mUADescriptor;
+        mutable std::vector<Engine::Memory::DescriptorAllocation> mRTDescriptor;
+        mutable std::vector<Engine::Memory::DescriptorAllocation> mDSDescriptor;
     };
 }

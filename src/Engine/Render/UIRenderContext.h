@@ -23,13 +23,13 @@ namespace Engine::Render
         ComPtr<ID3D12Device> mDevice;
 
         Memory::DescriptorAllocatorPool* mDescriptorAllocatorPool;
-        Memory::NewDescriptorAllocation mFontDescriptorAllocation;
+        Memory::DescriptorAllocation mFontDescriptorAllocation;
 
     public:
         UIRenderContext(
             View view,
             ComPtr<ID3D12Device> device, 
-            Memory::DescriptorAllocatorPool* descriptorAllocatorPool, 
+            Memory::DescriptorAllocatorPool* descriptorAllocatorPool,
             uint32 numFramesInFlight, 
             DXGI_FORMAT rtvFormat);
         ~UIRenderContext();

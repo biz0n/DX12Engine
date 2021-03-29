@@ -53,8 +53,7 @@ namespace Engine::Render::Passes
         builder
             .AddCBVParameter(0, 0, D3D12_SHADER_VISIBILITY_VERTEX)
             .AddCBVParameter(1, 0, D3D12_SHADER_VISIBILITY_ALL)
-            .AddCBVParameter(2, 0, D3D12_SHADER_VISIBILITY_PIXEL)
-            .AddSRVDescriptorTableParameter(0, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+            .AddCBVParameter(2, 0, D3D12_SHADER_VISIBILITY_PIXEL);
 
         rootSignatureProvider->BuildRootSignature(RootSignatureNames::Depth, builder);
     }
@@ -130,8 +129,6 @@ namespace Engine::Render::Passes
 
         commandList->IASetPrimitiveTopology(mesh.primitiveTopology);
 
-        
-
         auto device = renderContext->Device();
 
         MaterialUniform uniform = CommandListUtils::GetMaterialUniform(*mesh.material.get());
@@ -143,8 +140,6 @@ namespace Engine::Render::Passes
         if (mesh.material->HasBaseColorTexture())
         {
             CommandListUtils::TransitionBarrier(resourceStateTracker, mesh.material->GetBaseColorTexture()->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-
-            commandList->SetGraphicsRootDescriptorTable(3, mesh.material->GetBaseColorTexture()->GetSRDescriptor().GetGPUDescriptor());
         }
 
         CommandListUtils::BindVertexBuffer(commandList, resourceStateTracker, *mesh.vertexBuffer);

@@ -7,8 +7,6 @@ ConstantBuffer<FrameUniform> FrameCB : register(b1);
 
 ConstantBuffer<MaterialUniform> MaterialCB : register(b2);
 
-Texture2D baseColorTexture : register(t0);
-
 #include "BaseLayout.hlsl"
 
 struct VertexShaderOutput
@@ -34,7 +32,7 @@ void mainPS(VertexShaderOutput IN)
     float4 baseColor = MaterialCB.BaseColor;
     if (MaterialCB.HasBaseColorTexture)
     {
-        baseColor = baseColorTexture.Sample(gsamPointWrap, IN.TextureCoord);
+        baseColor = Textures2D[MaterialCB.BaseColorIndex].Sample(gsamPointWrap, IN.TextureCoord);
     }
 
     clip(baseColor.a - MaterialCB.Cutoff);

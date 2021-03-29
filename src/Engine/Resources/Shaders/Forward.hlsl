@@ -10,18 +10,6 @@ ConstantBuffer<MaterialUniform> MaterialCB : register(b2);
 
 StructuredBuffer<LightUniform> Lights : register(t0, space1);
 
-Texture2D baseColorTexture : register(t0);
-
-Texture2D metallicRoughnessTexture : register(t1);
-
-Texture2D normalTexture : register(t2);
-
-Texture2D emissiveTexture : register(t3);
-
-Texture2D occlusionTexture : register(t4);
-
-Texture2D shadowTexture : register(t5);
-
 #include "BaseLayout.hlsl"
 
 struct VertexShaderOutput
@@ -47,7 +35,7 @@ float3 SRGBToLinear(float3 sRGBCol)
     return linearRGB;
 }
 
-float ShadowCalculation(float4 fragPosLightSpace)
+float ShadowCalculation(float4 fragPosLightSpace, int shadowIndex)
 {
     float3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
 
@@ -55,7 +43,7 @@ float ShadowCalculation(float4 fragPosLightSpace)
 
 
     uint width, height, numMips;
-    shadowTexture.GetDimensions(0, width, height, numMips);
+    Textures2D[shadowIndex].GetDimensions(0, width, height, numMips);
 
     // Texel size.
     float dx = 1.0f / (float)width;
@@ -71,7 +59,7 @@ float ShadowCalculation(float4 fragPosLightSpace)
     [unroll]
     for(int i = 0; i < 9; ++i)
     {
-        percentLit += shadowTexture.SampleCmpLevelZero(gsamShadow,
+        percentLit += Textures2D[shadowIndex].SampleCmpLevelZero(gsamShadow,
             projCoords.xy + offsets[i], currentDepth).r;
     }
     
@@ -107,7 +95,6 @@ PixelShaderOutput mainPS(VertexShaderOutput IN)
     float4 baseColor = MaterialCB.BaseColor;
     if (MaterialCB.HasBaseColorTexture)
     {
-        //baseColor = baseColorTexture.Sample(gsamPointWrap, IN.TextureCoord);
         baseColor = Textures2D[MaterialCB.BaseColorIndex].Sample(gsamPointWrap, IN.TextureCoord);
         baseColor = float4(SRGBToLinear(baseColor.rgb), baseColor.a);
     }
@@ -117,7 +104,7 @@ PixelShaderOutput mainPS(VertexShaderOutput IN)
     float3 N;
     if (MaterialCB.HasNormalTexture)
     {
-        float3 n = normalTexture.Sample(gsamPointWrap, IN.TextureCoord).rgb;
+        float3 n = Textures2D[MaterialCB.NormalIndex].Sample(gsamPointWrap, IN.TextureCoord).rgb;
         n = float3(n.r, 1-n.g, n.b);
         float scale = MaterialCB.NormalScale;
         N = (n * 2.0 - 1.0) * float3(scale, scale, 1.0);
@@ -132,7 +119,7 @@ PixelShaderOutput mainPS(VertexShaderOutput IN)
     float roughness = MaterialCB.RoughnessFactor;
     if (MaterialCB.HasMetallicRoughnessTexture)
     {
-        float4 metallicRoughness = metallicRoughnessTexture.Sample(gsamPointWrap, IN.TextureCoord);
+        float4 metallicRoughness = Textures2D[MaterialCB.MetallicRoughnessIndex].Sample(gsamPointWrap, IN.TextureCoord);
 
         metallic = metallic * metallicRoughness.b;
         roughness = roughness * clamp(metallicRoughness.g, 0.04, 1.0);
@@ -141,13 +128,13 @@ PixelShaderOutput mainPS(VertexShaderOutput IN)
     float4 emissiveFactor = MaterialCB.EmissiveFactor;
     if (MaterialCB.HasEmissiveTexture)
     {
-        emissiveFactor *= emissiveTexture.Sample(gsamPointWrap, IN.TextureCoord);
+        emissiveFactor *= Textures2D[MaterialCB.EmissiveIndex].Sample(gsamPointWrap, IN.TextureCoord);
     }
 
     float4 occlusion = MaterialCB.Ambient;
     if (MaterialCB.HasOcclusionTexture)
     {
-        occlusion = occlusionTexture.Sample(gsamPointWrap, IN.TextureCoord);
+        occlusion = Textures2D[MaterialCB.OcclusionIndex].Sample(gsamPointWrap, IN.TextureCoord);
     }
     
     float3 V = normalize(FrameCB.EyePos - IN.PositionW);
@@ -161,8 +148,6 @@ PixelShaderOutput mainPS(VertexShaderOutput IN)
     {
         LightUniform light = Lights[i];
 
-        if ( !light.Enabled ) continue;
-
         float3 luminance = 0.0f;
         switch( light.LightType )
         {
@@ -170,7 +155,10 @@ PixelShaderOutput mainPS(VertexShaderOutput IN)
             {
                 luminance = ApplyDirectionalLight(light, IN.PositionW, F0, N, V, baseColor.rgb, metallic, roughness);
 
-                luminance *= ShadowCalculation(IN.ShadowPosH);
+                if (light.HasShadowTexture)
+                {
+                    luminance *= ShadowCalculation(IN.ShadowPosH, light.ShadowIndex);
+                }
             }
             break;
         case POINT_LIGHT: 

@@ -2,17 +2,17 @@
 
 namespace Engine::Memory
 {
-    NewDescriptorAllocation::NewDescriptorAllocation()
+    DescriptorAllocation::DescriptorAllocation()
     : mCPUDescriptor{0}, mGPUDescriptor{0}, mIndexInHeap{0}, mFreeCallback{0}
     {
     }
 
-    NewDescriptorAllocation::NewDescriptorAllocation(const Descriptor& descriptor, FreeCallback freeCallback)
+    DescriptorAllocation::DescriptorAllocation(const Descriptor& descriptor, FreeCallback freeCallback)
         : mCPUDescriptor{descriptor.CpuAddress}, mGPUDescriptor{descriptor.GpuAddress}, mIndexInHeap{descriptor.HeapIndex}, mFreeCallback{freeCallback}
     {
     }
 
-    NewDescriptorAllocation::NewDescriptorAllocation(NewDescriptorAllocation &&allocation)
+    DescriptorAllocation::DescriptorAllocation(DescriptorAllocation &&allocation)
         : mCPUDescriptor{allocation.mCPUDescriptor}, mGPUDescriptor{allocation.mGPUDescriptor}, mIndexInHeap{allocation.mIndexInHeap}, mFreeCallback{allocation.mFreeCallback}
     {
         allocation.mCPUDescriptor.ptr = 0;
@@ -21,7 +21,7 @@ namespace Engine::Memory
         allocation.mFreeCallback = nullptr;
     }
 
-    NewDescriptorAllocation &NewDescriptorAllocation::operator=(NewDescriptorAllocation &&other)
+    DescriptorAllocation &DescriptorAllocation::operator=(DescriptorAllocation &&other)
     {
         Free();
 
@@ -38,18 +38,18 @@ namespace Engine::Memory
         return *this;
     }
 
-    NewDescriptorAllocation::~NewDescriptorAllocation()
+    DescriptorAllocation::~DescriptorAllocation()
     {
         Free();
     }
 
 
-    bool NewDescriptorAllocation::IsNull() const
+    bool DescriptorAllocation::IsNull() const
     {
         return mCPUDescriptor.ptr == 0;
     }
 
-    void NewDescriptorAllocation::Free()
+    void DescriptorAllocation::Free()
     {
         if (!IsNull() && mFreeCallback)
         {
@@ -77,91 +77,91 @@ namespace Engine::Memory
 
     DescriptorAllocatorPool::~DescriptorAllocatorPool() = default;
 
-    NewDescriptorAllocation DescriptorAllocatorPool::AllocateRTDescriptor(ID3D12Resource* resource, uint32 mipSlice)
+    DescriptorAllocation DescriptorAllocatorPool::AllocateRTDescriptor(ID3D12Resource* resource, uint32 mipSlice)
     {
         const auto index = mRTIndexPool.GetIndex();
         const auto descriptor = mAllocator.AllocateRTDescriptor(resource, index, mipSlice);
-        return NewDescriptorAllocation(descriptor, [this](NewDescriptorAllocation&& allocation)
+        return DescriptorAllocation(descriptor, [this](DescriptorAllocation&& allocation)
         {
             mStaleDescriptors.emplace(allocation.GetIndex(), &mRTIndexPool, mCurrentFrameNumber);
         });
     }
     
-    NewDescriptorAllocation DescriptorAllocatorPool::AllocateDSDescriptor(ID3D12Resource* resource, uint32 mipSlice)
+    DescriptorAllocation DescriptorAllocatorPool::AllocateDSDescriptor(ID3D12Resource* resource, uint32 mipSlice)
     {
         const auto index = mDSIndexPool.GetIndex();
         const auto descriptor = mAllocator.AllocateDSDescriptor(resource, index, mipSlice);
-        return NewDescriptorAllocation(descriptor, [this](NewDescriptorAllocation&& allocation)
+        return DescriptorAllocation(descriptor, [this](DescriptorAllocation&& allocation)
         {
             mStaleDescriptors.emplace(allocation.GetIndex(), &mDSIndexPool, mCurrentFrameNumber);
         });
     }
 
-    NewDescriptorAllocation DescriptorAllocatorPool::AllocateSRDescriptor(ID3D12Resource* resource, uint32 strideSize)
+    DescriptorAllocation DescriptorAllocatorPool::AllocateSRDescriptor(ID3D12Resource* resource, uint32 strideSize)
     {
         const auto index = mSRIndexPool.GetIndex();
         const auto descriptor = mAllocator.AllocateSRDescriptor(resource, index, strideSize);
-        return NewDescriptorAllocation(descriptor, [this](NewDescriptorAllocation&& allocation)
+        return DescriptorAllocation(descriptor, [this](DescriptorAllocation&& allocation)
         {
             mStaleDescriptors.emplace(allocation.GetIndex(), &mSRIndexPool, mCurrentFrameNumber);
         });
     }
 
-    NewDescriptorAllocation DescriptorAllocatorPool::AllocateSRDescriptor(uint32 strideSize)
+    DescriptorAllocation DescriptorAllocatorPool::AllocateSRDescriptor(uint32 strideSize)
     {
         const auto index = mSRIndexPool.GetIndex();
         const auto descriptor = mAllocator.AllocateSRDescriptor(index, strideSize);
-        return NewDescriptorAllocation(descriptor, [this](NewDescriptorAllocation&& allocation)
+        return DescriptorAllocation(descriptor, [this](DescriptorAllocation&& allocation)
         {
             mStaleDescriptors.emplace(allocation.GetIndex(), &mSRIndexPool, mCurrentFrameNumber);
         });
     }
 
-    NewDescriptorAllocation DescriptorAllocatorPool::AllocateSRCubeDescriptor(ID3D12Resource* resource)
+    DescriptorAllocation DescriptorAllocatorPool::AllocateSRCubeDescriptor(ID3D12Resource* resource)
     {
         const auto index = mSRIndexPool.GetIndex();
         const auto descriptor = mAllocator.AllocateSRCubeDescriptor(resource, index);
-        return NewDescriptorAllocation(descriptor, [this](NewDescriptorAllocation&& allocation)
+        return DescriptorAllocation(descriptor, [this](DescriptorAllocation&& allocation)
         {
             mStaleDescriptors.emplace(allocation.GetIndex(), &mSRIndexPool, mCurrentFrameNumber);
         });
     }
 
-    NewDescriptorAllocation DescriptorAllocatorPool::AllocateSRRaytracingASDescriptor(ID3D12Resource* resource)
+    DescriptorAllocation DescriptorAllocatorPool::AllocateSRRaytracingASDescriptor(ID3D12Resource* resource)
     {
         const auto index = mSRIndexPool.GetIndex();
         const auto descriptor = mAllocator.AllocateSRRaytracingASDescriptor(resource, index);
-        return NewDescriptorAllocation(descriptor, [this](NewDescriptorAllocation&& allocation)
+        return DescriptorAllocation(descriptor, [this](DescriptorAllocation&& allocation)
         {
             mStaleDescriptors.emplace(allocation.GetIndex(), &mSRIndexPool, mCurrentFrameNumber);
         });
     }
 
-    NewDescriptorAllocation DescriptorAllocatorPool::AllocateCBDescriptor(ID3D12Resource* resource, uint32 strideSize)
+    DescriptorAllocation DescriptorAllocatorPool::AllocateCBDescriptor(ID3D12Resource* resource, uint32 strideSize)
     {
         const auto index = mCBIndexPool.GetIndex();
         const auto descriptor = mAllocator.AllocateCBDescriptor(resource, index, strideSize);
-        return NewDescriptorAllocation(descriptor, [this](NewDescriptorAllocation&& allocation)
+        return DescriptorAllocation(descriptor, [this](DescriptorAllocation&& allocation)
         {
             mStaleDescriptors.emplace(allocation.GetIndex(), &mCBIndexPool, mCurrentFrameNumber);
         });
     }
 
-    NewDescriptorAllocation DescriptorAllocatorPool::AllocateUADescriptor(ID3D12Resource* resource, uint32 strideSize, uint32 mipSlice)
+    DescriptorAllocation DescriptorAllocatorPool::AllocateUADescriptor(ID3D12Resource* resource, uint32 strideSize, uint32 mipSlice)
     {
         const auto index = mUAIndexPool.GetIndex();
         const auto descriptor = mAllocator.AllocateUADescriptor(resource, index, strideSize, mipSlice);
-        return NewDescriptorAllocation(descriptor, [this](NewDescriptorAllocation&& allocation)
+        return DescriptorAllocation(descriptor, [this](DescriptorAllocation&& allocation)
         {
             mStaleDescriptors.emplace(allocation.GetIndex(), &mUAIndexPool, mCurrentFrameNumber);
         });
     }
 
-    NewDescriptorAllocation DescriptorAllocatorPool::AllocateSamplerDescriptor(const D3D12_SAMPLER_DESC& samplerDesc)
+    DescriptorAllocation DescriptorAllocatorPool::AllocateSamplerDescriptor(const D3D12_SAMPLER_DESC& samplerDesc)
     {
         const auto index = mSamplerIndexPool.GetIndex();
         const auto descriptor = mAllocator.AllocateSamplerDescriptor(samplerDesc, index);
-        return NewDescriptorAllocation(descriptor, [this](NewDescriptorAllocation&& allocation)
+        return DescriptorAllocation(descriptor, [this](DescriptorAllocation&& allocation)
         {
             mStaleDescriptors.emplace(allocation.GetIndex(), &mSamplerIndexPool, mCurrentFrameNumber);
         });

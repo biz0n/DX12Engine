@@ -2,7 +2,7 @@
 
 #include <Types.h>
 
-#include <Memory/NewDescriptorAllocator.h>
+#include <Memory/DescriptorAllocator.h>
 #include <Memory/IndexPool.h>
 
 #include <memory>
@@ -12,24 +12,24 @@
 
 namespace Engine::Memory
 {
-    class NewDescriptorAllocation
+    class DescriptorAllocation
     {
         public:
-            using FreeCallback = std::function<void(NewDescriptorAllocation &&)>;
+            using FreeCallback = std::function<void(DescriptorAllocation &&)>;
 
-            NewDescriptorAllocation();
+            DescriptorAllocation();
 
-            NewDescriptorAllocation(const Descriptor& descriptor, FreeCallback freeCallback);
+            DescriptorAllocation(const Descriptor& descriptor, FreeCallback freeCallback);
 
             // Copies are not allowed.
-            NewDescriptorAllocation(const NewDescriptorAllocation &) = delete;
-            NewDescriptorAllocation &operator=(const NewDescriptorAllocation &) = delete;
+            DescriptorAllocation(const DescriptorAllocation &) = delete;
+            DescriptorAllocation &operator=(const DescriptorAllocation &) = delete;
 
-            NewDescriptorAllocation(NewDescriptorAllocation &&allocation);
+            DescriptorAllocation(DescriptorAllocation &&allocation);
 
-            NewDescriptorAllocation &operator=(NewDescriptorAllocation &&other);
+            DescriptorAllocation &operator=(DescriptorAllocation &&other);
 
-            ~NewDescriptorAllocation();
+            ~DescriptorAllocation();
 
             D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptor() const { return mCPUDescriptor; }
             D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptor() const { return mGPUDescriptor; }
@@ -53,15 +53,15 @@ namespace Engine::Memory
             ~DescriptorAllocatorPool();
 
         public:
-            NewDescriptorAllocation AllocateRTDescriptor(ID3D12Resource* resource, uint32 mipSlice = 0);
-            NewDescriptorAllocation AllocateDSDescriptor(ID3D12Resource* resource, uint32 mipSlice = 0);
-            NewDescriptorAllocation AllocateSRDescriptor(ID3D12Resource* resource, uint32 strideSize);
-            NewDescriptorAllocation AllocateSRDescriptor(uint32 strideSize);
-            NewDescriptorAllocation AllocateSRCubeDescriptor(ID3D12Resource* resource);
-            NewDescriptorAllocation AllocateSRRaytracingASDescriptor(ID3D12Resource* resource);
-            NewDescriptorAllocation AllocateCBDescriptor(ID3D12Resource* resource, uint32 strideSize);
-            NewDescriptorAllocation AllocateUADescriptor(ID3D12Resource* resource, uint32 strideSize, uint32 mipSlice = 0);
-            NewDescriptorAllocation AllocateSamplerDescriptor(const D3D12_SAMPLER_DESC& samplerDesc);
+            DescriptorAllocation AllocateRTDescriptor(ID3D12Resource* resource, uint32 mipSlice = 0);
+            DescriptorAllocation AllocateDSDescriptor(ID3D12Resource* resource, uint32 mipSlice = 0);
+            DescriptorAllocation AllocateSRDescriptor(ID3D12Resource* resource, uint32 strideSize);
+            DescriptorAllocation AllocateSRDescriptor(uint32 strideSize);
+            DescriptorAllocation AllocateSRCubeDescriptor(ID3D12Resource* resource);
+            DescriptorAllocation AllocateSRRaytracingASDescriptor(ID3D12Resource* resource);
+            DescriptorAllocation AllocateCBDescriptor(ID3D12Resource* resource, uint32 strideSize);
+            DescriptorAllocation AllocateUADescriptor(ID3D12Resource* resource, uint32 strideSize, uint32 mipSlice = 0);
+            DescriptorAllocation AllocateSamplerDescriptor(const D3D12_SAMPLER_DESC& samplerDesc);
         
         public:
             void SetCurrentFrame(uint64 frameNumber) { mCurrentFrameNumber = frameNumber; };
@@ -76,7 +76,7 @@ namespace Engine::Memory
             ID3D12DescriptorHeap* GetSamplerDescriptorHeap() const { return mAllocator.GetSamplerHeap().D3DHeap(); }
 
         private:
-            NewDescriptorAllocator mAllocator;
+            DescriptorAllocator mAllocator;
 
             IndexPool mRTIndexPool;
             IndexPool mDSIndexPool;
