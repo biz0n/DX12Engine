@@ -3,7 +3,7 @@
 #include <Types.h>
 #include <d3d12.h>
 
-namespace Engine
+namespace Engine::HAL
 {
     inline std::wstring GetResourceNameW(ID3D12Object* resource)
     {

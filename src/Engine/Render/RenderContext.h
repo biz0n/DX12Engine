@@ -6,6 +6,7 @@
 #include <EngineConfig.h>
 #include <Memory/MemoryForwards.h>
 #include <Render/RenderForwards.h>
+#include <HAL/HALForwards.h>
 
 #include <d3d12.h>
 #include <dxgi1_6.h>
@@ -23,15 +24,15 @@ namespace Engine::Render
 
         ComPtr<IDXGIFactory4> GIFactory() const;
 
-        SharedPtr<CommandQueue> GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) const;
+        SharedPtr<HAL::CommandQueue> GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) const;
 
         SharedPtr<Memory::DescriptorAllocatorPool> GetDescriptorAllocator() const { return mDescriptorAllocatorPool; }
 
         ComPtr<ID3D12GraphicsCommandList> CreateCommandList(D3D12_COMMAND_LIST_TYPE type);
 
-        SharedPtr<SwapChain> GetSwapChain() const { return mSwapChain; }
+        SharedPtr<HAL::SwapChain> GetSwapChain() const { return mSwapChain; }
 
-        SharedPtr<GlobalResourceStateTracker> GetGlobalResourceStateTracker() const { return mGlobalResourceStateTracker; }
+        SharedPtr<Memory::GlobalResourceStateTracker> GetGlobalResourceStateTracker() const { return mGlobalResourceStateTracker; }
 
         SharedPtr<UIRenderContext> GetUIContext() const { return mUIRenderContext; }
 
@@ -52,9 +53,9 @@ namespace Engine::Render
         void EndFrame();
 
     public:
-        SharedPtr<CommandQueue> GetGraphicsCommandQueue() const { return GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT); };
-        SharedPtr<CommandQueue> GetCopyCommandQueue() const { return GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY); };
-        SharedPtr<CommandQueue> GetComputeCommandQueue() const { return GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COMPUTE); };
+        SharedPtr<HAL::CommandQueue> GetGraphicsCommandQueue() const { return GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT); };
+        SharedPtr<HAL::CommandQueue> GetCopyCommandQueue() const { return GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY); };
+        SharedPtr<HAL::CommandQueue> GetComputeCommandQueue() const { return GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COMPUTE); };
 
         ComPtr<ID3D12GraphicsCommandList> CreateGraphicsCommandList() { return CreateCommandList(D3D12_COMMAND_LIST_TYPE_DIRECT); }
         ComPtr<ID3D12GraphicsCommandList> CreateCopyCommandList() { return CreateCommandList(D3D12_COMMAND_LIST_TYPE_COPY); }
@@ -65,19 +66,19 @@ namespace Engine::Render
         void WaitForIdle();
 
     private:
-        SharedPtr<GlobalResourceStateTracker> mGlobalResourceStateTracker;
+        SharedPtr<Memory::GlobalResourceStateTracker> mGlobalResourceStateTracker;
 
         SharedPtr<Memory::DescriptorAllocatorPool> mDescriptorAllocatorPool;
 
-        UniquePtr<Graphics> mGraphics;
+        UniquePtr<HAL::Graphics> mGraphics;
 
-        SharedPtr<CommandQueue> mDirectCommandQueue;
-        SharedPtr<CommandQueue> mComputeCommandQueue;
-        SharedPtr<CommandQueue> mCopyCommandQueue;
+        SharedPtr<HAL::CommandQueue> mDirectCommandQueue;
+        SharedPtr<HAL::CommandQueue> mComputeCommandQueue;
+        SharedPtr<HAL::CommandQueue> mCopyCommandQueue;
 
         UniquePtr<Memory::CommandAllocatorPool> mCommandAllocators[EngineConfig::SwapChainBufferCount];
 
-        SharedPtr<SwapChain> mSwapChain;
+        SharedPtr<HAL::SwapChain> mSwapChain;
 
         SharedPtr<UIRenderContext> mUIRenderContext;
 

@@ -4,7 +4,6 @@
 #include <EventTracker.h>
 
 #include <Memory/CommandAllocatorPool.h>
-
 #include <Memory/DescriptorAllocatorPool.h>
 #include <Memory/DescriptorAllocator.h>
 #include <Memory/Texture.h>
@@ -12,21 +11,23 @@
 #include <Memory/ResourceFactory.h>
 #include <Memory/ResourceCopyManager.h>
 
-#include <Render/SwapChain.h>
+#include <HAL/SwapChain.h>
+#include <HAL/CommandQueue.h>
+#include <HAL/Graphics.h>
+
+#include <Render/RenderPassMediators/CommandListUtils.h>
+
 #include <Render/UIRenderContext.h>
-#include <Render/CommandListUtils.h>
-#include <Render/CommandQueue.h>
-#include <Render/Graphics.h>
 #include <Render/PipelineStateProvider.h>
 #include <Render/ShaderProvider.h>
 #include <Render/RootSignatureProvider.h>
-#include <Render/ResourceStateTracker.h>
+#include <Memory/ResourceStateTracker.h>
 
 namespace Engine::Render
 {
     RenderContext::RenderContext(View view) : mFrameCount(0), mEventTracker{}
     {
-        mGraphics = MakeUnique<Graphics>();
+        mGraphics = MakeUnique<HAL::Graphics>();
 
         mDescriptorAllocatorPool = MakeShared<Memory::DescriptorAllocatorPool>(Device().Get(), Memory::DescriptorAllocatorConfig{});
         for (uint32 i = 0; i < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES; ++i)
@@ -35,15 +36,15 @@ namespace Engine::Render
             uint32 incrementalSize = Device()->GetDescriptorHandleIncrementSize(type);
         }
 
-        mDirectCommandQueue = MakeShared<CommandQueue>(Device(), D3D12_COMMAND_LIST_TYPE_DIRECT);
-        mComputeCommandQueue = MakeShared<CommandQueue>(Device(), D3D12_COMMAND_LIST_TYPE_COMPUTE);
-        mCopyCommandQueue = MakeShared<CommandQueue>(Device(), D3D12_COMMAND_LIST_TYPE_COPY);
+        mDirectCommandQueue = MakeShared<HAL::CommandQueue>(Device(), D3D12_COMMAND_LIST_TYPE_DIRECT);
+        mComputeCommandQueue = MakeShared<HAL::CommandQueue>(Device(), D3D12_COMMAND_LIST_TYPE_COMPUTE);
+        mCopyCommandQueue = MakeShared<HAL::CommandQueue>(Device(), D3D12_COMMAND_LIST_TYPE_COPY);
 
         mDirectCommandQueue->D3D12CommandQueue()->SetName(L"Render Queue");
         mComputeCommandQueue->D3D12CommandQueue()->SetName(L"Compute Queue");
         mCopyCommandQueue->D3D12CommandQueue()->SetName(L"Copy Queue");
 
-        mGlobalResourceStateTracker = MakeUnique<GlobalResourceStateTracker>();
+        mGlobalResourceStateTracker = MakeUnique<Memory::GlobalResourceStateTracker>();
 
         mResourceAllocator = MakeUnique<Memory::ResourceAllocator>(Device().Get());
         mResourceFactory = MakeUnique<Memory::ResourceFactory>(
@@ -55,7 +56,7 @@ namespace Engine::Render
         mResourceCopyManager = MakeUnique<Memory::ResourceCopyManager>();
 
 
-        mSwapChain = MakeShared<SwapChain>(
+        mSwapChain = MakeShared<HAL::SwapChain>(
                 view,
                 mGraphics.get(),
                 mResourceFactory.get(),
@@ -95,7 +96,7 @@ namespace Engine::Render
         return mSwapChain->GetCurrentBackBufferIndex(); 
     }
 
-    SharedPtr<CommandQueue> RenderContext::GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) const
+    SharedPtr<HAL::CommandQueue> RenderContext::GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) const
     {
         switch (type)
         {
@@ -147,7 +148,7 @@ namespace Engine::Render
     void RenderContext::EndFrame()
     {
         auto currentBackBufferIndex = mSwapChain->GetCurrentBackBufferIndex();
-        auto resourceStateTracker = MakeShared<ResourceStateTracker>(mGlobalResourceStateTracker);
+        auto resourceStateTracker = MakeShared<Memory::ResourceStateTracker>(mGlobalResourceStateTracker);
 
         auto uiCommandList = CreateGraphicsCommandList();
         uiCommandList->SetName(L"UI Render List");

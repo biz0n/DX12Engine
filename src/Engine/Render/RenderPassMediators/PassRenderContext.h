@@ -8,10 +8,10 @@
 
 namespace Engine::Render
 {
-    class PassContext
+    class PassRenderContext
     {
     public:
-        SharedPtr<ResourceStateTracker> resourceStateTracker;
+        SharedPtr<Memory::ResourceStateTracker> resourceStateTracker;
         ComPtr<ID3D12GraphicsCommandList> commandList;
         SharedPtr<RenderContext> renderContext;
         SharedPtr<PassCommandRecorder> commandRecorder;

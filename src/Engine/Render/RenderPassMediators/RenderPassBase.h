@@ -18,7 +18,7 @@ namespace Engine::Render
 
         virtual void CreatePipelineStates(Render::PipelineStateProvider *pipelineStateProvider) {}
 
-        virtual void Render(Render::PassContext &passContext) {}
+        virtual void Render(Render::PassRenderContext &passContext) {}
 
         const std::string &GetName() const { return mPassName; }
 

@@ -2,20 +2,20 @@
 
 #include <Render/Passes/Names.h>
 
+#include <Render/RenderPassMediators/CommandListUtils.h>
+#include <Render/RenderPassMediators/PassRenderContext.h>
+#include <Render/RenderPassMediators/PassCommandRecorder.h>
+#include <Render/RenderPassMediators/ResourcePlanner.h>
+
 #include <Render/RootSignatureBuilder.h>
-#include <Render/CommandListUtils.h>
-#include <Render/TextureCreationInfo.h>
-#include <Render/ResourcePlanner.h>
 #include <Render/RootSignatureProvider.h>
-#include <Render/PassContext.h>
 #include <Render/PipelineStateStream.h>
 #include <Render/PipelineStateProvider.h>
-#include <Render/SwapChain.h>
 #include <Render/RenderContext.h>
 #include <Render/FrameResourceProvider.h>
 #include <Render/FrameTransientContext.h>
-#include <Render/PassCommandRecorder.h>
 
+#include <Memory/TextureCreationInfo.h>
 #include <Memory/Texture.h>
 #include <Memory/IndexBuffer.h>
 #include <Memory/UploadBuffer.h>
@@ -68,10 +68,9 @@ namespace Engine::Render::Passes
         pipelineStateProvider->CreatePipelineState(PSONames::ToneMapping, pipelineState);
     }
 
-    void ToneMappingPass::Render(Render::PassContext& passContext)
+    void ToneMappingPass::Render(Render::PassRenderContext& passContext)
     {
         auto renderContext = passContext.renderContext;
-        auto canvas = renderContext->GetSwapChain();
 
         auto commandList = passContext.commandList;
 
@@ -94,19 +93,7 @@ namespace Engine::Render::Passes
 
         commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-        auto allocation = passContext.frameContext->uploadBuffer->Allocate(3 * sizeof(uint16), 1);
-        uint16 indices[3] = {0, 1, 2};
-        allocation.CopyTo(&indices);
-
-        D3D12_INDEX_BUFFER_VIEW indexBufferView = {};
-        indexBufferView.Format = DXGI_FORMAT_R16_UINT;
-        indexBufferView.SizeInBytes = 3 * sizeof(uint16);
-        indexBufferView.BufferLocation = allocation.GPU;
-
-        commandList->IASetIndexBuffer(&indexBufferView);
-
-
-        commandList->DrawIndexedInstanced(3, 1, 0, 0, 0);
+        commandList->DrawInstanced(3, 1, 0, 0);
 
         auto* depth = passContext.frameResourceProvider->GetTexture(ResourceNames::ShadowDepth);
 

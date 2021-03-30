@@ -14,6 +14,9 @@ namespace Engine::Memory
     class ResourceAllocator;
     class ResourceCopyManager;
 
+    class ResourceStateTracker;
+    class GlobalResourceStateTracker;
+
     class DescriptorAllocatorPool;
 
     class UploadBuffer;
@@ -22,4 +25,5 @@ namespace Engine::Memory
     class IndexPool;
 
     struct ResourceCopyData;
+    struct TextureCreationInfo;
 } // namespace Engine::Memory

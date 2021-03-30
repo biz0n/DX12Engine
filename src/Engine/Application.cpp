@@ -7,14 +7,15 @@
 #include <IO/Keyboard.h>
 
 #include <Render/RenderContext.h>
-#include <Render/SwapChain.h>
-#include <Render/CommandQueue.h>
 #include <Render/UIRenderContext.h>
 #include <Render/Renderer.h>
 
 #include <Render/Passes/ForwardPass.h>
 #include <Render/Passes/ToneMappingPass.h>
 #include <Render/Passes/CubePass.h>
+
+#include <HAL/SwapChain.h>
+#include <HAL/CommandQueue.h>
 
 #include <Scene/SceneObject.h>
 #include <Scene/SceneLoadingInfo.h>

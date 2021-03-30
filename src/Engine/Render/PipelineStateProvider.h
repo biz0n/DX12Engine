@@ -4,6 +4,7 @@
 
 #include <Name.h>
 #include <Render/RenderForwards.h>
+#include <HAL/HALForwards.h>
 
 #include <d3d12.h>
 #include <unordered_map>
@@ -27,7 +28,7 @@ namespace Engine::Render
         private:
             ComPtr<ID3D12Device2> mDevice;
             ShaderProvider* mShaderProvider;
-            RootSignatureProvider* mRootSignatureProvider;
+            Render::RootSignatureProvider* mRootSignatureProvider;
             std::unordered_map<Name, ComPtr<ID3D12PipelineState>> mPipelineStates;
 
     };

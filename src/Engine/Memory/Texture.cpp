@@ -4,14 +4,14 @@
 
 #include "Texture.h"
 #include <Memory/ResourceFactory.h>
-#include <Render/ResourceStateTracker.h>
+#include <Memory/ResourceStateTracker.h>
 
 Engine::Memory::Texture::Texture(ID3D12Device *device, ResourceAllocator *resourceAllocator,
                                  Engine::Memory::DescriptorAllocatorPool *descriptorAllocator,
-                                 Engine::Render::GlobalResourceStateTracker* stateTracker,
+                                 Engine::Memory::GlobalResourceStateTracker* stateTracker,
                                  D3D12_RESOURCE_DESC desc, const D3D12_CLEAR_VALUE *clearValue,
                                  D3D12_RESOURCE_STATES state)
-                                 : mDescriptorAllocator{descriptorAllocator}, mStateTracker{stateTracker}, 
+                                 : mDescriptorAllocator{descriptorAllocator}, mStateTracker{stateTracker}, mClearValue{.Format = DXGI_FORMAT_UNKNOWN},
                                    mCBDescriptor{},
                                    mSRDescriptor{},
                                    mCubeSRDescriptor{}
@@ -25,7 +25,13 @@ Engine::Memory::Texture::Texture(ID3D12Device *device, ResourceAllocator *resour
     mSize = desc.Width;
     mAlignment = allocationInfo.Alignment;
 
-    mResource = resourceAllocator->CreateResource(desc, state, D3D12_HEAP_TYPE_DEFAULT, clearValue);
+    if (clearValue != nullptr)
+    {
+        mClearValue = *clearValue;
+        mClearValue.Format = desc.Format;
+    }
+
+    mResource = resourceAllocator->CreateResource(desc, state, D3D12_HEAP_TYPE_DEFAULT, (mClearValue.Format != DXGI_FORMAT_UNKNOWN) ? &mClearValue : nullptr);
     mDescription = desc;
 
     mUADescriptor.resize(desc.MipLevels);
@@ -37,7 +43,7 @@ Engine::Memory::Texture::Texture(ID3D12Device *device, ResourceAllocator *resour
 
 Engine::Memory::Texture::Texture(ComPtr<ID3D12Resource> resource,
                                  Engine::Memory::DescriptorAllocatorPool *descriptorAllocator,
-                                 Engine::Render::GlobalResourceStateTracker* stateTracker,
+                                 Engine::Memory::GlobalResourceStateTracker* stateTracker,
                                  D3D12_RESOURCE_STATES state)
         : mDescriptorAllocator{descriptorAllocator}, mStateTracker{stateTracker},
           mCBDescriptor{}, mSRDescriptor{}, mCubeSRDescriptor{}

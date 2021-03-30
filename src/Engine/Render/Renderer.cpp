@@ -2,24 +2,22 @@
 
 #include <StringUtils.h>
 
-#include <Scene/CubeMap.h>
 #include <Scene/SceneObject.h>
-#include <Scene/Components/MeshComponent.h>
-#include <Scene/Components/CubeMapComponent.h>
 
+#include <HAL/CommandQueue.h>
+#include <HAL/SwapChain.h>
 
-#include <Render/CommandQueue.h>
-#include <Render/CommandListUtils.h>
-#include <Render/SwapChain.h>
-#include <Render/ResourceStateTracker.h>
-#include <Render/TextureCreationInfo.h>
+#include <Render/RenderPassMediators/CommandListUtils.h>
+#include <Render/RenderPassMediators/ResourcePlanner.h>
+#include <Render/RenderPassMediators/PassRenderContext.h>
+#include <Render/RenderPassMediators/RenderPassBase.h>
+#include <Render/RenderPassMediators/PassCommandRecorder.h>
+
 #include <Render/FrameResourceProvider.h>
-#include <Render/ResourcePlanner.h>
-#include <Render/PassContext.h>
 #include <Render/RenderContext.h>
-#include <Render/RenderPassBase.h>
-#include <Render/PassCommandRecorder.h>
 
+#include <Memory/ResourceStateTracker.h>
+#include <Memory/TextureCreationInfo.h>
 #include <Memory/Texture.h>
 #include <Memory/UploadBuffer.h>
 #include <Memory/IndexBuffer.h>
@@ -115,14 +113,14 @@ namespace Engine::Render
         
         mRenderContext->GetEventTracker().StartGPUEvent(pass->GetName(), commandList);
 
-        PassContext passContext = {};
+        PassRenderContext passContext = {};
 
         passContext.frameContext = &mFrameContexts[currentBackbufferIndex];
         passContext.commandList = commandList;
         passContext.renderContext = mRenderContext;
         passContext.frameResourceProvider = mFrameResourceProvider.get();
         passContext.timer = &timer;
-        passContext.resourceStateTracker = MakeShared<ResourceStateTracker>(mRenderContext->GetGlobalResourceStateTracker());
+        passContext.resourceStateTracker = MakeShared<Memory::ResourceStateTracker>(mRenderContext->GetGlobalResourceStateTracker());
 
         passContext.commandRecorder = MakeShared<PassCommandRecorder>(
             commandList,
@@ -165,7 +163,7 @@ namespace Engine::Render
 
     void Renderer::UploadResources(SharedPtr<RenderContext> renderContext)
     {
-        auto stateTracker = MakeUnique<ResourceStateTracker>(renderContext->GetGlobalResourceStateTracker());
+        auto stateTracker = MakeUnique<Memory::ResourceStateTracker>(renderContext->GetGlobalResourceStateTracker());
         auto commandList = renderContext->CreateGraphicsCommandList();
         commandList->SetName(L"Uploading resources List");
 

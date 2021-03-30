@@ -17,7 +17,7 @@ namespace Engine::Render
         FrameResourceProvider(ComPtr<ID3D12Device> device, Memory::ResourceFactory* resourceFactory);
         ~FrameResourceProvider();
 
-        void CreateResource(const Name& name, const TextureCreationInfo& textureInfo, D3D12_RESOURCE_STATES state);
+        void CreateResource(const Name& name, const Memory::TextureCreationInfo& textureInfo, D3D12_RESOURCE_STATES state);
 
         Memory::Texture* GetTexture(const Name& name) const;
     private:

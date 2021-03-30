@@ -14,7 +14,6 @@ struct Dummy
 
 ConstantBuffer<PassDataType>   PassCB                   : register(b0, space10);
 ConstantBuffer<FrameDataType>  FrameCB_                 : register(b1, space10);
-ConstantBuffer<GlobalDataType> GlobalCB                 : register(b2, space10);
 
 
 Texture2D                Textures2D[]                   : register(t0, space10);

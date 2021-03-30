@@ -6,7 +6,6 @@
 #include <Memory/ResourceAllocator.h>
 #include <Memory/ResourceCopyManager.h>
 #include <Memory/Resource.h>
-#include <Render/RenderForwards.h>
 #include <vector>
 #include <d3d12.h>
 #include <d3dx12.h>
@@ -14,20 +13,27 @@
 
 namespace Engine::Memory
 {
+    enum class TextureDimension
+    {
+        Texture1D = 0,
+        Texture2D = 1,
+        Texture3D = 2
+    };
+
     class Texture : public Resource
     {
     public:
         Texture(ID3D12Device *device,
                 ResourceAllocator *resourceAllocator,
                 Engine::Memory::DescriptorAllocatorPool *descriptorAllocator,
-                Engine::Render::GlobalResourceStateTracker* stateTracker,
+                Engine::Memory::GlobalResourceStateTracker* stateTracker,
                 D3D12_RESOURCE_DESC desc,
                 const D3D12_CLEAR_VALUE *clearValue,
                 D3D12_RESOURCE_STATES state);
 
         Texture(ComPtr<ID3D12Resource> resource,
                 Engine::Memory::DescriptorAllocatorPool *descriptorAllocator,
-                Engine::Render::GlobalResourceStateTracker* stateTracker,
+                Engine::Memory::GlobalResourceStateTracker* stateTracker,
                 D3D12_RESOURCE_STATES state);
 
         ~Texture() override;
@@ -45,16 +51,18 @@ namespace Engine::Memory
         const Engine::Memory::DescriptorAllocation &GetDSDescriptor(uint32 mipSlice = 0) const;
 
 
-
         Size GetAlignment() const { return mAlignment; }
 
         Size GetSubresourcesCount() const override ;
 
         CopyCommandFunction GetCopyCommandFunction() const override;
 
+        const D3D12_CLEAR_VALUE& GetClearValue() const { return mClearValue; }
+
     private:
         Engine::Memory::DescriptorAllocatorPool *mDescriptorAllocator;
-        Engine::Render::GlobalResourceStateTracker* mStateTracker;
+        Engine::Memory::GlobalResourceStateTracker* mStateTracker;
+        D3D12_CLEAR_VALUE mClearValue;
         Size mAlignment;
         Size mSize;
 

@@ -1,9 +1,9 @@
 #include "ShaderProvider.h"
 
-#include <ShaderCompiler.h>
+#include <HAL/ShaderCompiler.h>
 #include <StringUtils.h>
 
-#include <Render/ShaderCreationInfo.h>
+#include <HAL/ShaderCreationInfo.h>
 
 namespace Engine::Render
 {
@@ -11,9 +11,9 @@ namespace Engine::Render
     
     ShaderProvider::~ShaderProvider() = default;
 
-    ComPtr<ID3DBlob> ShaderProvider::GetShader(const ShaderCreationInfo &creationInfo)
+    ComPtr<ID3DBlob> ShaderProvider::GetShader(const HAL::ShaderCreationInfo &creationInfo)
     {
-        size_t hash = std::hash<ShaderCreationInfo>{}(creationInfo);
+        size_t hash = std::hash<HAL::ShaderCreationInfo>{}(creationInfo);
         auto iter = mShadersMap.find(hash);
 
         if (iter != mShadersMap.end())
@@ -22,7 +22,7 @@ namespace Engine::Render
         }
         else
         {
-            auto shader = ShaderCompiler::Compile(
+            auto shader = HAL::ShaderCompiler::Compile(
                 StringToWString(creationInfo.path),
                 creationInfo.defines.data(),
                 creationInfo.entryPoint,

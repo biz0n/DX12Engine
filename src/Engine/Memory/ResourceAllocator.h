@@ -2,7 +2,6 @@
 
 #include <Types.h>
 #include <Exceptions.h>
-#include <Memory/DescriptorAllocatorPool.h>
 #include <vector>
 #include <d3d12.h>
 #include <d3dx12.h>

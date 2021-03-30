@@ -4,8 +4,6 @@
 
 #include <Memory/MemoryForwards.h>
 
-#include <Render/RenderForwards.h>
-
 #include <d3d12.h>
 
 namespace Engine::Memory
@@ -17,7 +15,7 @@ namespace Engine::Memory
         ResourceFactory(ID3D12Device *device,
                         ResourceAllocator *resourceAllocator,
                         DescriptorAllocatorPool *descriptorAllocator,
-                        Engine::Render::GlobalResourceStateTracker *resourceStateTracker);
+                        Engine::Memory::GlobalResourceStateTracker *resourceStateTracker);
 
         SharedPtr<Texture> CreateTexture(D3D12_RESOURCE_DESC desc,
                                          D3D12_RESOURCE_STATES state,
@@ -40,6 +38,6 @@ namespace Engine::Memory
         ID3D12Device *mDevice;
         ResourceAllocator *mResourceAllocator;
         DescriptorAllocatorPool *mDescriptorAllocator;
-        Engine::Render::GlobalResourceStateTracker *mResourceStateTracker;
+        Engine::Memory::GlobalResourceStateTracker *mResourceStateTracker;
     };
 }

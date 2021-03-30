@@ -3,7 +3,6 @@
 #include <Types.h>
 #include <Memory/Buffer.h>
 #include <Memory/ResourceAllocator.h>
-#include <Render/RenderForwards.h>
 #include <d3d12.h>
 
 namespace Engine::Memory
@@ -14,7 +13,7 @@ namespace Engine::Memory
         VertexBuffer(ID3D12Device *device,
                      ResourceAllocator *resourceFactory,
                      DescriptorAllocatorPool *descriptorAllocator,
-                     Engine::Render::GlobalResourceStateTracker* stateTracker,
+                     Engine::Memory::GlobalResourceStateTracker* stateTracker,
                      Size elementsCount,
                      Size stride,
                      D3D12_RESOURCE_STATES state);

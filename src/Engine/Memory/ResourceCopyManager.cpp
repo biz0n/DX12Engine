@@ -4,12 +4,12 @@
 
 #include "ResourceCopyManager.h"
 
-#include <Render/ResourceStateTracker.h>
+#include <Memory/ResourceStateTracker.h>
 
 #include <d3dx12.h>
 
 bool Engine::Memory::ResourceCopyManager::Copy(ID3D12GraphicsCommandList *commandList,
-                                               Engine::Render::ResourceStateTracker *stateTracker)
+                                               Engine::Memory::ResourceStateTracker *stateTracker)
 {
     if (mScheduledWritingData.empty())
     {

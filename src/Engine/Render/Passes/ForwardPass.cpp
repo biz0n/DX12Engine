@@ -1,9 +1,11 @@
 #include "ForwardPass.h"
 
 #include <stdlib.h>
-#include <ShaderTypes.h>
+#include <Render/ShaderTypes.h>
 
 #include <Render/Passes/Names.h>
+
+#include <HAL/SwapChain.h>
 
 #include <Scene/SceneObject.h>
 #include <Scene/Mesh.h>
@@ -12,13 +14,10 @@
 #include <Scene/PunctualLight.h>
 #include <Scene/Vertex.h>
 
-#include <Render/SwapChain.h>
-#include <Render/ResourceStateTracker.h>
-#include <Render/CommandQueue.h>
 #include <Render/RootSignatureBuilder.h>
-#include <Render/CommandListUtils.h>
-#include <Render/TextureCreationInfo.h>
-#include <Render/PassContext.h>
+#include <Render/RenderPassMediators/CommandListUtils.h>
+#include <Memory/TextureCreationInfo.h>
+#include <Render/RenderPassMediators/PassRenderContext.h>
 #include <Render/PipelineStateStream.h>
 #include <Render/RenderContext.h>
 #include <Render/FrameResourceProvider.h>
@@ -26,9 +25,11 @@
 #include <Render/ShaderProvider.h>
 #include <Render/PipelineStateProvider.h>
 #include <Render/RootSignatureProvider.h>
-#include <Render/ResourcePlanner.h>
-#include <Render/PassCommandRecorder.h>
 
+#include <Render/RenderPassMediators/ResourcePlanner.h>
+#include <Render/RenderPassMediators/PassCommandRecorder.h>
+
+#include <Memory/ResourceStateTracker.h>
 #include <Memory/Texture.h>
 #include <Memory/UploadBuffer.h>
 #include <Memory/MemoryForwards.h>
@@ -86,11 +87,7 @@ namespace Engine::Render::Passes
 
     void ForwardPass::PrepareResources(Render::ResourcePlanner* planner)
     {
-        D3D12_CLEAR_VALUE optimizedClearValue = {};
-        optimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
-        optimizedClearValue.DepthStencil = {1.0f, 0};
-
-        Render::TextureCreationInfo dsTexture = {
+        Memory::TextureCreationInfo dsTexture = {
             .description = CD3DX12_RESOURCE_DESC::Tex2D(
                     DXGI_FORMAT_D32_FLOAT,
                     0,
@@ -100,25 +97,25 @@ namespace Engine::Render::Passes
                     1,
                     0,
                     D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE),
-            .clearValue = optimizedClearValue
+            .clearValue = {.DepthStencil = {1.0, 0}}
         };
         planner->NewDepthStencil(ResourceNames::ForwardDepth, dsTexture);
 
         float clear[4] = {0, 0, 0, 0};
-        Render::TextureCreationInfo rtTexture = {
+        Memory::TextureCreationInfo rtTexture = {
             .description = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R16G16B16A16_FLOAT, 0, 0, 1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET),
-            .clearValue = CD3DX12_CLEAR_VALUE(DXGI_FORMAT_R16G16B16A16_FLOAT, clear)
+            .clearValue = {.Color = {0, 0, 0, 0}}
         };
         planner->NewRenderTarget(ResourceNames::ForwardOutput, rtTexture);
     }
 
-    void ForwardPass::Draw(ComPtr<ID3D12GraphicsCommandList> commandList, const Scene::Mesh &mesh, const dx::XMMATRIX &world, Render::PassContext &passContext)
+    void ForwardPass::Draw(ComPtr<ID3D12GraphicsCommandList> commandList, const Scene::Mesh &mesh, const dx::XMMATRIX &world, Render::PassRenderContext &passContext)
     {
         auto renderContext = passContext.renderContext;
         auto commandRecorder = passContext.commandRecorder;
 
         auto cb = CommandListUtils::GetMeshUniform(world);
-        auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(MeshUniform));
+        auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(Shader::MeshUniform));
         cbAllocation.CopyTo(&cb);
 
         commandList->SetGraphicsRootConstantBufferView(0, cbAllocation.GPU);
@@ -148,7 +145,7 @@ namespace Engine::Render::Passes
         commandList->DrawIndexedInstanced(static_cast<uint32>(mesh.indexBuffer->GetElementsCount()), 1, 0, 0, 0);
     }
 
-    void ForwardPass::Render(Render::PassContext &passContext)
+    void ForwardPass::Render(Render::PassRenderContext &passContext)
     {
         auto renderContext = passContext.renderContext;
 
@@ -166,13 +163,13 @@ namespace Engine::Render::Passes
         commandRecorder->SetRootSignature(RootSignatureNames::Forward);
 
         auto& lightsData = PassData().lights;
-        std::vector<LightUniform> lights;
+        std::vector<Shader::LightUniform> lights;
         lights.reserve(lightsData.size());
 
         auto* depth = passContext.frameResourceProvider->GetTexture(ResourceNames::ShadowDepth);
         for (auto& lightData : lightsData)
         {
-            LightUniform light = CommandListUtils::GetLightUniform(lightData.light, lightData.worldTransform);
+            Shader::LightUniform light = CommandListUtils::GetLightUniform(lightData.light, lightData.worldTransform);
             if (light.LightType == DIRECTIONAL_LIGHT)
             {
                 light.HasShadowTexture = true;
@@ -185,12 +182,12 @@ namespace Engine::Render::Passes
         auto cb = CommandListUtils::GetFrameUniform(camera.viewProjection, camera.eyePosition, static_cast<uint32>(lights.size()));
         cb.ShadowTransform = PassData().shadowTransform;
 
-        auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(FrameUniform));
+        auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(Shader::FrameUniform));
         cbAllocation.CopyTo(&cb);
 
         commandList->SetGraphicsRootConstantBufferView(1, cbAllocation.GPU);
 
-        auto lightsAllocation = passContext.frameContext->uploadBuffer->Allocate(lights.size() * sizeof(LightUniform), sizeof(LightUniform));
+        auto lightsAllocation = passContext.frameContext->uploadBuffer->Allocate(lights.size() * sizeof(Shader::LightUniform), sizeof(Shader::LightUniform));
 
         lightsAllocation.CopyTo(lights);
 

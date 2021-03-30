@@ -5,7 +5,7 @@
 #include <d3dx12.h>
 #include <numeric>
 
-namespace Engine::Memory
+namespace Engine::HAL
 {
     DescriptorHeap::DescriptorHeap(ID3D12Device* device, D3D12_DESCRIPTOR_HEAP_TYPE type, std::vector<Size> ranges)
     {

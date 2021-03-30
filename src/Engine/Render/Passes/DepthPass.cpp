@@ -9,18 +9,18 @@
 #include <Scene/Vertex.h>
 
 #include <Render/RootSignatureBuilder.h>
-#include <Render/CommandListUtils.h>
-#include <Render/TextureCreationInfo.h>
-#include <Render/ResourcePlanner.h>
+#include <Render/RenderPassMediators/CommandListUtils.h>
+#include <Memory/TextureCreationInfo.h>
+#include <Render/RenderPassMediators/ResourcePlanner.h>
 #include <Render/RootSignatureProvider.h>
-#include <Render/PassContext.h>
+#include <Render/RenderPassMediators/PassRenderContext.h>
 #include <Render/PipelineStateStream.h>
 #include <Render/PipelineStateProvider.h>
-#include <Render/SwapChain.h>
+#include <HAL/SwapChain.h>
 #include <Render/RenderContext.h>
 #include <Render/FrameResourceProvider.h>
 #include <Render/FrameTransientContext.h>
-#include <Render/PassCommandRecorder.h>
+#include <Render/RenderPassMediators/PassCommandRecorder.h>
 
 #include <Memory/Texture.h>
 #include <Memory/IndexBuffer.h>
@@ -40,7 +40,7 @@ namespace Engine::Render::Passes
         optimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
         optimizedClearValue.DepthStencil = {1.0f, 0};
 
-        Render::TextureCreationInfo dsTexture = {
+        Memory::TextureCreationInfo dsTexture = {
             .description = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, EngineConfig::ShadowWidth, EngineConfig::ShadowHeight, 1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
             .clearValue = optimizedClearValue
         };
@@ -81,7 +81,7 @@ namespace Engine::Render::Passes
         pipelineStateProvider->CreatePipelineState(PSONames::Depth, pipelineState);
     }
 
-    void DepthPass::Render(Render::PassContext& passContext)
+    void DepthPass::Render(Render::PassRenderContext& passContext)
     {
         auto renderContext = passContext.renderContext;
 
@@ -100,7 +100,7 @@ namespace Engine::Render::Passes
         auto& camera = PassData().camera;
         auto cb = CommandListUtils::GetFrameUniform(camera.viewProjection, camera.eyePosition, 0);
 
-        auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(FrameUniform));
+        auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(Shader::FrameUniform));
         cbAllocation.CopyTo(&cb);
 
         commandList->SetGraphicsRootConstantBufferView(1, cbAllocation.GPU);
@@ -112,13 +112,13 @@ namespace Engine::Render::Passes
         }
     }
 
-    void DepthPass::Draw(ComPtr<ID3D12GraphicsCommandList> commandList, const Scene::Mesh &mesh, const dx::XMMATRIX &world, Render::PassContext &passContext)
+    void DepthPass::Draw(ComPtr<ID3D12GraphicsCommandList> commandList, const Scene::Mesh &mesh, const dx::XMMATRIX &world, Render::PassRenderContext &passContext)
     {
         auto renderContext = passContext.renderContext;
         auto commandRecorder = passContext.commandRecorder;
 
         auto cb = CommandListUtils::GetMeshUniform(world);
-        auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(MeshUniform));
+        auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(Shader::MeshUniform));
         cbAllocation.CopyTo(&cb);
 
         commandList->SetGraphicsRootConstantBufferView(0, cbAllocation.GPU);
@@ -131,9 +131,9 @@ namespace Engine::Render::Passes
 
         auto device = renderContext->Device();
 
-        MaterialUniform uniform = CommandListUtils::GetMaterialUniform(*mesh.material.get());
+        Shader::MaterialUniform uniform = CommandListUtils::GetMaterialUniform(*mesh.material.get());
 
-        auto matAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(MaterialUniform));
+        auto matAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(Shader::MaterialUniform));
         matAllocation.CopyTo(&uniform);
         commandList->SetGraphicsRootConstantBufferView(2, matAllocation.GPU);
 

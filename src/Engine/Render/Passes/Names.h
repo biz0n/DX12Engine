@@ -8,17 +8,17 @@ namespace Engine::Render::Passes
 {
     namespace Shaders
     {
-        inline String ForwardPS {"Resources\\Shaders\\Forward.hlsl"};
-        inline String ForwardVS {"Resources\\Shaders\\Forward.hlsl"};
+        inline String ForwardPS {"Render\\Shaders\\Forward.hlsl"};
+        inline String ForwardVS {"Render\\Shaders\\Forward.hlsl"};
 
-        inline String CubePS {"Resources\\Shaders\\CubeMap.hlsl"};
-        inline String CubeVS {"Resources\\Shaders\\CubeMap.hlsl"};
+        inline String CubePS {"Render\\Shaders\\CubeMap.hlsl"};
+        inline String CubeVS {"Render\\Shaders\\CubeMap.hlsl"};
 
-        inline String ToneMapPS {"Resources\\Shaders\\TonemappingPS.hlsl"};
-        inline String TonemapVS {"Resources\\Shaders\\ScreenVS.hlsl"};
+        inline String ToneMapPS {"Render\\Shaders\\TonemappingPS.hlsl"};
+        inline String TonemapVS {"Render\\Shaders\\ScreenVS.hlsl"};
 
-        inline String DepthPS {"Resources\\Shaders\\Depth.hlsl"};
-        inline String DepthVS {"Resources\\Shaders\\Depth.hlsl"};
+        inline String DepthPS {"Render\\Shaders\\Depth.hlsl"};
+        inline String DepthVS {"Render\\Shaders\\Depth.hlsl"};
     }
 
     namespace ResourceNames

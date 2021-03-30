@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ShaderTypes.h>
+#include <Render/ShaderTypes.h>
 
 #include <DirectXMath.h>
 

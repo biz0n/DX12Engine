@@ -4,6 +4,7 @@
 #include <Name.h>
 
 #include <Render/RenderForwards.h>
+#include <Memory/MemoryForwards.h>
 
 #include <d3d12.h>
 #include <vector>
@@ -15,7 +16,7 @@ namespace Engine::Render
     public:
         PassCommandRecorder(
             ComPtr<ID3D12GraphicsCommandList> commandList,
-            ResourceStateTracker *resourceStateTracker,
+            Memory::ResourceStateTracker *resourceStateTracker,
             RenderContext *renderContext,
             const FrameResourceProvider *frameResourceProvider,
             FrameTransientContext* frameTransientContext);
@@ -37,7 +38,7 @@ namespace Engine::Render
 
     private:
         ComPtr<ID3D12GraphicsCommandList> mCommandList;
-        ResourceStateTracker *mResourceStateTracker;
+        Memory::ResourceStateTracker *mResourceStateTracker;
         RenderContext *mRenderContext;
         const FrameResourceProvider *mFrameResourceProvider;
         FrameTransientContext* mFrameTransientContext;

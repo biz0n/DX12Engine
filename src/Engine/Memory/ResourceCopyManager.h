@@ -3,7 +3,6 @@
 #include <Types.h>
 
 #include <Memory/MemoryForwards.h>
-#include <Render/RenderForwards.h>
 
 #include <vector>
 #include <tuple>
@@ -61,7 +60,7 @@ namespace Engine::Memory
             mScheduledWritingData.emplace_back(copyData, mCurrentFrame);
         }
 
-        bool Copy(ID3D12GraphicsCommandList* commandList, Render::ResourceStateTracker* stateTracker);
+        bool Copy(ID3D12GraphicsCommandList* commandList, Memory::ResourceStateTracker* stateTracker);
 
     private:
 

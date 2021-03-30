@@ -20,7 +20,7 @@ namespace Engine::Memory
         Buffer(ID3D12Device *device,
                ResourceAllocator *resourceFactory,
                DescriptorAllocatorPool *descriptorAllocator,
-               Engine::Render::GlobalResourceStateTracker* stateTracker,
+               Engine::Memory::GlobalResourceStateTracker* stateTracker,
                Size stride,
                D3D12_RESOURCE_DESC desc,
                D3D12_RESOURCE_STATES state,
@@ -52,7 +52,7 @@ namespace Engine::Memory
 
     private:
         DescriptorAllocatorPool *mDescriptorAllocator;
-        Engine::Render::GlobalResourceStateTracker* mStateTracker;
+        Engine::Memory::GlobalResourceStateTracker* mStateTracker;
         Size mStride;
         Size mAlignment;
         Size mSize;

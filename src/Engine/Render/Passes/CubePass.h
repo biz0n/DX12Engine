@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Render/RenderPassBase.h>
+#include <Render/RenderPassMediators/RenderPassBase.h>
 #include <Render/Passes/Data/PassData.h>
 
 namespace Engine::Render::Passes
@@ -24,6 +24,6 @@ namespace Engine::Render::Passes
 
         void CreatePipelineStates(Render::PipelineStateProvider* pipelineStateProvider) override;
 
-        void Render(Render::PassContext& passContext) override;
+        void Render(Render::PassRenderContext& passContext) override;
     }; 
 } // namespace Engine::Render::Passes

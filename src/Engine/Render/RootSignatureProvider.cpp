@@ -1,6 +1,7 @@
 #include "RootSignatureProvider.h"
 
 #include <Render/RootSignatureBuilder.h>
+#include <HAL/RootSignature.h>
 #include <StringUtils.h>
 
 namespace Engine::Render
@@ -25,7 +26,7 @@ namespace Engine::Render
         mRootSignatureMap.emplace(name, std::move(rs));
     }
 
-    RootSignature *RootSignatureProvider::GetRootSignature(const Name &name)
+    HAL::RootSignature *RootSignatureProvider::GetRootSignature(const Name &name)
     {
         return mRootSignatureMap[name].get();
     }
@@ -35,7 +36,6 @@ namespace Engine::Render
         builder
         .AddCBVParameter(0, 10) // Pass constant buffer
         .AddCBVParameter(1, 10) // Frame constant buffer
-        .AddCBVParameter(2, 10) // Global constant buffer
         .AddSRVDescriptorTableParameter(0, 10, D3D12_SHADER_VISIBILITY_ALL, RootSignatureBuilder::UnboundedRangeSize) // Texture2D
         .AddSRVDescriptorTableParameter(0, 11, D3D12_SHADER_VISIBILITY_ALL, RootSignatureBuilder::UnboundedRangeSize) // Texture2D<uint4>
         .AddSRVDescriptorTableParameter(0, 12, D3D12_SHADER_VISIBILITY_ALL, RootSignatureBuilder::UnboundedRangeSize) // Texture3D

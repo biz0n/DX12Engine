@@ -1,28 +1,30 @@
 #include "CubePass.h"
 
-#include <ShaderTypes.h>
+#include <Render/ShaderTypes.h>
+
+#include <HAL/SwapChain.h>
 
 #include <Render/Passes/Names.h>
-#include <Render/RootSignatureBuilder.h>
-#include <Render/CommandListUtils.h>
 
-#include <Render/TextureCreationInfo.h>
-#include <Render/ResourcePlanner.h>
+#include <Render/RootSignatureBuilder.h>
 #include <Render/RootSignatureProvider.h>
-#include <Render/PassContext.h>
 #include <Render/PipelineStateStream.h>
 #include <Render/PipelineStateProvider.h>
-#include <Render/SwapChain.h>
 #include <Render/RenderContext.h>
 #include <Render/FrameResourceProvider.h>
 #include <Render/FrameTransientContext.h>
-#include <Render/PassCommandRecorder.h>
+
+#include <Render/RenderPassMediators/PassCommandRecorder.h>
+#include <Render/RenderPassMediators/CommandListUtils.h>
+#include <Render/RenderPassMediators/PassRenderContext.h>
+#include <Render/RenderPassMediators/ResourcePlanner.h>
 
 #include <Scene/Vertex.h>
 #include <Scene/SceneObject.h>
 #include <Scene/CubeMap.h>
 #include <Scene/Camera.h>
 
+#include <Memory/TextureCreationInfo.h>
 #include <Memory/Texture.h>
 #include <Memory/IndexBuffer.h>
 #include <Memory/UploadBuffer.h>
@@ -40,7 +42,7 @@ namespace Engine::Render::Passes
     void CubePass::PrepareResources(Render::ResourcePlanner* planner)
     {
         float clear[4] = {0};
-        Render::TextureCreationInfo rtTexture = {
+        Memory::TextureCreationInfo rtTexture = {
             .description = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R16G16B16A16_FLOAT, 0, 0, 1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET),
             .clearValue = CD3DX12_CLEAR_VALUE(DXGI_FORMAT_R16G16B16A16_FLOAT, clear)
         };
@@ -84,7 +86,7 @@ namespace Engine::Render::Passes
         pipelineStateProvider->CreatePipelineState(PSONames::Cube, pipelineState);
     }
 
-    void CubePass::Render(Render::PassContext& passContext)
+    void CubePass::Render(Render::PassRenderContext& passContext)
     {
         if (!PassData().hasCube)
         {
@@ -108,7 +110,7 @@ namespace Engine::Render::Passes
         auto& camera = PassData().camera;
         auto cb = CommandListUtils::GetFrameUniform(camera.viewProjection, camera.eyePosition, static_cast<uint32>(0));
 
-        auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(FrameUniform));
+        auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(Shader::FrameUniform));
         cbAllocation.CopyTo(&cb);
 
         commandList->SetGraphicsRootConstantBufferView(0, cbAllocation.GPU);

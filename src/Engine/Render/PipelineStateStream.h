@@ -3,7 +3,7 @@
 #include <Types.h>
 #include <Hash.h>
 #include <Name.h>
-#include <DirectXHashes.h>
+#include <HAL/DirectXHashes.h>
 #include <d3d12.h>
 
 #include <d3dx12.h>

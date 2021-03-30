@@ -1,15 +1,18 @@
 #include "PassCommandRecorder.h"
 
+#include <HAL/SwapChain.h>
+#include <HAL/RootSignature.h>
+
+#include <Render/RenderPassMediators/CommandListUtils.h>
+
 #include <Render/RenderContext.h>
-#include <Render/SwapChain.h>
 #include <Render/FrameResourceProvider.h>
-#include <Render/CommandListUtils.h>
 #include <Render/RootSignatureProvider.h>
 #include <Render/FrameTransientContext.h>
 #include <Render/PipelineStateProvider.h>
-#include <Render/RootSignature.h>
 
 #include <Memory/Texture.h>
+#include <Memory/ResourceStateTracker.h>
 
 #include <d3dx12.h>
 
@@ -17,7 +20,7 @@ namespace Engine::Render
 {
     PassCommandRecorder::PassCommandRecorder(
         ComPtr<ID3D12GraphicsCommandList> commandList,
-        ResourceStateTracker *resourceStateTracker,
+        Memory::ResourceStateTracker *resourceStateTracker,
         RenderContext *renderContext,
         const FrameResourceProvider *frameResourceProvider,
         FrameTransientContext* frameTransientContext) : mCommandList(commandList),
@@ -47,7 +50,7 @@ namespace Engine::Render
 
     void PassCommandRecorder::SetRenderTargets(std::vector<Name> renderTargets, const Name& depthStencil)
     {
-        SharedPtr<ResourceStateTracker> stateTrackerSharedPtr(mResourceStateTracker, [](ResourceStateTracker const*){}); //temporary solution
+        SharedPtr<Memory::ResourceStateTracker> stateTrackerSharedPtr(mResourceStateTracker, [](Memory::ResourceStateTracker const*){}); //temporary solution
 
         D3D12_CPU_DESCRIPTOR_HANDLE dsDescriptor {0};
 
@@ -79,7 +82,7 @@ namespace Engine::Render
 
     void PassCommandRecorder::SetBackBufferAsRenderTarget()
     {
-        SharedPtr<ResourceStateTracker> stateTrackerSharedPtr(mResourceStateTracker, [](ResourceStateTracker const*){}); //temporary solution
+        SharedPtr<Memory::ResourceStateTracker> stateTrackerSharedPtr(mResourceStateTracker, [](Memory::ResourceStateTracker const*){}); //temporary solution
 
         auto backBufferTexture = mRenderContext->GetSwapChain()->GetCurrentBackBufferTexture();
         auto backBuffer = backBufferTexture->D3DResource();
@@ -92,15 +95,13 @@ namespace Engine::Render
 
     void PassCommandRecorder::ClearRenderTargets(std::vector<Name> renderTargets)
     {
-        float32 clearColor[] = {0};
-
         for (auto renderTargetName : renderTargets)
         {
             Memory::Texture* rtTexture = mFrameResourceProvider->GetTexture(renderTargetName);
 
             auto rtDescriptor = rtTexture->GetRTDescriptor().GetCPUDescriptor();
 
-            mCommandList->ClearRenderTargetView(rtDescriptor, clearColor, 0, nullptr);
+            mCommandList->ClearRenderTargetView(rtDescriptor, rtTexture->GetClearValue().Color, 0, nullptr);
         }
     }
 
@@ -108,8 +109,9 @@ namespace Engine::Render
     {
         Memory::Texture* dsTexture = mFrameResourceProvider->GetTexture(depthStencil);
         auto dsDescriptor = dsTexture->GetDSDescriptor().GetCPUDescriptor();
+        const auto& clearValue = dsTexture->GetClearValue();
 
-        mCommandList->ClearDepthStencilView(dsDescriptor, D3D12_CLEAR_FLAG_DEPTH, 1.f, 0, 0, nullptr);
+        mCommandList->ClearDepthStencilView(dsDescriptor, D3D12_CLEAR_FLAG_DEPTH, clearValue.DepthStencil.Depth,  clearValue.DepthStencil.Stencil, 0, nullptr);
     }
     
     void PassCommandRecorder::SetRootSignature(const Name& rootSignature)
@@ -137,23 +139,23 @@ namespace Engine::Render
         auto samplerDescriptorHandle = mRenderContext->GetDescriptorAllocator()->GetSamplerDescriptorHandle();
 
 
-        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::ShaderResource, 0, 10), srDescriptorHandle);
-        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::ShaderResource, 0, 11), srDescriptorHandle);
-        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::ShaderResource, 0, 12), srDescriptorHandle);
-        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::ShaderResource, 0, 13), srDescriptorHandle);
-        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::ShaderResource, 0, 14), srDescriptorHandle);
-        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::ShaderResource, 0, 15), srDescriptorHandle);
-        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::ShaderResource, 0, 16), srDescriptorHandle);
+        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 10), srDescriptorHandle);
+        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 11), srDescriptorHandle);
+        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 12), srDescriptorHandle);
+        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 13), srDescriptorHandle);
+        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 14), srDescriptorHandle);
+        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 15), srDescriptorHandle);
+        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 16), srDescriptorHandle);
 
-        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::UnorderedAccess, 0, 10), auDescriptorHandle);
-        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::UnorderedAccess, 0, 11), auDescriptorHandle);
-        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::UnorderedAccess, 0, 12), auDescriptorHandle);
-        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::UnorderedAccess, 0, 13), auDescriptorHandle);
-        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::UnorderedAccess, 0, 14), auDescriptorHandle);
-        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::UnorderedAccess, 0, 15), auDescriptorHandle);
+        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 10), auDescriptorHandle);
+        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 11), auDescriptorHandle);
+        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 12), auDescriptorHandle);
+        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 13), auDescriptorHandle);
+        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 14), auDescriptorHandle);
+        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 15), auDescriptorHandle);
 
-        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::Sampler, 0, 10), samplerDescriptorHandle);
-        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(RootSignature::RegisterType::Sampler, 0, 11), samplerDescriptorHandle);
+        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::Sampler, 0, 10), samplerDescriptorHandle);
+        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::Sampler, 0, 11), samplerDescriptorHandle);
     }
 
     void PassCommandRecorder::SetPipelineState(const Name& pso)
@@ -164,6 +166,7 @@ namespace Engine::Render
         }
 
         mCommandList->SetPipelineState(mRenderContext->GetPipelineStateProvider()->GetPipelineState(pso).Get());
+        
         mLastPSO = pso;
     }
 

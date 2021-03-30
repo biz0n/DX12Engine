@@ -1,11 +1,11 @@
 #include "FrameResourceProvider.h"
 
-#include <DirectXHashes.h>
+#include <HAL/DirectXHashes.h>
 
-#include <Render/ResourceStateTracker.h>
+#include <Memory/ResourceStateTracker.h>
 #include <Memory/Texture.h>
 #include <Memory/ResourceFactory.h>
-#include <Render/TextureCreationInfo.h>
+#include <Memory/TextureCreationInfo.h>
 
 #include <tuple>
 
@@ -17,10 +17,10 @@ namespace Engine::Render
     }
     FrameResourceProvider::~FrameResourceProvider() = default;
 
-    void FrameResourceProvider::CreateResource(const Name &name, const TextureCreationInfo &textureInfo, D3D12_RESOURCE_STATES state)
+    void FrameResourceProvider::CreateResource(const Name &name, const Memory::TextureCreationInfo &textureInfo, D3D12_RESOURCE_STATES state)
     {
         auto iter = mResources.find(name);
-        size_t hash = std::hash<TextureCreationInfo>{}(textureInfo);
+        size_t hash = std::hash<Memory::TextureCreationInfo>{}(textureInfo);
 
         if (iter != mResources.end())
         {

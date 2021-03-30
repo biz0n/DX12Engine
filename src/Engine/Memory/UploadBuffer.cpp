@@ -10,7 +10,7 @@ namespace Engine::Memory
     UploadBuffer::UploadBuffer(ID3D12Device *device,
                                ResourceAllocator *resourceFactory,
                                DescriptorAllocatorPool *descriptorAllocator,
-                               Engine::Render::GlobalResourceStateTracker* stateTracker,
+                               Engine::Memory::GlobalResourceStateTracker* stateTracker,
                                Size size)
         : Buffer(
                 device,

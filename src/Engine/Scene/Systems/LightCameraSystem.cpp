@@ -3,7 +3,7 @@
 #include <EngineConfig.h>
 
 #include <Render/RenderContext.h>
-#include <Render/SwapChain.h>
+#include <HAL/SwapChain.h>
 
 #include <Scene/SceneObject.h>
 #include <Scene/PunctualLight.h>

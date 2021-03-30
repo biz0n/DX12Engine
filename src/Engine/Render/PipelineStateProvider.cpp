@@ -6,8 +6,9 @@
 #include <Render/PipelineStateStream.h>
 #include <Render/RootSignatureProvider.h>
 #include <Render/ShaderProvider.h>
-#include <Render/ShaderCreationInfo.h>
-#include <Render/RootSignature.h>
+
+#include <HAL/ShaderCreationInfo.h>
+#include <HAL/RootSignature.h>
 
 #include <d3dx12.h>
 

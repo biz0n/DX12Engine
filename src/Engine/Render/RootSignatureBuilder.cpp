@@ -1,5 +1,7 @@
 #include "RootSignatureBuilder.h"
 
+#include <HAL/RootSignature.h>
+
 namespace Engine::Render
 {
     RootSignatureBuilder::RootSignatureBuilder()
@@ -87,7 +89,7 @@ namespace Engine::Render
         return *this;
     }
 
-    UniquePtr<RootSignature> RootSignatureBuilder::Build(ComPtr<ID3D12Device2> device)
+    UniquePtr<HAL::RootSignature> RootSignatureBuilder::Build(ComPtr<ID3D12Device2> device)
     {
         const D3D12_STATIC_SAMPLER_DESC sampler = CD3DX12_STATIC_SAMPLER_DESC(
             0,                               // shaderRegister
@@ -130,6 +132,6 @@ namespace Engine::Render
 
         mParameters.clear();
 
-        return MakeUnique<RootSignature>(device, &rootSigDesc);
+        return MakeUnique<HAL::RootSignature>(device, &rootSigDesc);
     }
 }

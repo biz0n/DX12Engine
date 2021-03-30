@@ -9,15 +9,14 @@
 #include <Memory/IndexBuffer.h>
 #include <Memory/VertexBuffer.h>
 #include <Memory/UploadBuffer.h>
-
-#include <Render/ResourceStateTracker.h>
+#include <Memory/ResourceStateTracker.h>
 
 namespace Engine::Memory
 {
 
     ResourceFactory::ResourceFactory(ID3D12Device *device, ResourceAllocator *resourceAllocator,
                                      DescriptorAllocatorPool *descriptorAllocator,
-                                     Engine::Render::GlobalResourceStateTracker *resourceStateTracker) :
+                                     Engine::Memory::GlobalResourceStateTracker *resourceStateTracker) :
             mDevice{device}, mResourceAllocator{resourceAllocator}, mDescriptorAllocator{descriptorAllocator},
             mResourceStateTracker{resourceStateTracker}
     {

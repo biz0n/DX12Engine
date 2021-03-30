@@ -7,7 +7,6 @@
 
 #include <Memory/Buffer.h>
 #include <Memory/ResourceAllocator.h>
-#include <Render/RenderForwards.h>
 
 namespace Engine::Memory
 {
@@ -43,7 +42,7 @@ namespace Engine::Memory
         UploadBuffer(ID3D12Device *device,
                      ResourceAllocator *resourceFactory,
                      DescriptorAllocatorPool *descriptorAllocator,
-                     Engine::Render::GlobalResourceStateTracker* stateTracker,
+                     Engine::Memory::GlobalResourceStateTracker* stateTracker,
                      Size size);
         ~UploadBuffer() override;
 

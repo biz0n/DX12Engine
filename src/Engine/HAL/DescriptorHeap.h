@@ -5,7 +5,7 @@
 #include <vector>
 #include <d3d12.h>
 
-namespace Engine::Memory
+namespace Engine::HAL
 {
     class DescriptorHeap
     {

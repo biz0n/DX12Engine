@@ -2,8 +2,8 @@
 
 #include <Types.h>
 #include <Memory/MemoryForwards.h>
-#include <Memory/DescriptorHeap.h>
 #include <Memory/IndexPool.h>
+#include <HAL/DescriptorHeap.h>
 
 #include <d3d12.h>
 
@@ -47,14 +47,14 @@ namespace Engine::Memory
             Descriptor AllocateSamplerDescriptor(const D3D12_SAMPLER_DESC& samplerDesc, Index heapIndex);
 
         public:
-            const DescriptorHeap& GetSrvCbvUavHeap() const { return mSrvCbvUavHeap; }
-            const DescriptorHeap& GetSamplerHeap() const { return mSamplerHeap; }
+            const HAL::DescriptorHeap& GetSrvCbvUavHeap() const { return mSrvCbvUavHeap; }
+            const HAL::DescriptorHeap& GetSamplerHeap() const { return mSamplerHeap; }
 
         private:
-            DescriptorHeap mRTHeap;
-            DescriptorHeap mDSHeap;
-            DescriptorHeap mSrvCbvUavHeap;
-            DescriptorHeap mSamplerHeap;
+            HAL::DescriptorHeap mRTHeap;
+            HAL::DescriptorHeap mDSHeap;
+            HAL::DescriptorHeap mSrvCbvUavHeap;
+            HAL::DescriptorHeap mSamplerHeap;
 
         private:
             ID3D12Device* mDevice;

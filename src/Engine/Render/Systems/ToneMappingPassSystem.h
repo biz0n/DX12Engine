@@ -2,8 +2,8 @@
 
 #include <Types.h>
 #include <Scene/SceneForwards.h>
-#include <Render/RenderForwards.h>
 #include <Scene/Systems/System.h>
+#include <Render/RenderForwards.h>
 #include <Timer.h>
 
 namespace Engine::Render::Systems

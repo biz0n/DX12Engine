@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Scene/SceneForwards.h>
-#include <Render/RenderPassBase.h>
+#include <Render/RenderPassMediators/RenderPassBase.h>
 #include <Render/Passes/Data/PassData.h>
 
 #include <DirectXMath.h>
@@ -28,10 +28,10 @@ namespace Engine::Render::Passes
 
         void CreatePipelineStates(Render::PipelineStateProvider* pipelineStateProvider) override;
 
-        void Render(Render::PassContext& passContext) override;
+        void Render(Render::PassRenderContext& passContext) override;
 
     private:
-        void Draw(ComPtr<ID3D12GraphicsCommandList> commandList, const Scene::Mesh& node, const dx::XMMATRIX& world, Render::PassContext& passContext);
+        void Draw(ComPtr<ID3D12GraphicsCommandList> commandList, const Scene::Mesh& node, const dx::XMMATRIX& world, Render::PassRenderContext& passContext);
     };
 
 } // namespace Engine

@@ -4,6 +4,7 @@
 
 #include <Memory/DescriptorAllocator.h>
 #include <Memory/IndexPool.h>
+#include <HAL/DescriptorHeap.h>
 
 #include <memory>
 #include <queue>

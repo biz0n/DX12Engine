@@ -5,7 +5,7 @@
 #include "Buffer.h"
 #include <Memory/ResourceFactory.h>
 #include <Memory/UploadBuffer.h>
-#include <Render/ResourceStateTracker.h>
+#include <Memory/ResourceStateTracker.h>
 
 void Engine::Memory::ResourceCopyData::Execute(ID3D12GraphicsCommandList *copyCommandList) const
 {
@@ -15,7 +15,7 @@ void Engine::Memory::ResourceCopyData::Execute(ID3D12GraphicsCommandList *copyCo
 
     Engine::Memory::Buffer::Buffer(ID3D12Device *device, ResourceAllocator *resourceFactory,
                                    Engine::Memory::DescriptorAllocatorPool *descriptorAllocator,
-                                   Engine::Render::GlobalResourceStateTracker *stateTracker,
+                                   Engine::Memory::GlobalResourceStateTracker *stateTracker,
                                    Size stride,
                                    D3D12_RESOURCE_DESC desc, D3D12_RESOURCE_STATES state, D3D12_HEAP_TYPE heapType)
             : mDescriptorAllocator{descriptorAllocator}, mStateTracker{stateTracker}

@@ -5,7 +5,7 @@ namespace Engine::Memory
     VertexBuffer::VertexBuffer(ID3D12Device *device,
                                ResourceAllocator *resourceFactory,
                                DescriptorAllocatorPool *descriptorAllocator,
-                               Engine::Render::GlobalResourceStateTracker* stateTracker,
+                               Engine::Memory::GlobalResourceStateTracker* stateTracker,
                                Size elementsCount,
                                Size stride,
                                D3D12_RESOURCE_STATES state)
