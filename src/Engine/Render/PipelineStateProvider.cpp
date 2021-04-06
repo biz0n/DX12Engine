@@ -62,6 +62,7 @@ namespace Engine::Render
         pipelineState->SetName(StringToWString(name.string()).c_str());
 
         mPipelineStates.emplace(name, std::move(pipelineState));
+        mRootSignatureMap.emplace(name, pipelineStateProxy.rootSignatureName);
     }
 
     void PipelineStateProvider::CreatePipelineState(const Name& name, const ComputePipelineStateProxy& pipelineStateProxy)
@@ -83,10 +84,16 @@ namespace Engine::Render
         pipelineState->SetName(StringToWString(name.string()).c_str());
 
         mPipelineStates.emplace(name, std::move(pipelineState));
+        mRootSignatureMap.emplace(name, pipelineStateProxy.rootSignatureName);
     }
 
     ComPtr<ID3D12PipelineState> PipelineStateProvider::GetPipelineState(const Name& name)
     {
         return mPipelineStates[name];
+    }
+
+    const Name& PipelineStateProvider::GetAssociatedRootSignatureName(const Name& pipelineName) const
+    {
+        return mRootSignatureMap.at(pipelineName);
     }
 } // namespace Engine::Render

@@ -6,6 +6,7 @@ namespace Engine::Render
     class PassRenderContext;
     class PipelineStateProvider;
     class PassCommandRecorder;
+    class PassContext;
     
     class RenderContext;
     class UIRenderContext;
@@ -32,5 +33,6 @@ namespace Engine::Render
         class CubePass;
         class ToneMappingPass;
         class DepthPass;
+        class BackBufferPass;
     }
 } // namespace Engine::Render

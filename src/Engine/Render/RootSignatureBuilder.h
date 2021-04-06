@@ -33,6 +33,6 @@ namespace Engine::Render
 
         UniquePtr<HAL::RootSignature> Build(ComPtr<ID3D12Device2> device);
     private:
-        std::vector<std::tuple<CD3DX12_ROOT_PARAMETER1, std::optional<CD3DX12_DESCRIPTOR_RANGE1>>> mParameters;
+        std::vector<std::tuple<CD3DX12_ROOT_PARAMETER, std::optional<CD3DX12_DESCRIPTOR_RANGE>>> mParameters;
     };
 }

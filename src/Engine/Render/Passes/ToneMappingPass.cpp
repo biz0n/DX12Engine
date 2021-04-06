@@ -25,7 +25,7 @@
 
 namespace Engine::Render::Passes
 {
-    ToneMappingPass::ToneMappingPass() : RenderPassBase("Tone Mapping Pass")
+    ToneMappingPass::ToneMappingPass() : RenderPassBase("Tone Mapping Pass", CommandQueueType::Compute)
     {
 
     }
@@ -34,76 +34,83 @@ namespace Engine::Render::Passes
     void ToneMappingPass::PrepareResources(Render::ResourcePlanner* planner)
     {
         planner->ReadRenderTarget(ResourceNames::ForwardOutput);
+
+        Memory::TextureCreationInfo texture = {
+            .description = CD3DX12_RESOURCE_DESC::Tex2D(
+                    DXGI_FORMAT_R16G16B16A16_FLOAT,
+                    0,
+                    0,
+                    1,
+                    1,
+                    1,
+                    0,
+                    D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
+        };
+        planner->NewTexture(ResourceNames::TonemappingOutput, texture);
     }
 
     void ToneMappingPass::CreateRootSignatures(Render::RootSignatureProvider* rootSignatureProvider)
     {
         RootSignatureBuilder builder = {};
-        builder.AddSRVDescriptorTableParameter(0, 0, D3D12_SHADER_VISIBILITY_PIXEL);
         rootSignatureProvider->BuildRootSignature(RootSignatureNames::ToneMapping, builder);
     }
 
     void ToneMappingPass::CreatePipelineStates(Render::PipelineStateProvider* pipelineStateProvider)
     {
-        CD3DX12_DEPTH_STENCIL_DESC dsDesc = {};
-        dsDesc.DepthEnable = false;
-
-        CD3DX12_RASTERIZER_DESC rasterizer = {};
-        rasterizer.FillMode = D3D12_FILL_MODE_SOLID;
-        rasterizer.CullMode = D3D12_CULL_MODE_FRONT;
-
-        PipelineStateProxy pipelineState = {
+        ComputePipelineStateProxy pipelineState = {
             .rootSignatureName = RootSignatureNames::ToneMapping,
-            .inputLayout = {},
-            .primitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-            .vertexShaderName = Shaders::TonemapVS,
-            .pixelShaderName = Shaders::ToneMapPS,
-            .dsvFormat = DXGI_FORMAT_D32_FLOAT,
-            .rtvFormats = {
-                DXGI_FORMAT_R8G8B8A8_UNORM
-            },
-            .rasterizer = rasterizer,
-            .depthStencil = dsDesc
+            .computeShaderName = Shaders::ToneMapCS
         };
         pipelineStateProvider->CreatePipelineState(PSONames::ToneMapping, pipelineState);
     }
 
     void ToneMappingPass::Render(Render::PassRenderContext& passContext)
     {
-        auto renderContext = passContext.renderContext;
-
-        auto commandList = passContext.commandList;
-
         auto resourceStateTracker = passContext.resourceStateTracker;
         auto commandRecorder = passContext.commandRecorder;
 
-        commandRecorder->SetViewPort();
+       // commandRecorder->SetViewPort();
 
-        commandRecorder->SetBackBufferAsRenderTarget();
+        //commandRecorder->SetBackBufferAsRenderTarget();
 
-        commandRecorder->SetRootSignature(RootSignatureNames::ToneMapping);
         commandRecorder->SetPipelineState(PSONames::ToneMapping);
         
-        auto* color = passContext.frameResourceProvider->GetTexture(ResourceNames::ForwardOutput);
-        auto colorSRV = color->GetSRDescriptor().GetGPUDescriptor();
+        auto* inputTexture = passContext.frameResourceProvider->GetTexture(ResourceNames::ForwardOutput);
+        auto* outputTexture = passContext.frameResourceProvider->GetTexture(ResourceNames::TonemappingOutput);
+       // auto colorSRV = color->GetSRDescriptor().GetGPUDescriptor();
 
-        CommandListUtils::TransitionBarrier(passContext.resourceStateTracker, color->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        CommandListUtils::TransitionBarrier(passContext.resourceStateTracker.get(), inputTexture->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        CommandListUtils::TransitionBarrier(passContext.resourceStateTracker.get(), outputTexture->D3DResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
-        commandList->SetGraphicsRootDescriptorTable(0, colorSRV);
+        uint32 cbData[4];
+        cbData[0] = inputTexture->GetSRDescriptor().GetIndex();
+        cbData[1] = outputTexture->GetUADescriptor().GetIndex();
+        auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(std::size(cbData) * sizeof(uint32));
+        cbAllocation.CopyTo(cbData, std::size(cbData) * sizeof(uint32));
+        commandRecorder->SetRootConstantBufferView(0, 10, cbAllocation.GPU);
 
-        commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        uint32 x = std::ceilf(outputTexture->GetDescription().Width / 16.0f);
+        uint32 y = std::ceilf(outputTexture->GetDescription().Height / 16.0f);
 
-        commandList->DrawInstanced(3, 1, 0, 0);
+        commandRecorder->Dispatch(x, y);
 
-        auto* depth = passContext.frameResourceProvider->GetTexture(ResourceNames::ShadowDepth);
+        commandRecorder->UAVBarrier(outputTexture->D3DResource());
 
-        CommandListUtils::TransitionBarrier(passContext.resourceStateTracker, depth->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+       // commandRecorder->SetRootDescriptorTable(0, 0, colorSRV);
 
-        auto depsDescriptor = depth->GetSRDescriptor().GetGPUDescriptor();
+       // commandRecorder->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-        ImGui::Begin("ShadowMap");
-        ImGui::Image(IMGUI_TEXTURE_ID(depsDescriptor), {512, 512});
-        ImGui::End();
+       // commandRecorder->Draw(3, 0);
+
+    //    auto* depth = passContext.frameResourceProvider->GetTexture(ResourceNames::ShadowDepth);
+
+     //   CommandListUtils::TransitionBarrier(passContext.resourceStateTracker.get(), depth->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+     //   auto depsDescriptor = depth->GetSRDescriptor().GetGPUDescriptor();
+
+     //   ImGui::Begin("ShadowMap");
+    //    ImGui::Image(IMGUI_TEXTURE_ID(depsDescriptor), {512, 512});
+    //    ImGui::End();
 
     }
 } // namespace Engine::Render::Passes

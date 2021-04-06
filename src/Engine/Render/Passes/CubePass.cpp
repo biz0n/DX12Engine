@@ -33,7 +33,7 @@
 
 namespace Engine::Render::Passes
 {
-    CubePass::CubePass() : RenderPassBaseWithData<CubePassData>("Cube Pass")
+    CubePass::CubePass() : RenderPassBaseWithData<CubePassData>("Cube Pass", CommandQueueType::Graphics)
     {
 
     }
@@ -93,10 +93,6 @@ namespace Engine::Render::Passes
             return;
         }
 
-        auto renderContext = passContext.renderContext;
-
-        auto commandList = passContext.commandList;
-
         auto resourceStateTracker = passContext.resourceStateTracker;
 
         auto commandRecorder = passContext.commandRecorder;
@@ -104,7 +100,6 @@ namespace Engine::Render::Passes
         commandRecorder->SetViewPort();
         commandRecorder->SetRenderTargets({ResourceNames::ForwardOutput}, ResourceNames::ForwardDepth);
 
-        commandRecorder->SetRootSignature(RootSignatureNames::Cube);
         commandRecorder->SetPipelineState(PSONames::Cube);
 
         auto& camera = PassData().camera;
@@ -113,7 +108,7 @@ namespace Engine::Render::Passes
         auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(Shader::FrameUniform));
         cbAllocation.CopyTo(&cb);
 
-        commandList->SetGraphicsRootConstantBufferView(0, cbAllocation.GPU);
+        commandRecorder->SetRootConstantBufferView(0, 0, cbAllocation.GPU);
 
         auto cubeMap = PassData().cube.cubeMap;
 
@@ -121,12 +116,12 @@ namespace Engine::Render::Passes
 
         auto cubeDescriptor = cubeTexture->GetCubeSRDescriptor().GetGPUDescriptor();
 
-        commandList->SetGraphicsRootDescriptorTable(1, cubeDescriptor);
+        commandRecorder->SetRootDescriptorTable(0, 0, cubeDescriptor);
 
-        commandList->IASetPrimitiveTopology(cubeMap.primitiveTopology);
-        CommandListUtils::BindVertexBuffer(commandList, resourceStateTracker, *cubeMap.vertexBuffer);
-        CommandListUtils::BindIndexBuffer(commandList, resourceStateTracker, *cubeMap.indexBuffer);
+        commandRecorder->IASetPrimitiveTopology(cubeMap.primitiveTopology);
+        CommandListUtils::BindVertexBuffer(commandRecorder.get(), resourceStateTracker, cubeMap.vertexBuffer.get());
+        CommandListUtils::BindIndexBuffer(commandRecorder.get(), resourceStateTracker, cubeMap.indexBuffer.get());
 
-        commandList->DrawIndexedInstanced(static_cast<uint32>(cubeMap.indexBuffer->GetElementsCount()), 1, 0, 0, 0);
+        commandRecorder->DrawIndexed(0, static_cast<uint32>(cubeMap.indexBuffer->GetElementsCount()), 0);
     }
 } // namespace Engine::Render::Passes

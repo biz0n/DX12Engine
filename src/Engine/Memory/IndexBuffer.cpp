@@ -17,7 +17,7 @@ namespace Engine::Memory
 
     IndexBuffer::~IndexBuffer() = default;
 
-    D3D12_INDEX_BUFFER_VIEW IndexBuffer::GetIndexBufferView()
+    const D3D12_INDEX_BUFFER_VIEW& IndexBuffer::GetIndexBufferView() const
     {
         if (!mIndexBufferView.BufferLocation)
         {

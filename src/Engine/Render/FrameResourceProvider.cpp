@@ -21,20 +21,21 @@ namespace Engine::Render
     {
         auto iter = mResources.find(name);
         size_t hash = std::hash<Memory::TextureCreationInfo>{}(textureInfo);
+        auto* clearValue = textureInfo.clearValue.has_value() ? &textureInfo.clearValue.value() : nullptr;
 
         if (iter != mResources.end())
         {
             if (iter->second.hash != hash)
             {
                 iter->second.hash = hash;
-                iter->second.texture = mResourceFactory->CreateTexture(textureInfo.description, state, &textureInfo.clearValue);
+                iter->second.texture = mResourceFactory->CreateTexture(textureInfo.description, state, clearValue);
             }
         }
         else
         {
             FrameResourceProvider::ResourceData data = {};
             data.hash = hash;
-            data.texture = mResourceFactory->CreateTexture(textureInfo.description, state, &textureInfo.clearValue);
+            data.texture = mResourceFactory->CreateTexture(textureInfo.description, state, clearValue);
             mResources.emplace(name, std::move(data));
         }
     }

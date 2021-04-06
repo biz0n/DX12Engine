@@ -18,12 +18,12 @@ namespace Engine::Memory
                     D3D12_RESOURCE_STATES state);
         ~IndexBuffer() override ;
 
-        D3D12_INDEX_BUFFER_VIEW GetIndexBufferView();
+        const D3D12_INDEX_BUFFER_VIEW& GetIndexBufferView() const;
 
         uint32 GetElementsCount() const { return GetDescription().Width / GetStride(); }
 
     private:
-        D3D12_INDEX_BUFFER_VIEW mIndexBufferView;
+        mutable D3D12_INDEX_BUFFER_VIEW mIndexBufferView;
     };
 
 } // namespace Engine::Memory

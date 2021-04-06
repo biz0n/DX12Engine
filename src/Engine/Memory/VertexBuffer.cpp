@@ -15,7 +15,7 @@ namespace Engine::Memory
 
     VertexBuffer::~VertexBuffer() = default;
 
-    D3D12_VERTEX_BUFFER_VIEW VertexBuffer::GetVertexBufferView()
+    const D3D12_VERTEX_BUFFER_VIEW& VertexBuffer::GetVertexBufferView() const
     {
         if (!mVertexBufferView.BufferLocation)
         {

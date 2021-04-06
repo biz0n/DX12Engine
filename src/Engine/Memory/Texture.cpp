@@ -12,9 +12,7 @@ Engine::Memory::Texture::Texture(ID3D12Device *device, ResourceAllocator *resour
                                  D3D12_RESOURCE_DESC desc, const D3D12_CLEAR_VALUE *clearValue,
                                  D3D12_RESOURCE_STATES state)
                                  : mDescriptorAllocator{descriptorAllocator}, mStateTracker{stateTracker}, mClearValue{.Format = DXGI_FORMAT_UNKNOWN},
-                                   mCBDescriptor{},
-                                   mSRDescriptor{},
-                                   mCubeSRDescriptor{}
+                                   mCBDescriptor{}, mSRDescriptor{}, mCubeSRDescriptor{}
 {
 
     assert_format(desc.Dimension != D3D12_RESOURCE_DIMENSION_BUFFER, "Unsupported dimension for buffer");

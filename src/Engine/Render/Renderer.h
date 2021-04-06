@@ -32,7 +32,7 @@ namespace Engine::Render
     private:
         void PrepareFrame();
         void RenderPasses(Scene::SceneObject* scene, const Timer& timer);
-        void RenderPass(RenderPassBase* pass, Scene::SceneObject* scene, const Timer& timer);
+        void RenderPass(PassContext* passContext, Scene::SceneObject* scene, const Timer& timer);
         void UploadResources(SharedPtr<RenderContext> renderContext);
     private:
         FrameTransientContext mFrameContexts[EngineConfig::SwapChainBufferCount];
@@ -40,6 +40,7 @@ namespace Engine::Render
     private:
         SharedPtr<RenderContext> mRenderContext;
         std::vector<RenderPassBase*> mRenderPasses;
+        std::vector<PassContext> mPassContexts;
         UniquePtr<FrameResourceProvider> mFrameResourceProvider;
     };
 } // namespace Engine::Render

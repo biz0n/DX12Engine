@@ -16,9 +16,13 @@ namespace Engine::Render::Passes
 
         inline String ToneMapPS {"Render\\Shaders\\TonemappingPS.hlsl"};
         inline String TonemapVS {"Render\\Shaders\\ScreenVS.hlsl"};
+        inline String ToneMapCS {"Render\\Shaders\\TonemappingPS.hlsl"};
 
         inline String DepthPS {"Render\\Shaders\\Depth.hlsl"};
         inline String DepthVS {"Render\\Shaders\\Depth.hlsl"};
+
+        inline String BackBufferPS {"Render\\Shaders\\BackBufferPS.hlsl"};
+        inline String BackBufferVS {"Render\\Shaders\\ScreenVS.hlsl"};
     }
 
     namespace ResourceNames
@@ -27,6 +31,7 @@ namespace Engine::Render::Passes
         inline Name CubeOutput {"CubeOutput"};
         inline Name ForwardDepth {"ForwardDepth"};
         inline Name ShadowDepth {"Depth::Shadow"};
+        inline Name TonemappingOutput {"Tonemaping::Output"};
     }
 
     namespace PSONames
@@ -35,6 +40,7 @@ namespace Engine::Render::Passes
         inline Name ForwardCullNone {"Forward::PSO::CullModeNone"};
 
         inline Name ToneMapping {"ToneMapping::PSO"};
+        inline Name BackBuffer {"BackBuffer::PSO"};
 
         inline Name Cube {"Cube::PSO"};
         inline Name Depth {"Depth::PSO"};
@@ -46,6 +52,7 @@ namespace Engine::Render::Passes
         inline Name ToneMapping {"ToneMapping::RS"};
         inline Name Cube {"Cube::RS"};
         inline Name Depth {"Depth::RS"};
+        inline Name BackBuffer {"BackBuffer::RS"};
     }
     
 } // namespace Engine::Render::Passes

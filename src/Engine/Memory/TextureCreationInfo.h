@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Types.h>
 #include <HAL/DirectXHashes.h>
 #include <d3d12.h>
 
@@ -10,7 +11,7 @@ namespace Engine::Memory
     struct TextureCreationInfo
     {
         D3D12_RESOURCE_DESC description;
-        D3D12_CLEAR_VALUE clearValue;
+        Optional<D3D12_CLEAR_VALUE> clearValue;
 
         auto operator<=>(const TextureCreationInfo& other) const = default;
     };

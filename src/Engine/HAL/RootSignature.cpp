@@ -8,7 +8,7 @@ namespace Engine::HAL
     RootSignature::RootSignature(ComPtr<ID3D12Device> device, const CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC *description)
         : mDescriptorTableBitMask(0), mSamplerTableBitMask(0), mNumDescriptorsPerTable{0}
     {
-        auto desc = &description->Desc_1_1;
+        auto desc = &description->Desc_1_0;
         mNumRootParameters = desc->NumParameters;
         for (uint32 i = 0; i < desc->NumParameters; ++i)
         {
@@ -83,7 +83,7 @@ namespace Engine::HAL
 
         ComPtr<ID3DBlob> serializedRootSig = nullptr;
         ComPtr<ID3DBlob> errorBlob = nullptr;
-        HRESULT hr = D3DX12SerializeVersionedRootSignature(description, D3D_ROOT_SIGNATURE_VERSION_1_1,
+        HRESULT hr = D3DX12SerializeVersionedRootSignature(description, D3D_ROOT_SIGNATURE_VERSION_1_0,
                                                            serializedRootSig.GetAddressOf(), errorBlob.GetAddressOf());
         ThrowIfFailed(hr);
 

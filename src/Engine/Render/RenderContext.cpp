@@ -44,6 +44,10 @@ namespace Engine::Render
         mComputeCommandQueue->D3D12CommandQueue()->SetName(L"Compute Queue");
         mCopyCommandQueue->D3D12CommandQueue()->SetName(L"Copy Queue");
 
+        mDirectCommandQueue->GetFence()->SetName(L"Render Queue Fence");
+        mComputeCommandQueue->GetFence()->SetName(L"Compute Queue Fence");
+        mCopyCommandQueue->GetFence()->SetName(L"Copy Queue Fence");
+
         mGlobalResourceStateTracker = MakeUnique<Memory::GlobalResourceStateTracker>();
 
         mResourceAllocator = MakeUnique<Memory::ResourceAllocator>(Device().Get());
@@ -148,13 +152,13 @@ namespace Engine::Render
     void RenderContext::EndFrame()
     {
         auto currentBackBufferIndex = mSwapChain->GetCurrentBackBufferIndex();
-        auto resourceStateTracker = MakeShared<Memory::ResourceStateTracker>(mGlobalResourceStateTracker);
+        auto resourceStateTracker = MakeUnique<Memory::ResourceStateTracker>(mGlobalResourceStateTracker);
 
         auto uiCommandList = CreateGraphicsCommandList();
         uiCommandList->SetName(L"UI Render List");
         mEventTracker.StartGPUEvent("Render UI", uiCommandList);
 
-        CommandListUtils::TransitionBarrier(resourceStateTracker, mSwapChain->GetCurrentBackBufferTexture()->D3DResource(), D3D12_RESOURCE_STATE_RENDER_TARGET);
+        CommandListUtils::TransitionBarrier(resourceStateTracker.get(), mSwapChain->GetCurrentBackBufferTexture()->D3DResource(), D3D12_RESOURCE_STATE_RENDER_TARGET);
 
         auto rtv = mSwapChain->GetCurrentBackBufferTexture()->GetRTDescriptor().GetCPUDescriptor();
         uiCommandList->OMSetRenderTargets(1, &rtv, false, nullptr);
@@ -187,7 +191,7 @@ namespace Engine::Render
         auto postPassCommandList = CreateGraphicsCommandList();
         postPassCommandList->SetName(L"Transition BackBuffer");
         mEventTracker.StartGPUEvent("Transition BackBuffer", postPassCommandList);
-        CommandListUtils::TransitionBarrier(resourceStateTracker, mSwapChain->GetCurrentBackBufferTexture()->D3DResource(), D3D12_RESOURCE_STATE_PRESENT);
+        CommandListUtils::TransitionBarrier(resourceStateTracker.get(), mSwapChain->GetCurrentBackBufferTexture()->D3DResource(), D3D12_RESOURCE_STATE_PRESENT);
         resourceStateTracker->FlushPendingBarriers(postPassCommandList);
         resourceStateTracker->CommitFinalResourceStates();
         mEventTracker.EndGPUEvent(postPassCommandList);

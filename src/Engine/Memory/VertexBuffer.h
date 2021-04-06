@@ -19,10 +19,10 @@ namespace Engine::Memory
                      D3D12_RESOURCE_STATES state);
         ~VertexBuffer() ;
 
-        D3D12_VERTEX_BUFFER_VIEW GetVertexBufferView();
+        const D3D12_VERTEX_BUFFER_VIEW& GetVertexBufferView() const;
 
     private:
-        D3D12_VERTEX_BUFFER_VIEW mVertexBufferView;
+        mutable D3D12_VERTEX_BUFFER_VIEW mVertexBufferView;
     };
 
 } // namespace Engine::Memory

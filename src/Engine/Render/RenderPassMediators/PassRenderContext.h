@@ -12,8 +12,8 @@ namespace Engine::Render
     {
     public:
         SharedPtr<Memory::ResourceStateTracker> resourceStateTracker;
-        ComPtr<ID3D12GraphicsCommandList> commandList;
-        SharedPtr<RenderContext> renderContext;
+        //ComPtr<ID3D12GraphicsCommandList> commandList;
+       // SharedPtr<RenderContext> renderContext;
         SharedPtr<PassCommandRecorder> commandRecorder;
 
         const FrameResourceProvider* frameResourceProvider;

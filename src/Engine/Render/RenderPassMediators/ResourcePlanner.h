@@ -29,6 +29,7 @@ namespace Engine::Render
 
             void NewRenderTarget(const Name& name, const Memory::TextureCreationInfo& textureInfo);
             void NewDepthStencil(const Name& name, const Memory::TextureCreationInfo& textureInfo);
+            void NewTexture(const Name& name, const Memory::TextureCreationInfo& textureInfo);
 
             void ReadRenderTarget(const Name& name);
             void ReadDeptStencil(const Name& name);

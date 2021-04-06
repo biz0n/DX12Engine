@@ -9,12 +9,12 @@ namespace Engine::HAL
         ComPtr<ID3D12Debug3> debugController;
         ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)));
         debugController->EnableDebugLayer();
-        //debugController->SetEnableGPUBasedValidation(TRUE);
-        //debugController->SetEnableSynchronizedCommandQueueValidation(FALSE);
+        debugController->SetEnableGPUBasedValidation(TRUE);
+        debugController->SetEnableSynchronizedCommandQueueValidation(FALSE);
 #endif
         UINT createFactoryFlags = 0;
 #if defined(DEBUG) || defined(_DEBUG)
-        createFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
+        createFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
 #endif
 
         ThrowIfFailed(CreateDXGIFactory2(createFactoryFlags, IID_PPV_ARGS(&dxgiFactory)));

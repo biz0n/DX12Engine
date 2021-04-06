@@ -38,6 +38,7 @@
 #include <Render/Systems/ForwardPassSystem.h>
 #include <Render/Systems/CubePassSystem.h>
 #include <Render/Systems/ToneMappingPassSystem.h>
+#include <Render/Systems/BackBufferPassSystem.h>
 
 
 #include <future>
@@ -104,6 +105,7 @@ namespace Engine
         scene->AddSystem(MakeUnique<Render::Systems::ForwardPassSystem>(renderer));
         scene->AddSystem(MakeUnique<Render::Systems::CubePassSystem>(renderer));
         scene->AddSystem(MakeUnique<Render::Systems::ToneMappingPassSystem>(renderer));
+        scene->AddSystem(MakeUnique<Render::Systems::BackBufferPassSystem>(renderer));
 
         scene->AddSystem(MakeUnique<Render::Systems::RenderSystem>(renderer));
 

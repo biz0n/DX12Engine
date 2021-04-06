@@ -4,6 +4,8 @@
 #include <HAL/RootSignature.h>
 
 #include <Render/RenderPassMediators/CommandListUtils.h>
+#include <Render/RenderPassMediators/PassContext.h>
+#include <Render/RenderPassMediators/RenderPassBase.h>
 
 #include <Render/RenderContext.h>
 #include <Render/FrameResourceProvider.h>
@@ -13,17 +15,21 @@
 
 #include <Memory/Texture.h>
 #include <Memory/ResourceStateTracker.h>
+#include <Memory/IndexBuffer.h>
+#include <Memory/VertexBuffer.h>
 
 #include <d3dx12.h>
 
 namespace Engine::Render
 {
     PassCommandRecorder::PassCommandRecorder(
+        PassContext* passContext,
         ComPtr<ID3D12GraphicsCommandList> commandList,
         Memory::ResourceStateTracker *resourceStateTracker,
         RenderContext *renderContext,
         const FrameResourceProvider *frameResourceProvider,
-        FrameTransientContext* frameTransientContext) : mCommandList(commandList),
+        FrameTransientContext* frameTransientContext) : mPassContext{passContext}, 
+                                                        mCommandList(commandList),
                                                         mResourceStateTracker(resourceStateTracker),
                                                         mRenderContext(renderContext),
                                                         mFrameResourceProvider(frameResourceProvider),
@@ -48,17 +54,15 @@ namespace Engine::Render
         mCommandList->RSSetScissorRects(1, &scissorRect);
     }
 
-    void PassCommandRecorder::SetRenderTargets(std::vector<Name> renderTargets, const Name& depthStencil)
+    void PassCommandRecorder::SetRenderTargets(const std::vector<Name>& renderTargets, const Name& depthStencil)
     {
-        SharedPtr<Memory::ResourceStateTracker> stateTrackerSharedPtr(mResourceStateTracker, [](Memory::ResourceStateTracker const*){}); //temporary solution
-
         D3D12_CPU_DESCRIPTOR_HANDLE dsDescriptor {0};
 
         if (depthStencil.isValid())
         {
             Memory::Texture* dsTexture = mFrameResourceProvider->GetTexture(depthStencil);
             
-            CommandListUtils::TransitionBarrier(stateTrackerSharedPtr, dsTexture->D3DResource(), D3D12_RESOURCE_STATE_DEPTH_WRITE);
+            CommandListUtils::TransitionBarrier(mResourceStateTracker, dsTexture->D3DResource(), D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
             dsDescriptor = dsTexture->GetDSDescriptor().GetCPUDescriptor();
         }
@@ -66,11 +70,11 @@ namespace Engine::Render
         std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> renderTargetDescriptors;
         renderTargetDescriptors.reserve(renderTargets.size());
 
-        for (auto renderTargetName : renderTargets)
+        for (const auto& renderTargetName : renderTargets)
         {
             Memory::Texture* rtTexture = mFrameResourceProvider->GetTexture(renderTargetName);
 
-            CommandListUtils::TransitionBarrier(stateTrackerSharedPtr, rtTexture->D3DResource(), D3D12_RESOURCE_STATE_RENDER_TARGET);
+            CommandListUtils::TransitionBarrier(mResourceStateTracker, rtTexture->D3DResource(), D3D12_RESOURCE_STATE_RENDER_TARGET);
 
             auto rtDescriptor = rtTexture->GetRTDescriptor().GetCPUDescriptor();
 
@@ -82,20 +86,18 @@ namespace Engine::Render
 
     void PassCommandRecorder::SetBackBufferAsRenderTarget()
     {
-        SharedPtr<Memory::ResourceStateTracker> stateTrackerSharedPtr(mResourceStateTracker, [](Memory::ResourceStateTracker const*){}); //temporary solution
-
         auto backBufferTexture = mRenderContext->GetSwapChain()->GetCurrentBackBufferTexture();
         auto backBuffer = backBufferTexture->D3DResource();
-        CommandListUtils::TransitionBarrier(stateTrackerSharedPtr, backBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        CommandListUtils::TransitionBarrier(mResourceStateTracker, backBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
         auto rtv = backBufferTexture->GetRTDescriptor().GetCPUDescriptor();
 
         mCommandList->OMSetRenderTargets(1, &rtv, false, nullptr);
     }
 
-    void PassCommandRecorder::ClearRenderTargets(std::vector<Name> renderTargets)
+    void PassCommandRecorder::ClearRenderTargets(const std::vector<Name>& renderTargets)
     {
-        for (auto renderTargetName : renderTargets)
+        for (const auto& renderTargetName : renderTargets)
         {
             Memory::Texture* rtTexture = mFrameResourceProvider->GetTexture(renderTargetName);
 
@@ -116,7 +118,7 @@ namespace Engine::Render
     
     void PassCommandRecorder::SetRootSignature(const Name& rootSignature)
     {
-        if (mLastRootSignature == rootSignature)
+        if (mLastRootSignatureName == rootSignature)
         {
             return;
         }
@@ -128,46 +130,202 @@ namespace Engine::Render
         mCommandList->SetDescriptorHeaps(std::size(heaps), heaps);
 
         auto rs = mRenderContext->GetRootSignatureProvider()->GetRootSignature(rootSignature);
-        mCommandList->SetGraphicsRootSignature(rs->GetD3D12RootSignature().Get());
 
-        mLastRootSignature = rootSignature;
+        if (mPassContext->GetQueueType() == CommandQueueType::Graphics)
+        {
+            mCommandList->SetGraphicsRootSignature(rs->GetD3D12RootSignature().Get());
+        }
+        else
+        {
+            mCommandList->SetComputeRootSignature(rs->GetD3D12RootSignature().Get());
+        }
 
-        
+        mLastRootSignatureName = rootSignature;
+        mLastRootSignature = rs;
 
         auto srDescriptorHandle = mRenderContext->GetDescriptorAllocator()->GetSRDescriptorHandle();
         auto auDescriptorHandle = mRenderContext->GetDescriptorAllocator()->GetUADescriptorHandle();
         auto samplerDescriptorHandle = mRenderContext->GetDescriptorAllocator()->GetSamplerDescriptorHandle();
 
+        if (mPassContext->GetQueueType() == CommandQueueType::Graphics)
+        {
+            mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 10), srDescriptorHandle);
+            mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 11), srDescriptorHandle);
+            mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 12), srDescriptorHandle);
+            mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 13), srDescriptorHandle);
+            mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 14), srDescriptorHandle);
+            mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 15), srDescriptorHandle);
+            mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 16), srDescriptorHandle);
 
-        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 10), srDescriptorHandle);
-        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 11), srDescriptorHandle);
-        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 12), srDescriptorHandle);
-        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 13), srDescriptorHandle);
-        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 14), srDescriptorHandle);
-        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 15), srDescriptorHandle);
-        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 16), srDescriptorHandle);
+            mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 10), auDescriptorHandle);
+            mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 11), auDescriptorHandle);
+            mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 12), auDescriptorHandle);
+            mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 13), auDescriptorHandle);
+            mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 14), auDescriptorHandle);
+            mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 15), auDescriptorHandle);
 
-        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 10), auDescriptorHandle);
-        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 11), auDescriptorHandle);
-        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 12), auDescriptorHandle);
-        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 13), auDescriptorHandle);
-        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 14), auDescriptorHandle);
-        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 15), auDescriptorHandle);
+            mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::Sampler, 0, 10), samplerDescriptorHandle);
+            mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::Sampler, 0, 11), samplerDescriptorHandle);
+        }
+        else 
+        {
+            mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 10), srDescriptorHandle);
+            mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 11), srDescriptorHandle);
+            mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 12), srDescriptorHandle);
+            mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 13), srDescriptorHandle);
+            mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 14), srDescriptorHandle);
+            mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 15), srDescriptorHandle);
+            mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 16), srDescriptorHandle);
 
-        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::Sampler, 0, 10), samplerDescriptorHandle);
-        mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::Sampler, 0, 11), samplerDescriptorHandle);
+            mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 10), auDescriptorHandle);
+            mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 11), auDescriptorHandle);
+            mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 12), auDescriptorHandle);
+            mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 13), auDescriptorHandle);
+            mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 14), auDescriptorHandle);
+            mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 15), auDescriptorHandle);
+
+            //mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::Sampler, 0, 10), samplerDescriptorHandle);
+            //mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::Sampler, 0, 11), samplerDescriptorHandle);
+        }
     }
 
     void PassCommandRecorder::SetPipelineState(const Name& pso)
     {
-        if (mLastPSO == pso)
+        if (mLastPSOName == pso)
         {
             return;
         }
 
         mCommandList->SetPipelineState(mRenderContext->GetPipelineStateProvider()->GetPipelineState(pso).Get());
+        auto rootSignature = mRenderContext->GetPipelineStateProvider()->GetAssociatedRootSignatureName(pso);
         
-        mLastPSO = pso;
+        mLastPSOName = pso;
+
+        SetRootSignature(rootSignature);
+    }
+
+    void PassCommandRecorder::SetRoot32BitConstants(uint32 registerIndex, uint32 registerSpace, uint32 num32BitValuesToSet, const void *srcData, uint32 destOffsetIn32BitValues)
+    {
+        assert(mLastRootSignature);
+        auto parameterIndex = mLastRootSignature->GetIndex(HAL::RootSignature::RegisterType::ConstantBuffer, registerIndex, registerSpace);
+        if (mPassContext->GetQueueType() == CommandQueueType::Graphics)
+        {
+            mCommandList->SetGraphicsRoot32BitConstants(parameterIndex, num32BitValuesToSet, srcData, destOffsetIn32BitValues);
+        }
+        else
+        {
+            mCommandList->SetComputeRoot32BitConstants(parameterIndex, num32BitValuesToSet, srcData, destOffsetIn32BitValues);
+        }
+    }
+
+    void PassCommandRecorder::SetRootConstantBufferView(uint32 registerIndex, uint32 registerSpace, D3D12_GPU_VIRTUAL_ADDRESS bufferLocation)
+    {
+        assert(mLastRootSignature);
+        auto parameterIndex = mLastRootSignature->GetIndex(HAL::RootSignature::RegisterType::ConstantBuffer, registerIndex, registerSpace);
+        if (mPassContext->GetQueueType() == CommandQueueType::Graphics)
+        {
+            mCommandList->SetGraphicsRootConstantBufferView(parameterIndex, bufferLocation);
+        }
+        else
+        {
+            mCommandList->SetComputeRootConstantBufferView(parameterIndex, bufferLocation);
+        }
+    }
+
+    void PassCommandRecorder::SetRootShaderResourceView(uint32 registerIndex, uint32 registerSpace, D3D12_GPU_VIRTUAL_ADDRESS bufferLocation)
+    {
+        assert(mLastRootSignature);
+        auto parameterIndex = mLastRootSignature->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, registerIndex, registerSpace);
+        if (mPassContext->GetQueueType() == CommandQueueType::Graphics)
+        {
+            mCommandList->SetGraphicsRootShaderResourceView(parameterIndex, bufferLocation);
+        }
+        else
+        {
+            mCommandList->SetComputeRootShaderResourceView(parameterIndex, bufferLocation);
+        }
+    }
+
+    void PassCommandRecorder::SetRootUnorderedAccessView(uint32 registerIndex, uint32 registerSpace, D3D12_GPU_VIRTUAL_ADDRESS bufferLocation)
+    {
+        assert(mLastRootSignature);
+        auto parameterIndex = mLastRootSignature->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, registerIndex, registerSpace);
+        if (mPassContext->GetQueueType() == CommandQueueType::Graphics)
+        {
+            mCommandList->SetGraphicsRootUnorderedAccessView(parameterIndex, bufferLocation);
+        }
+        else
+        {
+            mCommandList->SetComputeRootUnorderedAccessView(parameterIndex, bufferLocation);
+        }
+    }
+
+    void PassCommandRecorder::SetRootDescriptorTable(uint32 registerIndex, uint32 registerSpace, D3D12_GPU_DESCRIPTOR_HANDLE descriptorHandle)
+    {
+        assert(mLastRootSignature);
+        auto parameterIndex = mLastRootSignature->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, registerIndex, registerSpace);
+        if (mPassContext->GetQueueType() == CommandQueueType::Graphics)
+        {
+            mCommandList->SetGraphicsRootDescriptorTable(parameterIndex, descriptorHandle);
+        }
+        else
+        {
+            mCommandList->SetComputeRootDescriptorTable(parameterIndex, descriptorHandle);
+        }
+    }
+
+    void PassCommandRecorder::IASetIndexBuffer(const Memory::IndexBuffer *indexBuffer)
+    {
+        assert(mPassContext->GetQueueType() == CommandQueueType::Graphics);
+        mCommandList->IASetIndexBuffer(&indexBuffer->GetIndexBufferView());
+    }
+
+    void PassCommandRecorder::IASetVertexBuffers(const Memory::VertexBuffer* vertexBuffer)
+    {
+        assert(mPassContext->GetQueueType() == CommandQueueType::Graphics);
+        mCommandList->IASetVertexBuffers(0, 1, &vertexBuffer->GetVertexBufferView());
+    }
+
+    void PassCommandRecorder::IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY topology)
+    {
+        assert(mPassContext->GetQueueType() == CommandQueueType::Graphics);
+        mCommandList->IASetPrimitiveTopology(topology);
+    }
+
+    void PassCommandRecorder::Draw(uint32 vertexCount, uint32 vertexStart)
+    {
+        assert(mPassContext->GetQueueType() == CommandQueueType::Graphics);
+        mCommandList->DrawInstanced(vertexCount, 1, vertexStart, 0);
+    }
+
+    void PassCommandRecorder::DrawInstanced(uint32 vertexCount, uint32 vertexStart, uint32 instanceCount)
+    {
+        assert(mPassContext->GetQueueType() == CommandQueueType::Graphics);
+        mCommandList->DrawInstanced(vertexCount, instanceCount, vertexStart, 1);
+    }
+
+    void PassCommandRecorder::DrawIndexed(uint32 vertexStart, uint32 indexCount, uint32 indexStart)
+    {
+        assert(mPassContext->GetQueueType() == CommandQueueType::Graphics);
+        mCommandList->DrawIndexedInstanced(indexCount, 1, indexStart, vertexStart, 0);
+    }
+
+    void PassCommandRecorder::DrawIndexedInstanced(uint32 vertexStart, uint32 indexCount, uint32 indexStart, uint32 instanceCount)
+    {
+        assert(mPassContext->GetQueueType() == CommandQueueType::Graphics);
+        mCommandList->DrawIndexedInstanced(indexCount, instanceCount, indexStart, vertexStart, 1);
+    }
+
+    void PassCommandRecorder::Dispatch(uint32 x, uint32 y, uint32 z)
+    {
+        assert(mPassContext->GetQueueType() == CommandQueueType::Compute);
+        mCommandList->Dispatch(x, y, z);
+    }
+
+    void PassCommandRecorder::UAVBarrier(ID3D12Resource* res)
+    {
+        auto b = CD3DX12_RESOURCE_BARRIER::UAV(res);
+        mCommandList->ResourceBarrier(1, &b);
     }
 
 } // namespace Engine::Render

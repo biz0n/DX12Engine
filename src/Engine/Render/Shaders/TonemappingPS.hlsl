@@ -1,14 +1,25 @@
-Texture2D colorTexture : register(t0);
+struct TonemapingPassCB
+{
+    uint InputTexIndex;
+    uint OutputTexIndex;
+
+    float2 Padding;
+};
+
+#define PassDataType TonemapingPassCB
 
 #include "BaseLayout.hlsl"
 
-float4 mainPS( float4 position : SV_Position ) : SV_Target0
+[numthreads(16, 16, 1)]
+void mainCS(int3 dispatchThreadId : SV_DispatchThreadId)
 {
-    float4 color = colorTexture[(int2)position.xy];
-   // float3 mapped = color.xyz / (color.xyz + float3(1.0, 1.0, 1.0));
-   float3 mapped = float3(1.0, 1.0, 1.0) - exp(-color.xyz * 1);
+    Texture2D input = Textures2D[PassCB.InputTexIndex];
+    RWTexture2D<float4> output = RWTextures2D_Float4[PassCB.OutputTexIndex];
 
-    color = pow(float4(mapped, 1.0), 1.0/2.2);  
+    float4 color = input[dispatchThreadId.xy];
+    float3 mapped = float3(1.0, 1.0, 1.0) - exp(-color.xyz * 5);
 
-    return color;
+    color = pow(float4(mapped, 1.0), 1.0/2.2);
+
+    output[dispatchThreadId.xy] = color;
 }

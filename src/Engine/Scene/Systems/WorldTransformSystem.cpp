@@ -98,8 +98,8 @@ namespace Engine::Scene::Systems
                 auto e = entities.front();
                 entities.pop();
 
-                r.emplace_or_replace<Components::Dirty>(std::get<0>(e));
-                relationship = std::get<1>(e);
+                r.emplace_or_replace<Components::Dirty>(std::get<entt::entity>(e));
+                relationship = std::get<Components::RelationshipComponent>(e);
 
                 auto child = relationship.first;
                 while(child != entt::null)

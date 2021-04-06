@@ -22,6 +22,8 @@ namespace Engine::Render
 
             ComPtr<ID3D12PipelineState> GetPipelineState(const Name& name);
 
+            const Name& GetAssociatedRootSignatureName(const Name& pipelineName) const;
+
         private:
             ComPtr<ID3D12PipelineState> CreatePipelineState(const D3D12_PIPELINE_STATE_STREAM_DESC& pipelineStateStream);
 
@@ -30,6 +32,6 @@ namespace Engine::Render
             ShaderProvider* mShaderProvider;
             Render::RootSignatureProvider* mRootSignatureProvider;
             std::unordered_map<Name, ComPtr<ID3D12PipelineState>> mPipelineStates;
-
+            std::unordered_map<Name, Name> mRootSignatureMap;
     };
 }

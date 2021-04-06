@@ -53,7 +53,7 @@ namespace Engine::Scene::Loader
         //  else
         {
             unsigned int preprocessFlags = 0
-                //| aiProcess_Triangulate 
+                | aiProcess_Triangulate 
                 | aiProcess_ConvertToLeftHanded
                 //| aiProcess_JoinIdenticalVertices
                 //| aiProcess_GenNormals

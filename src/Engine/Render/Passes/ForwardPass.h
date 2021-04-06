@@ -34,7 +34,7 @@ namespace Engine::Render::Passes
 
     private:
 
-        void Draw(ComPtr<ID3D12GraphicsCommandList> commandList, const Scene::Mesh& node, const dx::XMMATRIX& world, Render::PassRenderContext& passContext);
+        void Draw(const Scene::Mesh& node, const dx::XMMATRIX& world, Render::PassRenderContext& passContext);
     };
 
 } // namespace Engine

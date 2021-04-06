@@ -1,6 +1,7 @@
 #include "ForwardPass.h"
 
 #include <stdlib.h>
+#include <Types.h>
 #include <Render/ShaderTypes.h>
 
 #include <Render/Passes/Names.h>
@@ -41,7 +42,7 @@
 
 namespace Engine::Render::Passes
 {
-    ForwardPass::ForwardPass() : Render::RenderPassBaseWithData<ForwardPassData>("Forward Pass")
+    ForwardPass::ForwardPass() : Render::RenderPassBaseWithData<ForwardPassData>("Forward Pass", CommandQueueType::Graphics)
     {
     }
 
@@ -97,28 +98,27 @@ namespace Engine::Render::Passes
                     1,
                     0,
                     D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE),
-            .clearValue = {.DepthStencil = {1.0, 0}}
+            .clearValue = D3D12_CLEAR_VALUE{.DepthStencil = {1.0, 0}}
         };
         planner->NewDepthStencil(ResourceNames::ForwardDepth, dsTexture);
 
         float clear[4] = {0, 0, 0, 0};
         Memory::TextureCreationInfo rtTexture = {
             .description = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R16G16B16A16_FLOAT, 0, 0, 1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET),
-            .clearValue = {.Color = {0, 0, 0, 0}}
+            .clearValue = D3D12_CLEAR_VALUE{.Color = {0, 0, 0, 0}}
         };
         planner->NewRenderTarget(ResourceNames::ForwardOutput, rtTexture);
     }
 
-    void ForwardPass::Draw(ComPtr<ID3D12GraphicsCommandList> commandList, const Scene::Mesh &mesh, const dx::XMMATRIX &world, Render::PassRenderContext &passContext)
+    void ForwardPass::Draw(const Scene::Mesh &mesh, const dx::XMMATRIX &world, Render::PassRenderContext &passContext)
     {
-        auto renderContext = passContext.renderContext;
         auto commandRecorder = passContext.commandRecorder;
 
         auto cb = CommandListUtils::GetMeshUniform(world);
         auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(Shader::MeshUniform));
         cbAllocation.CopyTo(&cb);
 
-        commandList->SetGraphicsRootConstantBufferView(0, cbAllocation.GPU);
+        commandRecorder->SetRootConstantBufferView(0, 0, cbAllocation.GPU);
 
         auto resourceStateTracker = passContext.resourceStateTracker;
 
@@ -131,26 +131,22 @@ namespace Engine::Render::Passes
             commandRecorder->SetPipelineState(PSONames::ForwardCullBack);
         }
 
-        commandList->IASetPrimitiveTopology(mesh.primitiveTopology);
+        commandRecorder->IASetPrimitiveTopology(mesh.primitiveTopology);
 
-        CommandListUtils::BindMaterial(
-            renderContext,
-            commandList,
+        auto materialGpuAddress = CommandListUtils::BindMaterial(
             resourceStateTracker,
             passContext.frameContext->uploadBuffer,
             mesh.material);
-        CommandListUtils::BindVertexBuffer(commandList, resourceStateTracker, *mesh.vertexBuffer);
-        CommandListUtils::BindIndexBuffer(commandList, resourceStateTracker, *mesh.indexBuffer);
+        CommandListUtils::BindVertexBuffer(commandRecorder.get(), resourceStateTracker, mesh.vertexBuffer.get());
+        CommandListUtils::BindIndexBuffer(commandRecorder.get(), resourceStateTracker, mesh.indexBuffer.get());
 
-        commandList->DrawIndexedInstanced(static_cast<uint32>(mesh.indexBuffer->GetElementsCount()), 1, 0, 0, 0);
+        commandRecorder->SetRootConstantBufferView(2, 0, materialGpuAddress);
+
+        commandRecorder->DrawIndexed(0, static_cast<uint32>(mesh.indexBuffer->GetElementsCount()), 0);
     }
 
     void ForwardPass::Render(Render::PassRenderContext &passContext)
     {
-        auto renderContext = passContext.renderContext;
-
-        auto commandList = passContext.commandList;
-
         auto commandRecorder = passContext.commandRecorder;
 
         commandRecorder->SetViewPort();
@@ -160,7 +156,7 @@ namespace Engine::Render::Passes
         commandRecorder->ClearRenderTargets({ResourceNames::ForwardOutput});
         commandRecorder->ClearDepthStencil(ResourceNames::ForwardDepth);
 
-        commandRecorder->SetRootSignature(RootSignatureNames::Forward);
+        commandRecorder->SetPipelineState(PSONames::ForwardCullBack);
 
         auto& lightsData = PassData().lights;
         std::vector<Shader::LightUniform> lights;
@@ -185,20 +181,20 @@ namespace Engine::Render::Passes
         auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(Shader::FrameUniform));
         cbAllocation.CopyTo(&cb);
 
-        commandList->SetGraphicsRootConstantBufferView(1, cbAllocation.GPU);
+        commandRecorder->SetRootConstantBufferView(1, 0, cbAllocation.GPU);
 
         auto lightsAllocation = passContext.frameContext->uploadBuffer->Allocate(lights.size() * sizeof(Shader::LightUniform), sizeof(Shader::LightUniform));
 
         lightsAllocation.CopyTo(lights);
 
-        commandList->SetGraphicsRootShaderResourceView(3, lightsAllocation.GPU);
+        commandRecorder->SetRootShaderResourceView(0, 1, lightsAllocation.GPU);
 
-        CommandListUtils::TransitionBarrier(passContext.resourceStateTracker, depth->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        CommandListUtils::TransitionBarrier(passContext.resourceStateTracker.get(), depth->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
         auto& meshes = PassData().meshes;
         for (auto &mesh : meshes)
         {
-            Draw(commandList, mesh.mesh, mesh.worldTransform, passContext);
+            Draw(mesh.mesh, mesh.worldTransform, passContext);
         }
     }
 

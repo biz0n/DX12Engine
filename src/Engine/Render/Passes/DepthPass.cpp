@@ -28,7 +28,7 @@
 
 namespace Engine::Render::Passes
 {
-    DepthPass::DepthPass() : Render::RenderPassBaseWithData<DepthPassData>("Depth Pass")
+    DepthPass::DepthPass() : Render::RenderPassBaseWithData<DepthPassData>("Depth Pass", CommandQueueType::Graphics)
     {
 
     }
@@ -83,11 +83,9 @@ namespace Engine::Render::Passes
 
     void DepthPass::Render(Render::PassRenderContext& passContext)
     {
-        auto renderContext = passContext.renderContext;
-
-        auto commandList = passContext.commandList;
-
         auto commandRecorder = passContext.commandRecorder;
+
+        commandRecorder->SetPipelineState(PSONames::Depth);
 
         commandRecorder->SetViewPort(EngineConfig::ShadowWidth, EngineConfig::ShadowHeight);
 
@@ -95,56 +93,49 @@ namespace Engine::Render::Passes
 
         commandRecorder->ClearDepthStencil(ResourceNames::ShadowDepth);
 
-        commandRecorder->SetRootSignature(RootSignatureNames::Depth);
-
         auto& camera = PassData().camera;
         auto cb = CommandListUtils::GetFrameUniform(camera.viewProjection, camera.eyePosition, 0);
 
         auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(Shader::FrameUniform));
         cbAllocation.CopyTo(&cb);
 
-        commandList->SetGraphicsRootConstantBufferView(1, cbAllocation.GPU);
+        commandRecorder->SetRootConstantBufferView(1, 0, cbAllocation.GPU);
 
         auto& meshes = PassData().meshes;
         for (auto &mesh : meshes)
         {
-            Draw(commandList, mesh.mesh, mesh.worldTransform, passContext);
+            Draw(mesh.mesh, mesh.worldTransform, passContext);
         }
     }
 
-    void DepthPass::Draw(ComPtr<ID3D12GraphicsCommandList> commandList, const Scene::Mesh &mesh, const dx::XMMATRIX &world, Render::PassRenderContext &passContext)
+    void DepthPass::Draw(const Scene::Mesh &mesh, const dx::XMMATRIX &world, Render::PassRenderContext &passContext)
     {
-        auto renderContext = passContext.renderContext;
         auto commandRecorder = passContext.commandRecorder;
 
         auto cb = CommandListUtils::GetMeshUniform(world);
         auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(Shader::MeshUniform));
         cbAllocation.CopyTo(&cb);
 
-        commandList->SetGraphicsRootConstantBufferView(0, cbAllocation.GPU);
+        commandRecorder->SetRootConstantBufferView(0, 0, cbAllocation.GPU);
 
         auto resourceStateTracker = passContext.resourceStateTracker;
 
-        commandRecorder->SetPipelineState(PSONames::Depth);
-
-        commandList->IASetPrimitiveTopology(mesh.primitiveTopology);
-
-        auto device = renderContext->Device();
+        commandRecorder->IASetPrimitiveTopology(mesh.primitiveTopology);
 
         Shader::MaterialUniform uniform = CommandListUtils::GetMaterialUniform(*mesh.material.get());
 
         auto matAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(Shader::MaterialUniform));
         matAllocation.CopyTo(&uniform);
-        commandList->SetGraphicsRootConstantBufferView(2, matAllocation.GPU);
+        commandRecorder->SetRootConstantBufferView(2, 0, matAllocation.GPU);
 
         if (mesh.material->HasBaseColorTexture())
         {
-            CommandListUtils::TransitionBarrier(resourceStateTracker, mesh.material->GetBaseColorTexture()->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+            CommandListUtils::TransitionBarrier(resourceStateTracker.get(), mesh.material->GetBaseColorTexture()->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
         }
 
-        CommandListUtils::BindVertexBuffer(commandList, resourceStateTracker, *mesh.vertexBuffer);
-        CommandListUtils::BindIndexBuffer(commandList, resourceStateTracker, *mesh.indexBuffer);
+        CommandListUtils::BindVertexBuffer(commandRecorder.get(), resourceStateTracker, mesh.vertexBuffer.get());
+        CommandListUtils::BindIndexBuffer(commandRecorder.get(), resourceStateTracker, mesh.indexBuffer.get());
 
-        commandList->DrawIndexedInstanced(static_cast<uint32>(mesh.indexBuffer->GetElementsCount()), 1, 0, 0, 0);
+        commandRecorder->DrawIndexed(0, static_cast<uint32>(mesh.indexBuffer->GetElementsCount()), 0);
     }
 } // namespace Engine::Render::Passes

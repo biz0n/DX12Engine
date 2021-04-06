@@ -10,6 +10,7 @@
 #include <Memory/Texture.h>
 
 #include <Render/RenderContext.h>
+#include <Render/RenderPassMediators/PassCommandRecorder.h>
 
 #include <Scene/Loader/SceneLoader.h>
 #include <Scene/Image.h>
@@ -25,20 +26,18 @@
 
 namespace Engine::Render::CommandListUtils
 {
-    void BindVertexBuffer(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<Memory::ResourceStateTracker> stateTracker, Memory::VertexBuffer &vertexBuffer)
+    void BindVertexBuffer(PassCommandRecorder* commandRecorder, SharedPtr<Memory::ResourceStateTracker> stateTracker, const Memory::VertexBuffer* vertexBuffer)
     {
-        TransitionBarrier(stateTracker, vertexBuffer.D3DResource(), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+        TransitionBarrier(stateTracker.get(), vertexBuffer->D3DResource(), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
-        auto vbv = vertexBuffer.GetVertexBufferView();
-        commandList->IASetVertexBuffers(0, 1, &vbv);
+        commandRecorder->IASetVertexBuffers(vertexBuffer);
     }
 
-    void BindIndexBuffer(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<Memory::ResourceStateTracker> stateTracker, Memory::IndexBuffer &indexBuffer)
+    void BindIndexBuffer(PassCommandRecorder* commandRecorder, SharedPtr<Memory::ResourceStateTracker> stateTracker, const Memory::IndexBuffer* indexBuffer)
     {
-        TransitionBarrier(stateTracker, indexBuffer.D3DResource(), D3D12_RESOURCE_STATE_INDEX_BUFFER);
+        TransitionBarrier(stateTracker.get(), indexBuffer->D3DResource(), D3D12_RESOURCE_STATE_INDEX_BUFFER);
 
-        auto ibv = indexBuffer.GetIndexBufferView();
-        commandList->IASetIndexBuffer(&ibv);
+        commandRecorder->IASetIndexBuffer(indexBuffer);
     }
 
     Shader::LightUniform GetLightUniform(const Scene::PunctualLight& lightNode, const DirectX::XMMATRIX& world)
@@ -140,53 +139,21 @@ namespace Engine::Render::CommandListUtils
         return cb;
     }
 
-    void BindMaterial(SharedPtr<RenderContext> renderContext, ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<Memory::ResourceStateTracker> stateTracker, SharedPtr<Memory::UploadBuffer> buffer, SharedPtr<Scene::Material> material)
+    D3D12_GPU_VIRTUAL_ADDRESS BindMaterial(SharedPtr<Memory::ResourceStateTracker> stateTracker, SharedPtr<Memory::UploadBuffer> buffer, SharedPtr<Scene::Material> material)
     {
-        auto device = renderContext->Device();
-
         Shader::MaterialUniform uniform = CommandListUtils::GetMaterialUniform(*material.get());
 
         auto matAllocation = buffer->Allocate(sizeof(Shader::MaterialUniform));
         matAllocation.CopyTo(&uniform);
-        commandList->SetGraphicsRootConstantBufferView(2, matAllocation.GPU);
+        return matAllocation.GPU;
     }
 
-    void TransitionBarrier(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<Memory::ResourceStateTracker> stateTracker, ComPtr<ID3D12Resource> resource, D3D12_RESOURCE_STATES targetState, bool forceFlush)
-    {
-        TransitionBarrier(stateTracker, resource, targetState);
-
-        if (forceFlush)
-        {
-            stateTracker->FlushBarriers(commandList);
-        }
-    }
-
-    void TransitionBarrier(SharedPtr<Memory::ResourceStateTracker> stateTracker, ComPtr<ID3D12Resource> resource, D3D12_RESOURCE_STATES targetState)
+    void TransitionBarrier(Memory::ResourceStateTracker* stateTracker, ID3D12Resource* resource, D3D12_RESOURCE_STATES targetState)
     {
         CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-            resource.Get(),
+            resource,
             D3D12_RESOURCE_STATE_COMMON,
             targetState);
         stateTracker->ResourceBarrier(barrier);
     }
-
-    void TransitionBarrier(ComPtr<ID3D12GraphicsCommandList> commandList, SharedPtr<Memory::ResourceStateTracker> stateTracker, ID3D12Resource* resource, D3D12_RESOURCE_STATES targetState, bool forceFlush)
-    {
-        TransitionBarrier(stateTracker, resource, targetState);
-
-        if (forceFlush)
-        {
-            stateTracker->FlushBarriers(commandList);
-        }
-    }
-
-    void TransitionBarrier(SharedPtr<Memory::ResourceStateTracker> stateTracker, ID3D12Resource* resource, D3D12_RESOURCE_STATES targetState)
-    {
-        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-                resource,
-                D3D12_RESOURCE_STATE_COMMON,
-                targetState);
-        stateTracker->ResourceBarrier(barrier);
-    }
-
 } // namespace Engine::CommandListUtils
