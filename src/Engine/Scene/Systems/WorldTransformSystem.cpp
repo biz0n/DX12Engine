@@ -78,7 +78,7 @@ namespace Engine::Scene::Systems
 
     void WorldTransformSystem::InitWithDirty(entt::registry& r, entt::entity entity)
     {
-        if (r.has<Components::RelationshipComponent, Components::LocalTransformComponent>(entity))
+        if (r.all_of<Components::RelationshipComponent, Components::LocalTransformComponent>(entity))
         {
             r.emplace_or_replace<Components::Dirty>(entity);
         }

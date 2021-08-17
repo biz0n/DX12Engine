@@ -23,12 +23,12 @@ namespace Engine::UI::ComponentRenderers
         public:
             bool HasComponent(entt::registry& registry, entt::entity entity) const override
             {
-                return registry.has<Scene::Components::MeshComponent>(entity);
+                return registry.all_of<Scene::Components::MeshComponent>(entity);
             }
 
             void RenderComponent(entt::registry& registry, entt::entity entity) override
             {
-                bool isActive = !registry.has<Scene::Components::IsDisabledComponent>(entity);
+                bool isActive = !registry.all_of<Scene::Components::IsDisabledComponent>(entity);
                 if (ImGui::Checkbox("Is Active", &isActive))
                 {
                     if (isActive)

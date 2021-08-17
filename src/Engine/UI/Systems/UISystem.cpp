@@ -138,7 +138,7 @@ namespace Engine::UI::Systems
             std::vector<entt::entity> cameraEntities;
             for (auto&& [entity, camera, name] : registry.view<Scene::Components::CameraComponent, Scene::Components::NameComponent>().each())
             {
-                if (registry.has<Scene::Components::MainCameraComponent>(entity))
+                if (registry.all_of<Scene::Components::MainCameraComponent>(entity))
                 {
                     currentCameraIndex = cameraNames.size();
                     currentCameraEntity = entity;
@@ -161,7 +161,7 @@ namespace Engine::UI::Systems
 
         
 
-        if (selectedEntity != entt::null && registry.has<Scene::Components::WorldTransformComponent>(selectedEntity))
+        if (selectedEntity != entt::null && registry.all_of<Scene::Components::WorldTransformComponent>(selectedEntity))
         {
             auto [cameraEntity, camera] = scene->GetMainCamera();
             auto worldTransformComponent = registry.get<Scene::Components::WorldTransformComponent>(selectedEntity);

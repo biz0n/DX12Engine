@@ -575,19 +575,19 @@ namespace Engine::Scene::Loader
         aMaterial->Get(AI_MATKEY_NAME, name);
 
         aiColor4D baseColor;
-        if (aMaterial->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_FACTOR, baseColor) == aiReturn_SUCCESS)
+        if (aMaterial->Get(AI_MATKEY_BASE_COLOR, baseColor) == aiReturn_SUCCESS)
         {
             properties.baseColor.baseColor = *reinterpret_cast<DirectX::XMFLOAT4 *>(&baseColor);
         }
 
         float32 metallicFactor = 0;
-        if (aMaterial->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLIC_FACTOR, metallicFactor) == aiReturn_SUCCESS)
+        if (aMaterial->Get(AI_MATKEY_METALLIC_FACTOR, metallicFactor) == aiReturn_SUCCESS)
         {
             properties.metallicRaughness.metallicFactor = metallicFactor;
         }
 
         float32 roughnessFactor = 0;
-        if (aMaterial->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_ROUGHNESS_FACTOR, roughnessFactor) == aiReturn_SUCCESS)
+        if (aMaterial->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughnessFactor) == aiReturn_SUCCESS)
         {
             properties.metallicRaughness.roughnessFactor = roughnessFactor;
         }
@@ -622,10 +622,10 @@ namespace Engine::Scene::Loader
             }
         }
 
-        bool unlit = false;
-        if (aMaterial->Get(AI_MATKEY_GLTF_UNLIT, unlit) == aiReturn_SUCCESS)
+        aiShadingMode shadingMode = aiShadingMode_PBR_BRDF;
+        if (aMaterial->Get(AI_MATKEY_SHADING_MODEL, shadingMode) == aiReturn_SUCCESS)
         {
-            properties.unlit = unlit;
+            properties.unlit = shadingMode == aiShadingMode_Unlit;
         }
 
         bool twoSided;
@@ -635,9 +635,9 @@ namespace Engine::Scene::Loader
         }
 
         aiString albedoTexturePath;
-        if (aMaterial->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_TEXTURE, &albedoTexturePath) == aiReturn_SUCCESS)
+        if (aMaterial->GetTexture(AI_MATKEY_BASE_COLOR_TEXTURE, &albedoTexturePath) == aiReturn_SUCCESS)
         {
-            material.BaseColorTextureSamplerIndex = ParseSampler(aMaterial, AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_TEXTURE, context);
+            material.BaseColorTextureSamplerIndex = ParseSampler(aMaterial, AI_MATKEY_BASE_COLOR_TEXTURE, context);
             auto albedoTextureIndex = GetImage(albedoTexturePath, context);
             material.BaseColorTextureIndex = albedoTextureIndex;
         }

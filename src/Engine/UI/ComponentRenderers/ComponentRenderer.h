@@ -27,7 +27,7 @@ namespace Engine::UI::ComponentRenderers
 
             bool HasComponent(entt::registry& registry, entt::entity entity) const override
             {
-                return registry.has<TComponent>(entity);
+                return registry.all_of<TComponent>(entity);
             }
 
             void RenderComponent(entt::registry& registry, entt::entity entity) override

@@ -79,14 +79,19 @@ namespace Engine::Render::Passes
         auto* outputTexture = passContext.frameResourceProvider->GetTexture(ResourceNames::TonemappingOutput);
        // auto colorSRV = color->GetSRDescriptor().GetGPUDescriptor();
 
-        CommandListUtils::TransitionBarrier(passContext.resourceStateTracker.get(), inputTexture->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        CommandListUtils::TransitionBarrier(passContext.resourceStateTracker.get(), inputTexture->D3DResource(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
         CommandListUtils::TransitionBarrier(passContext.resourceStateTracker.get(), outputTexture->D3DResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
-        uint32 cbData[4];
-        cbData[0] = inputTexture->GetSRDescriptor().GetIndex();
-        cbData[1] = outputTexture->GetUADescriptor().GetIndex();
-        auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(std::size(cbData) * sizeof(uint32));
-        cbAllocation.CopyTo(cbData, std::size(cbData) * sizeof(uint32));
+        struct
+        {
+            uint32 InputTexIndex;
+            uint32 OutputTexIndex;
+        } cbData;
+
+        cbData.InputTexIndex = inputTexture->GetSRDescriptor().GetIndex();
+        cbData.OutputTexIndex = outputTexture->GetUADescriptor().GetIndex();
+        auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(cbData));
+        cbAllocation.CopyTo(&cbData, sizeof(cbData));
         commandRecorder->SetRootConstantBufferView(0, 10, cbAllocation.GPU);
 
         uint32 x = std::ceilf(outputTexture->GetDescription().Width / 16.0f);
