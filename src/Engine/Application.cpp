@@ -33,6 +33,7 @@
 #include <Scene/Systems/CameraSystem.h>
 #include <Scene/Systems/LightCameraSystem.h>
 #include <UI/Systems/UISystem.h>
+#include <UI/Systems/RenderGraphSystem.h>
 #include <Render/Systems/RenderSystem.h>
 #include <Render/Systems/DepthPassSystem.h>
 #include <Render/Systems/ForwardPassSystem.h>
@@ -110,6 +111,7 @@ namespace Engine
         scene->AddSystem(MakeUnique<Render::Systems::RenderSystem>(renderer));
 
         scene->AddSystem(MakeUnique<UI::Systems::UISystem>(mRenderContext));
+        scene->AddSystem(MakeUnique<UI::Systems::RenderGraphSystem>());
 
         scene->AddSystem(MakeUnique<Scene::Systems::MovingSystem>(mKeyboard));
 
