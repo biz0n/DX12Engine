@@ -43,6 +43,8 @@ namespace Engine
         abort();
     }
 
+    TString HrCodeToErrorString(HRESULT errorCode);
+
 
 } // namespace Engine
 
@@ -55,12 +57,14 @@ namespace Engine
             Engine::print_assertion(                                             \
                 "Result: ",                                                      \
                 hr__,                                                            \
-                " Function: ",                                                    \
+                " Function: ",                                                   \
                  #x,                                                             \
                 " in File: ",                                                    \
                 __FILE__,                                                        \
                 " in Line: ",                                                    \
-                __LINE__);                                                       \
+                __LINE__,                                                        \
+                " Error Message: ",                                              \
+                Engine::HrCodeToErrorString(hr__));                              \
             /*throw Engine::DxException(hr__, TEXT(#x), TEXT(__FILE__), __LINE__); */ \
         }                                                                        \
     }while (0)

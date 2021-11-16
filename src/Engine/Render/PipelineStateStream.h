@@ -21,6 +21,7 @@ namespace Engine::Render
         D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType;
         std::string vertexShaderName;
         std::string pixelShaderName;
+        std::string geometryShaderName;
         DXGI_FORMAT dsvFormat;
         std::vector<DXGI_FORMAT> rtvFormats;
         D3D12_RASTERIZER_DESC rasterizer;
@@ -44,6 +45,7 @@ namespace Engine::Render
         CD3DX12_PIPELINE_STATE_STREAM_PRIMITIVE_TOPOLOGY primitiveTopologyType;
         CD3DX12_PIPELINE_STATE_STREAM_VS VS;
         CD3DX12_PIPELINE_STATE_STREAM_PS PS;
+        CD3DX12_PIPELINE_STATE_STREAM_GS GS;
         CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL_FORMAT dsvFormat;
         CD3DX12_PIPELINE_STATE_STREAM_RENDER_TARGET_FORMATS rtvFormats;
         CD3DX12_PIPELINE_STATE_STREAM_RASTERIZER rasterizer;
@@ -93,6 +95,7 @@ namespace std
                 key.primitiveTopologyType,
                 key.vertexShaderName,
                 key.pixelShaderName,
+                key.geometryShaderName,
                 key.dsvFormat,
                 std::hash_combine(key.rtvFormats.begin(), key.rtvFormats.end()),
                 key.rasterizer,

@@ -23,4 +23,11 @@ namespace Engine
         return FunctionName + TEXT("\nFile: ") + Filename + TEXT("\nLine: ") + lineNumberStr + TEXT("\nError: ") + msg;
     }
 
+    TString HrCodeToErrorString(HRESULT errorCode)   
+    {
+        _com_error err(errorCode);
+        TString msg = err.ErrorMessage();
+        return msg;
+    }
+
 } // namespace Engine

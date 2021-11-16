@@ -17,6 +17,7 @@
 #include <HAL/SwapChain.h>
 #include <HAL/CommandQueue.h>
 
+#include <Scene/Loader/SceneDto.h>
 #include <Scene/SceneObject.h>
 #include <Scene/SceneLoadingInfo.h>
 #include <Scene/Loader/SceneLoader.h>
@@ -41,6 +42,7 @@
 #include <Render/Systems/ToneMappingPassSystem.h>
 #include <Render/Systems/BackBufferPassSystem.h>
 
+#include <Exceptions.h>
 
 #include <future>
 #include <thread>

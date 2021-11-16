@@ -50,6 +50,10 @@ namespace Engine::Render
         stateStream.primitiveTopologyType = pipelineStateProxy.primitiveTopologyType;
         stateStream.PS = CD3DX12_SHADER_BYTECODE(mShaderProvider->GetShader({pipelineStateProxy.pixelShaderName, "mainPS", "ps_5_1"}).Get());
         stateStream.VS = CD3DX12_SHADER_BYTECODE(mShaderProvider->GetShader({pipelineStateProxy.vertexShaderName, "mainVS", "vs_5_1"}).Get());
+        if (!pipelineStateProxy.geometryShaderName.empty())
+        {
+            stateStream.GS = CD3DX12_SHADER_BYTECODE(mShaderProvider->GetShader({pipelineStateProxy.geometryShaderName, "mainGS", "gs_5_1"}).Get());
+        }
         stateStream.rasterizer = CD3DX12_RASTERIZER_DESC(pipelineStateProxy.rasterizer);
         stateStream.rootSignature = mRootSignatureProvider->GetRootSignature(pipelineStateProxy.rootSignatureName)->GetD3D12RootSignature().Get();
         stateStream.rtvFormats = rtFormats;
