@@ -31,10 +31,11 @@ namespace Engine::Graph
         
         public:
             void ReadResource(const Resource& resource);
-            void WriteResource(const Resource& resource);
+            void WriteResource(const Resource& resource, Optional<Name> originalName = std::nullopt);
             const Name& GetName() const { return mName; }
-            const std::vector<Name>& GetReadResources() const { return mReadResources; }
-            const std::vector<Name>& GetWriteResources() const { return mWriteResources; }
+            const std::vector<Resource>& GetReadResources() const { return mReadResources; }
+            const std::vector<Resource>& GetWriteResources() const { return mWriteResources; }
+            const std::vector<Resource>& GetAliasedWriteResources() const { return mAliasedWriteResources; }
 
             int GetQueueIndex() const { return mQueueIndex; }
 
@@ -45,8 +46,9 @@ namespace Engine::Graph
         private:
             Name mName;
             int mQueueIndex;
-            std::vector<Name> mReadResources;
-            std::vector<Name> mWriteResources;
+            std::vector<Resource> mReadResources;
+            std::vector<Resource> mWriteResources;
+            std::vector<Resource> mAliasedWriteResources;
             RelationsInGraph mRelationsInGraph;
     };
 }

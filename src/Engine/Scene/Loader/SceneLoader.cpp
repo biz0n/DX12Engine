@@ -46,11 +46,11 @@ namespace Engine::Scene::Loader
         Assimp::Importer importer;
 
         const aiScene *aScene;
-        // if (std::filesystem::exists(exportPath) && std::filesystem::is_regular_file(exportPath))
+       // if (std::filesystem::exists(exportPath) && std::filesystem::is_regular_file(exportPath))
         {
-            //      aScene = importer.ReadFile(exportPath.string(), 0);
+       //     aScene = importer.ReadFile(exportPath.string(), 0);
         }
-        //  else
+        //else
         {
             unsigned int preprocessFlags = 0
                 | aiProcess_Triangulate 
@@ -73,8 +73,8 @@ namespace Engine::Scene::Loader
             if (aScene)
             {
                 // Export the preprocessed scene file for faster loading next time.
-                // Assimp::Exporter exporter;
-                // exporter.Export(aScene, "assbin", exportPath.string(), preprocessFlags);
+                 //Assimp::Exporter exporter;
+                 //exporter.Export(aScene, "assbin", exportPath.string(), preprocessFlags);
             }
         }
 
@@ -181,7 +181,7 @@ namespace Engine::Scene::Loader
         light1.OuterConeAngle = 0;
         light1.LightType = LightType::PointLight;
 
-        addLight(light1, DirectX::XMMatrixTranslation(4.0f, 5.0f, -2.0f));
+       // addLight(light1, DirectX::XMMatrixTranslation(4.0f, 5.0f, -2.0f));
 
         LightDto light2 = {};
         light2.Name = "Custom light 2";
@@ -192,9 +192,10 @@ namespace Engine::Scene::Loader
         light2.QuadraticAttenuation = 1;
         light2.InnerConeAngle = 0;
         light2.OuterConeAngle = 0;
-        light2.LightType = LightType::PointLight;
+        light2.Direction = { 1, 0, 0 };
+        light2.LightType = LightType::DirectionalLight;
 
-        addLight(light2, DirectX::XMMatrixTranslation(0.0f, 2.0f, 0.0f));
+       // addLight(light2, DirectX::XMMatrixTranslation(0.0f, 2.0f, 0.0f));
 
         return sceneDTO;
     }

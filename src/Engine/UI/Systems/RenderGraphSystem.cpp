@@ -19,13 +19,14 @@
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
+#include <format>
 
 namespace ed = ax::NodeEditor;
 static ed::EditorContext* g_Context = nullptr;
 
 static Engine::Graph::GraphBuilder* g_GraphBuilder = nullptr;
 static std::vector<Engine::Graph::Resource>* g_Resources = nullptr;
-static std::unordered_map<Engine::Name, std::unordered_set<Engine::Name>>* g_Reads;
+static std::unordered_map<Engine::Graph::Resource, std::unordered_set<Engine::Name>>* g_Reads;
 
 namespace Engine::UI::Systems
 {
@@ -35,20 +36,24 @@ namespace Engine::UI::Systems
 
         g_GraphBuilder = new Graph::GraphBuilder();
         g_Resources = new std::vector<Graph::Resource>();
-        g_Reads = new std::unordered_map<Engine::Name, std::unordered_set<Engine::Name>>();
+        g_Reads = new std::unordered_map<Engine::Graph::Resource, std::unordered_set<Engine::Name>>();
 
-        auto resource1 = g_Resources->emplace_back(Graph::Resource{ "Resource1" });
-        auto resource2 = g_Resources->emplace_back(Graph::Resource{ "Resource2" });
-        auto resource3 = g_Resources->emplace_back(Graph::Resource{ "Resource3" });
-        auto resource4 = g_Resources->emplace_back(Graph::Resource{ "Resource4" });
-        auto resource5 = g_Resources->emplace_back(Graph::Resource{ "Resource5" });
+        auto resource1 = g_Resources->emplace_back(Graph::Resource{ "Resource1", 0 });
+        auto resource2 = g_Resources->emplace_back(Graph::Resource{ "Resource2", 0 });
+        auto resource3 = g_Resources->emplace_back(Graph::Resource{ "Resource3", 0 });
+        auto resource4 = g_Resources->emplace_back(Graph::Resource{ "Resource4", 0 });
+        auto resource5 = g_Resources->emplace_back(Graph::Resource{ "Resource5", 0 });
+        auto resource6 = g_Resources->emplace_back(Graph::Resource{ "_Resource6", 0 });
 
+        auto node0 = Graph::Node{ "Node0", 0 };
         auto node1 = Graph::Node{ "Node1", 0 };
         auto node2 = Graph::Node{ "Node2", 1 };
         auto node3 = Graph::Node{ "Node3", 1 };
         auto node4 = Graph::Node{ "Node4", 2 };
         auto node5 = Graph::Node{ "Node5", 2 };
         auto node6 = Graph::Node{ "Node6", 3 };
+        auto node7 = Graph::Node{ "Node7", 3 };
+        auto node8 = Graph::Node{ "Node8", 3 };
 
         node1.WriteResource(resource1);
         node2.WriteResource(resource2);
@@ -65,13 +70,19 @@ namespace Engine::UI::Systems
         node6.ReadResource(resource3);
         node6.ReadResource(resource5);
 
+        node7.WriteResource(resource6, resource4.Id);
+        node8.ReadResource(resource6);
+
         
+        g_GraphBuilder->AddNode(std::move(node0));
         g_GraphBuilder->AddNode(std::move(node1));
         g_GraphBuilder->AddNode(std::move(node2));
         g_GraphBuilder->AddNode(std::move(node3));
         g_GraphBuilder->AddNode(std::move(node4));
         g_GraphBuilder->AddNode(std::move(node5));
         g_GraphBuilder->AddNode(std::move(node6));
+        g_GraphBuilder->AddNode(std::move(node7));
+        g_GraphBuilder->AddNode(std::move(node8));
         
 
         g_GraphBuilder->Build();
@@ -88,6 +99,9 @@ namespace Engine::UI::Systems
             }
         }
 
+        mShowResourcesLinks = true;
+        mShowNodesLinks = true;
+        mShowNodesDebugLinks = false;
     }
 
     RenderGraphSystem::~RenderGraphSystem()
@@ -101,9 +115,23 @@ namespace Engine::UI::Systems
 
         ImVec2 cursor_pos = ImGui::GetIO().MousePos;
 
+
         ImGui::Begin("Editor");
+
+        ImGui::BeginChild("Editor settings", {200, 500});
+        {
+            bool v = false;
+            ImGui::Checkbox("Show resources links", &mShowResourcesLinks);
+            ImGui::Checkbox("Show node links", &mShowNodesLinks);
+            ImGui::Checkbox("Show node debug links", &mShowNodesDebugLinks);
+        }
+        ImGui::EndChild();
+        ImGui::SameLine();
+
         ed::Begin("My Editor");
         {
+           
+
             int index = 0;
             for(auto& node : g_GraphBuilder->GetNodes())
             {
@@ -112,7 +140,7 @@ namespace Engine::UI::Systems
 
                 ed::BeginNode(node.GetName().id());
                 {
-                    const float nodeWidth = 180;
+                    const float nodeWidth = 200;
                     const float iconSize = 15;
                     index++;
 
@@ -163,6 +191,7 @@ namespace Engine::UI::Systems
                     ImGui::Text("Execution index: %i", node.GetRelations().ExecutionIndex);
                     ImGui::Text("Queue index: %i", node.GetRelations().IndexInQueue);
                     ImGui::Text("Layer index: %i", node.GetRelations().IndexInLayer);
+                    ImGui::Text("Ordered index: %i", node.GetRelations().OrderedIndex);
                     
 
                     if (ImGui::BeginTable(("resources" + node.GetName().string()).c_str(), 4, ImGuiTableFlags_NoPadInnerX | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_NoHostExtendX))
@@ -189,7 +218,7 @@ namespace Engine::UI::Systems
                                 ImGui::TableSetColumnIndex(1);
                                 
                                 ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + ImGui::GetColumnWidth());
-                                ImGui::TextWrapped(resource.string().c_str());
+                                ImGui::TextWrapped("%s:%i", resource.Id.c_str(), resource.Subresource);
                                 ImGui::PopTextWrapPos();
                                 if (ImGui::IsItemHovered())
                                 {
@@ -197,12 +226,9 @@ namespace Engine::UI::Systems
                                     ImGui::SetNextWindowPos(tooltip_pos);
 
                                     ImGui::BeginTooltip();
-                                    ImGui::Text("Resource Id: %i %g %g", resource.id(), cursor_pos.x, cursor_pos.y);
+                                    ImGui::Text("Resource Id: %i %g %g", resource.Id.id(), cursor_pos.x, cursor_pos.y);
                                     ImGui::EndTooltip();
                                 }
-                            }
-                            else
-                            {
                             }
 
                             if (index < node.GetWriteResources().size())
@@ -212,7 +238,8 @@ namespace Engine::UI::Systems
 
                                 auto id = std::hash_combine(node.GetName(), resource);
                                 
-                                auto posX = (ImGui::GetCursorPosX() + ImGui::GetColumnWidth() - ImGui::CalcTextSize(resource.string().c_str()).x);
+                                auto resourceName = std::format("{}:{}", resource.Id.c_str(), resource.Subresource);
+                                auto posX = (ImGui::GetCursorPosX() + ImGui::GetColumnWidth() - ImGui::CalcTextSize(resourceName.c_str()).x);
                                 if (posX > ImGui::GetCursorPosX())
                                 {
                                     ImGui::SetCursorPosX(posX);
@@ -220,7 +247,7 @@ namespace Engine::UI::Systems
                                 posX = ImGui::GetCursorPos().x;
                                 auto width = ImGui::GetColumnWidth();
                                 ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + ImGui::GetColumnWidth());
-                                ImGui::TextWrapped(resource.string().c_str());
+                                ImGui::TextWrapped(resourceName.c_str());
                                 ImGui::PopTextWrapPos();
                                 if (ImGui::IsItemHovered())
                                 {
@@ -228,7 +255,7 @@ namespace Engine::UI::Systems
                                     ImGui::SetNextWindowPos(tooltip_pos);
 
                                     ImGui::BeginTooltip();
-                                    ImGui::Text("Resource Id: %i %g %g", resource.id(), cursor_pos.x, cursor_pos.y);
+                                    ImGui::Text("Resource Id: %i %g %g", resource.Id.id(), cursor_pos.x, cursor_pos.y);
                                     ImGui::EndTooltip();
                                 }
 
@@ -276,32 +303,41 @@ namespace Engine::UI::Systems
 
             for(auto& node : g_GraphBuilder->GetNodes())
             {
-                for(auto& write : node.GetWriteResources())
+                if (mShowResourcesLinks)
                 {
-                    if (g_Reads->contains(write))
+                    for (auto& write : node.GetWriteResources())
                     {
-                        for (auto& read : g_Reads->at(write))
+                        if (g_Reads->contains(write))
                         {
-                            auto linkId = std::hash_combine(write, node.GetName(), read);
-                            ed::Link(linkId, std::hash_combine(node.GetName(), write), std::hash_combine(read, write));
+                            for (auto& read : g_Reads->at(write))
+                            {
+                                auto linkId = std::hash_combine(write, node.GetName(), read);
+                                ed::Link(linkId, std::hash_combine(node.GetName(), write), std::hash_combine(read, write));
+                            }
                         }
                     }
                 }
 
-                for (auto* otherNode : node.GetRelations().DebugNodesToSyncWith)
+                if (mShowNodesDebugLinks)
                 {
-                    auto linkId = std::hash_combine(0, node.GetName(), otherNode->GetName(), 1);
-                    auto syncInId = std::hash_combine(node.GetName(), 0);
-                    auto syncOutId = std::hash_combine(otherNode->GetName(), 1);
-                    ed::Link(linkId, syncOutId, syncInId, ImVec4{0.5, 0.5, 0.5 ,1}, 0.5);
+                    for (auto* otherNode : node.GetRelations().DebugNodesToSyncWith)
+                    {
+                        auto linkId = std::hash_combine(0, node.GetName(), otherNode->GetName(), 1);
+                        auto syncInId = std::hash_combine(node.GetName(), 0);
+                        auto syncOutId = std::hash_combine(otherNode->GetName(), 1);
+                        ed::Link(linkId, syncOutId, syncInId, ImVec4{ 0.5, 0.5, 0.5 ,1 }, 0.5);
+                    }
                 }
 
-                for (auto* otherNode : node.GetRelations().NodesToSyncWith)
+                if (mShowNodesLinks)
                 {
-                    auto linkId = std::hash_combine(0, node.GetName(), otherNode->GetName(), 1);
-                    auto syncInId = std::hash_combine(node.GetName(), 0);
-                    auto syncOutId = std::hash_combine(otherNode->GetName(), 1);
-                    ed::Link(linkId, syncOutId, syncInId, ImVec4{ 0.9, 0.4, 0.4 ,1 }, 0.5);
+                    for (auto* otherNode : node.GetRelations().NodesToSyncWith)
+                    {
+                        auto linkId = std::hash_combine(0, node.GetName(), otherNode->GetName(), 1);
+                        auto syncInId = std::hash_combine(node.GetName(), 0);
+                        auto syncOutId = std::hash_combine(otherNode->GetName(), 1);
+                        ed::Link(linkId, syncOutId, syncInId, ImVec4{ 0.9, 0.4, 0.4 ,1 }, 0.5);
+                    }
                 }
             }
 

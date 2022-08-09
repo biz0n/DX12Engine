@@ -61,7 +61,7 @@ namespace Engine::Scene
             scratch = std::move(mipChain);
         }
 
-       // DirectX::SaveToDDSFile(scratch->GetImages(),scratch->GetImageCount(), scratch->GetMetadata(), DirectX::DDS_FLAGS_NONE, dds.wstring().c_str());
+        // DirectX::SaveToDDSFile(scratch->GetImages(),scratch->GetImageCount(), scratch->GetMetadata(), DirectX::DDS_FLAGS_NONE, filename.replace_extension("dds").wstring().c_str());
 
         SharedPtr<Image> image = MakeShared<Image>();
         image->mImage = std::move(scratch);

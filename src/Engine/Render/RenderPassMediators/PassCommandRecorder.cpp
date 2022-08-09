@@ -156,6 +156,7 @@ namespace Engine::Render
             mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 14), srDescriptorHandle);
             mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 15), srDescriptorHandle);
             mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 16), srDescriptorHandle);
+            mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 17), srDescriptorHandle);
 
             mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 10), auDescriptorHandle);
             mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 11), auDescriptorHandle);
@@ -176,6 +177,7 @@ namespace Engine::Render
             mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 14), srDescriptorHandle);
             mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 15), srDescriptorHandle);
             mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 16), srDescriptorHandle);
+            mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 17), srDescriptorHandle);
 
             mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 10), auDescriptorHandle);
             mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 11), auDescriptorHandle);
@@ -278,12 +280,14 @@ namespace Engine::Render
     {
         assert(mPassContext->GetQueueType() == CommandQueueType::Graphics);
         mCommandList->IASetIndexBuffer(&indexBuffer->GetIndexBufferView());
+        indexBuffer->GetSRDescriptor();
     }
 
     void PassCommandRecorder::IASetVertexBuffers(const Memory::VertexBuffer* vertexBuffer)
     {
         assert(mPassContext->GetQueueType() == CommandQueueType::Graphics);
         mCommandList->IASetVertexBuffers(0, 1, &vertexBuffer->GetVertexBufferView());
+        vertexBuffer->GetSRDescriptor();
     }
 
     void PassCommandRecorder::IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY topology)

@@ -23,6 +23,7 @@ Texture3D<uint4>         Textures3D_UIn4[]              : register(t0, space13);
 Texture2DArray           Texture2DArrays[]              : register(t0, space14);
 TextureCube              TextureCubes[]                 : register(t0, space15);
 TextureCubeArray         TextureCubeArrays[]            : register(t0, space16);
+ByteAddressBuffer        BindlessBuffers[]              : register(t0, space17);
 
 
 

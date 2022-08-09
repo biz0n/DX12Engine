@@ -2,6 +2,8 @@
 #include <Window.h>
 #include <Application.h>
 
+#include <filesystem>
+
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <dxgidebug.h>
@@ -21,6 +23,8 @@ void ReportLiveObjects()
 
 int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmdShow)
 {
+	std::filesystem::current_path("C:\\Users\\Maxim\\Documents\\dev\\3d\\src\\Engine\\");
+
 	CoInitialize(nullptr);
 
 	Engine::Application app;

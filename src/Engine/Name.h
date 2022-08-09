@@ -27,6 +27,8 @@ namespace Engine
 
         const String &string() const;
 
+        const char* c_str() const;
+
         auto operator<=>(const Name &other) const = default;
 
     private:

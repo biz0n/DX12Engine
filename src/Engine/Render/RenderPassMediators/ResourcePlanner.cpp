@@ -1,8 +1,10 @@
 #include "ResourcePlanner.h"
+#include "..\Graph\ResourcePlanner.h"
 
 namespace Engine::Render
 {
     ResourcePlanner::ResourcePlanner() = default;
+
     ResourcePlanner::~ResourcePlanner() = default;
 
     void ResourcePlanner::NewRenderTarget(const Name &name, const Memory::TextureCreationInfo &textureInfo)

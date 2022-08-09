@@ -48,11 +48,11 @@ namespace Engine::Render
         stateStream.dsvFormat = pipelineStateProxy.dsvFormat;
         stateStream.inputLayout = {pipelineStateProxy.inputLayout.data(), static_cast<uint32>(pipelineStateProxy.inputLayout.size())};
         stateStream.primitiveTopologyType = pipelineStateProxy.primitiveTopologyType;
-        stateStream.PS = CD3DX12_SHADER_BYTECODE(mShaderProvider->GetShader({pipelineStateProxy.pixelShaderName, "mainPS", "ps_5_1"}).Get());
-        stateStream.VS = CD3DX12_SHADER_BYTECODE(mShaderProvider->GetShader({pipelineStateProxy.vertexShaderName, "mainVS", "vs_5_1"}).Get());
+        stateStream.PS = mShaderProvider->GetShader({pipelineStateProxy.pixelShaderName, "mainPS", "ps_6_6"});
+        stateStream.VS = mShaderProvider->GetShader({pipelineStateProxy.vertexShaderName, "mainVS", "vs_6_6"});
         if (!pipelineStateProxy.geometryShaderName.empty())
         {
-            stateStream.GS = CD3DX12_SHADER_BYTECODE(mShaderProvider->GetShader({pipelineStateProxy.geometryShaderName, "mainGS", "gs_5_1"}).Get());
+            stateStream.GS = mShaderProvider->GetShader({pipelineStateProxy.geometryShaderName, "mainGS", "gs_6_6"});
         }
         stateStream.rasterizer = CD3DX12_RASTERIZER_DESC(pipelineStateProxy.rasterizer);
         stateStream.rootSignature = mRootSignatureProvider->GetRootSignature(pipelineStateProxy.rootSignatureName)->GetD3D12RootSignature().Get();
@@ -78,7 +78,7 @@ namespace Engine::Render
 
         ComputePipelineStateStream stateStream;
         stateStream.rootSignature = mRootSignatureProvider->GetRootSignature(pipelineStateProxy.rootSignatureName)->GetD3D12RootSignature().Get();
-        stateStream.CS = CD3DX12_SHADER_BYTECODE(mShaderProvider->GetShader({pipelineStateProxy.computeShaderName, "mainCS", "cs_5_1"}).Get());
+        stateStream.CS = mShaderProvider->GetShader({pipelineStateProxy.computeShaderName, "mainCS", "cs_6_6"});
 
         D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc = { 
             sizeof(ComputePipelineStateStream), 

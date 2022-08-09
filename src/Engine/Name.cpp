@@ -49,4 +49,9 @@ namespace Engine
     {
         return NameRegistry::Instance().GetName(mId);
     }
+
+    const char* Name::c_str() const
+    {
+        return string().c_str();
+    }
 }

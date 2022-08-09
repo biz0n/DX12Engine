@@ -1,5 +1,6 @@
 #include "GraphBuilder.h"
 
+#include <Graph/Resource.h>
 #include <Types.h>
 #include <Exceptions.h>
 
@@ -27,13 +28,22 @@ namespace Engine::Graph
 
         auto adjacencyLists = AdjacencyList(mNodes.size());
 
-        auto readList = std::unordered_map<Name, std::vector<Index>>();
+        auto readList = std::unordered_map<Resource, std::vector<Index>>();
 
         for (Size i = 0; i < mNodes.size(); ++i)
         {
             auto& node = mNodes[i];
             node.GetRelations().OriginalIndex = i;
             for (const auto& readResource : node.GetReadResources())
+            {
+                if (!readList.contains(readResource))
+                {
+                    readList.insert({ readResource, std::vector<Index>() });
+                }
+                readList.at(readResource).push_back(i);
+            }
+
+            for (const auto& readResource : node.GetAliasedWriteResources())
             {
                 if (!readList.contains(readResource))
                 {
@@ -68,6 +78,30 @@ namespace Engine::Graph
             }
         }
 
+        for (Size i = 0; i < mNodes.size(); ++i)
+        {
+            auto& node = mNodes[i];
+            for (const auto& readResource : node.GetAliasedWriteResources())
+            {
+                for (Index nodeIndex : readList[readResource])
+                {
+                    if (node.GetRelations().OriginalIndex == nodeIndex)
+                    {
+                        continue;
+                    }
+                    adjacencyLists[nodeIndex].push_back(node.GetRelations().OriginalIndex);
+
+                    auto& otherNode = mNodes[nodeIndex];
+                    if (node.GetQueueIndex() != otherNode.GetQueueIndex())
+                    {
+                        otherNode.GetRelations().SyncRequired = true;
+                        node.GetRelations().NodesToSyncWith.push_back(&otherNode);
+                    }
+                }
+            }
+        }
+        
+
         auto visited = std::vector<bool>(mNodes.size(), false);
 
         auto onStack = std::vector<bool>(mNodes.size(), false);
@@ -83,9 +117,6 @@ namespace Engine::Graph
         }
 
         std::reverse(mOrderedIndexes.begin(), mOrderedIndexes.end());
-
-        std::vector<int32> indexPerQueue(mQueueCount, 0);
-
 
         for (int i = 0; i < mOrderedIndexes.size(); ++i)
         {
@@ -104,7 +135,6 @@ namespace Engine::Graph
             }
 
             mLayersCount = std::max(mLayersCount, node.GetRelations().Layer + 1);
-            node.GetRelations().IndexInQueue = indexPerQueue[node.GetQueueIndex()]++;
         }
     }
 
@@ -145,29 +175,33 @@ namespace Engine::Graph
         mLayers.resize(mLayersCount);
         std::vector<int32> indexPerLayer(mLayersCount, 0);
         std::vector<Node*> previousNodeInQueue(mQueueCount, nullptr);
+        std::vector<int32> indexPerQueue(mQueueCount, 0);
+        Index executionIndex = 0;
 
         for (int i = 0; i < mOrderedIndexes.size(); ++i)
         {
             auto originalIndex = mOrderedIndexes[i];
             auto& node = mNodes[originalIndex];
+
             node.GetRelations().IndexInLayer = indexPerLayer[node.GetRelations().Layer]++;
             mLayers[node.GetRelations().Layer].Add(&node);
-
-            auto* previousNode = previousNodeInQueue[node.GetQueueIndex()];
-            if (previousNode)
-            {
-                node.GetRelations().NodesToSyncWith.push_back(previousNode);
-            }
-
-            previousNodeInQueue[node.GetQueueIndex()] = &node;
         }
 
-        Index executionIndex = 0;
         for (auto& layer : mLayers)
         {
             for (auto* node : layer.GetNodes())
             {
+                auto* previousNode = previousNodeInQueue[node->GetQueueIndex()];
+                if (previousNode)
+                {
+                    node->GetRelations().NodesToSyncWith.push_back(previousNode);
+                }
+
+                previousNodeInQueue[node->GetQueueIndex()] = node;
+                node->GetRelations().IndexInQueue = indexPerQueue[node->GetQueueIndex()]++;
+
                 node->GetRelations().ExecutionIndex = executionIndex++;
+
                 node->GetRelations().DebugNodesToSyncWith = node->GetRelations().NodesToSyncWith;
             }
         }
@@ -305,6 +339,8 @@ namespace Engine::Graph
                 }
 
                 node->GetRelations().NodesToSyncWith = nodesToSyncWith;
+
+                
             }
         }
     }

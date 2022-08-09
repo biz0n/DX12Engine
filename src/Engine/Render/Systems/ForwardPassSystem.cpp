@@ -10,6 +10,7 @@
 #include <Scene/Components/LightComponent.h>
 #include <Scene/Components/MeshComponent.h>
 #include <Scene/Components/AABBComponent.h>
+#include <Scene/Components/NameComponent.h>
 #include <Scene/Components/IsDisabledComponent.h>
 
 namespace Engine::Render::Systems
@@ -76,11 +77,12 @@ namespace Engine::Render::Systems
         const auto &meshsView = registry.view<
             Scene::Components::MeshComponent, 
             Scene::Components::WorldTransformComponent, 
-            Scene::Components::AABBComponent>(entt::exclude<Scene::Components::IsDisabledComponent>);
+            Scene::Components::AABBComponent,
+            Scene::Components::NameComponent>(entt::exclude<Scene::Components::IsDisabledComponent>);
         data.meshes.reserve(meshsView.size_hint());
-        for (auto &&[entity, meshComponent, transformComponent, aabbComponent] : meshsView.each())
+        for (auto &&[entity, meshComponent, transformComponent, aabbComponent, name] : meshsView.each())
         {
-            if (camera.frustum.Intersects(aabbComponent.boundingBox))
+            if (camera.frustum.Intersects(aabbComponent.boundingBox) && name.Name.find("decal") == std::string::npos)
             {
                 Render::Passes::MeshData meshData = {};
                 meshData.mesh = meshComponent.mesh;

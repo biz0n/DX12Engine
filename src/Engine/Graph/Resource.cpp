@@ -2,7 +2,7 @@
 
 namespace Engine::Graph
 {
-    Resource::Resource(Name&& name) : mName{name}
+    Resource::Resource(Name name, int32 subresource) : Id{ name }, Subresource{ subresource }
     {
 
     }

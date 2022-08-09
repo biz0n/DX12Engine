@@ -41,7 +41,7 @@ project(d3d12)
 
 set(GUI_TYPE WIN32)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /UMBCS /D_UNICODE /DUNICODE")
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 
 file(GLOB IMGUI "src/Libraries/imgui/imgui/*.cpp" "src/Libraries/imgui/imgui/*.h")
 file(GLOB PIX "src/Libraries/PIX/*.h")
@@ -67,11 +67,25 @@ target_include_directories(d3d12 PRIVATE "src/Libraries/imgui/")
 
 target_include_directories(d3d12 PRIVATE "src/Libraries/PIX/")
 
-target_link_libraries(d3d12 PRIVATE "d3d12.lib" "dxgi.lib" "d3dcompiler.lib" "dxguid.lib" "assimp" "DirectXTex" "EnTT"  "DirectX-Headers" "${CMAKE_SOURCE_DIR}/src/Libraries/PIX/WinPixEventRuntime.lib")
+target_include_directories(d3d12 PRIVATE "src/Libraries/DirectXShaderCompiler/inc")
+
+target_link_libraries(d3d12 PRIVATE 
+"d3d12.lib" 
+"dxgi.lib" 
+"d3dcompiler.lib" 
+"dxguid.lib" 
+"assimp" 
+"DirectXTex" 
+"EnTT"  
+"DirectX-Headers" 
+"${CMAKE_SOURCE_DIR}/src/Libraries/PIX/WinPixEventRuntime.lib"
+"${CMAKE_SOURCE_DIR}/src/Libraries/DirectXShaderCompiler/lib/x64/dxcompiler.lib")
 
 add_custom_command (TARGET d3d12 POST_BUILD
 # COPY
 COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/src/Libraries/PIX/WinPixEventRuntime.dll ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/src/Libraries/DirectXShaderCompiler/bin/x64/dxcompiler.dll ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/src/Libraries/DirectXShaderCompiler/bin/x64/dxil.dll ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
 # Output Message
 COMMENT "Copying PIX binaries" VERBATIM)
 

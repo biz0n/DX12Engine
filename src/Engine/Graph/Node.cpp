@@ -9,11 +9,16 @@ namespace Engine::Graph
 
     void Node::ReadResource(const Resource& resource)
     {
-        mReadResources.push_back(resource.GetName());
+        mReadResources.push_back(resource);
     }
 
-    void Node::WriteResource(const Resource& resource)
+    void Node::WriteResource(const Resource& resource, Optional<Name> originalName)
     {
-        mWriteResources.push_back(resource.GetName());
+        mWriteResources.push_back(resource);
+
+        if (originalName)
+        {
+            mAliasedWriteResources.push_back(Resource{ *originalName, resource.Subresource});
+        }
     }
 } // namespace Engine::Graph

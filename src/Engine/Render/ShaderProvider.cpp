@@ -7,22 +7,25 @@
 
 namespace Engine::Render
 {
-    ShaderProvider::ShaderProvider() = default;
+    ShaderProvider::ShaderProvider()
+    {
+        mShaderCompiler = MakeUnique<HAL::ShaderCompiler>();
+    }
     
     ShaderProvider::~ShaderProvider() = default;
 
-    ComPtr<ID3DBlob> ShaderProvider::GetShader(const HAL::ShaderCreationInfo &creationInfo)
+    D3D12_SHADER_BYTECODE ShaderProvider::GetShader(const HAL::ShaderCreationInfo &creationInfo)
     {
         size_t hash = std::hash<HAL::ShaderCreationInfo>{}(creationInfo);
         auto iter = mShadersMap.find(hash);
 
         if (iter != mShadersMap.end())
         {
-            return iter->second;
+            return { iter->second->GetBufferPointer(), iter->second->GetBufferSize() };
         }
         else
         {
-            auto shader = HAL::ShaderCompiler::Compile(
+            auto shader = mShaderCompiler->Compile2(
                 StringToWString(creationInfo.path),
                 creationInfo.defines.data(),
                 creationInfo.entryPoint,
@@ -30,7 +33,7 @@ namespace Engine::Render
                 
             mShadersMap.emplace(hash, shader);
 
-            return shader;
+            return { shader->GetBufferPointer(), shader->GetBufferSize() };
         }
     }
 } // namespace Engine::Render

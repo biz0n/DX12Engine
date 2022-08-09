@@ -14,7 +14,7 @@ namespace Engine::Render
     template <typename TConstantsType>
     RootSignatureBuilder& RootSignatureBuilder::AddConstantsParameter(uint32 registerIndex, uint32 registerSpace, D3D12_SHADER_VISIBILITY visibility)
     {
-        CD3DX12_ROOT_PARAMETER parameter;
+        CD3DX12_ROOT_PARAMETER1 parameter;
         auto num32BitValues = static_cast<uint32>(sizeof(TConstantsType) / 4);
         parameter.InitAsConstants(num32BitValues, registerIndex, registerSpace, visibility);
 
@@ -25,8 +25,8 @@ namespace Engine::Render
 
     RootSignatureBuilder& RootSignatureBuilder::AddCBVParameter(uint32 registerIndex, uint32 registerSpace, D3D12_SHADER_VISIBILITY visibility)
     {
-        CD3DX12_ROOT_PARAMETER parameter;
-        parameter.InitAsConstantBufferView(registerIndex, registerSpace, visibility);
+        CD3DX12_ROOT_PARAMETER1 parameter;
+        parameter.InitAsConstantBufferView(registerIndex, registerSpace, D3D12_ROOT_DESCRIPTOR_FLAG_NONE,  visibility);
 
         mParameters.push_back({parameter, std::nullopt});
 
@@ -35,8 +35,8 @@ namespace Engine::Render
 
     RootSignatureBuilder& RootSignatureBuilder::AddSRVParameter(uint32 registerIndex, uint32 registerSpace, D3D12_SHADER_VISIBILITY visibility)
     {
-        CD3DX12_ROOT_PARAMETER parameter;
-        parameter.InitAsShaderResourceView(registerIndex, registerSpace, visibility);
+        CD3DX12_ROOT_PARAMETER1 parameter;
+        parameter.InitAsShaderResourceView(registerIndex, registerSpace, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, visibility);
 
         mParameters.push_back({parameter, std::nullopt});
 
@@ -45,8 +45,8 @@ namespace Engine::Render
 
     RootSignatureBuilder& RootSignatureBuilder::AddUAVParameter(uint32 registerIndex, uint32 registerSpace, D3D12_SHADER_VISIBILITY visibility)
     {
-        CD3DX12_ROOT_PARAMETER parameter;
-        parameter.InitAsUnorderedAccessView(registerIndex, registerSpace, visibility);
+        CD3DX12_ROOT_PARAMETER1 parameter;
+        parameter.InitAsUnorderedAccessView(registerIndex, registerSpace, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, visibility);
 
         mParameters.push_back({parameter, std::nullopt});
 
@@ -55,10 +55,10 @@ namespace Engine::Render
 
     RootSignatureBuilder& RootSignatureBuilder::AddSRVDescriptorTableParameter(uint32 registerIndex, uint32 registerSpace, D3D12_SHADER_VISIBILITY visibility, uint32 numDescriptors)
     {
-        CD3DX12_DESCRIPTOR_RANGE table;
+        CD3DX12_DESCRIPTOR_RANGE1 table;
         table.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, numDescriptors, registerIndex, registerSpace);
 
-        CD3DX12_ROOT_PARAMETER parameter;
+        CD3DX12_ROOT_PARAMETER1 parameter;
         parameter.InitAsDescriptorTable(1, &table, visibility);
         mParameters.push_back({parameter, table});
 
@@ -67,10 +67,10 @@ namespace Engine::Render
 
     RootSignatureBuilder& RootSignatureBuilder::AddUAVDescriptorTableParameter(uint32 registerIndex, uint32 registerSpace, D3D12_SHADER_VISIBILITY visibility, uint32 numDescriptors)
     {
-        CD3DX12_DESCRIPTOR_RANGE table;
+        CD3DX12_DESCRIPTOR_RANGE1 table;
         table.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, numDescriptors, registerIndex, registerSpace);
 
-        CD3DX12_ROOT_PARAMETER parameter;
+        CD3DX12_ROOT_PARAMETER1 parameter;
         parameter.InitAsDescriptorTable(1, &table, visibility);
         mParameters.push_back({parameter, table});
 
@@ -79,10 +79,10 @@ namespace Engine::Render
 
     RootSignatureBuilder& RootSignatureBuilder::AddSamplerDescriptorTableParameter(uint32 registerIndex, uint32 registerSpace, D3D12_SHADER_VISIBILITY visibility, uint32 numDescriptors)
     {
-        CD3DX12_DESCRIPTOR_RANGE table;
+        CD3DX12_DESCRIPTOR_RANGE1 table;
         table.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, numDescriptors, registerIndex, registerSpace);
 
-        CD3DX12_ROOT_PARAMETER parameter;
+        CD3DX12_ROOT_PARAMETER1 parameter;
         parameter.InitAsDescriptorTable(1, &table, visibility);
         mParameters.push_back({parameter, table});
 
@@ -109,7 +109,7 @@ namespace Engine::Render
             D3D12_COMPARISON_FUNC_LESS_EQUAL,
             D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK);
 
-        std::vector<CD3DX12_ROOT_PARAMETER> parameters;
+        std::vector<CD3DX12_ROOT_PARAMETER1> parameters;
         parameters.reserve(mParameters.size());
 
         for (auto &p : mParameters)
@@ -127,7 +127,7 @@ namespace Engine::Render
 
         const D3D12_STATIC_SAMPLER_DESC samplers[2] = {sampler, shadow};
         CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSigDesc;
-        rootSigDesc.Init_1_0(static_cast<uint32>(parameters.size()), parameters.data(), std::size(samplers), samplers,
+        rootSigDesc.Init_1_1(static_cast<uint32>(parameters.size()), parameters.data(), std::size(samplers), samplers,
                              D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
         mParameters.clear();

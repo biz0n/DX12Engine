@@ -12,5 +12,10 @@ namespace Engine::UI::Systems
             ~RenderGraphSystem() override;
         public:
             void Process(Scene::SceneObject *scene, const Timer& timer) override;
+
+        private:
+            bool mShowResourcesLinks;
+            bool mShowNodesLinks;
+            bool mShowNodesDebugLinks;
     };
 }

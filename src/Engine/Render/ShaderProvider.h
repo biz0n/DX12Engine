@@ -6,6 +6,7 @@
 #include <unordered_map>
 
 #include <d3d12.h>
+#include <dxcapi.h>
 
 namespace Engine::Render
 {
@@ -15,9 +16,10 @@ namespace Engine::Render
         ShaderProvider();
         ~ShaderProvider();
 
-        ComPtr<ID3DBlob> GetShader(const HAL::ShaderCreationInfo& creationInfo);
+        D3D12_SHADER_BYTECODE GetShader(const HAL::ShaderCreationInfo& creationInfo);
 
     private:
-        std::unordered_map<size_t, ComPtr<ID3DBlob>> mShadersMap;
+        std::unordered_map<size_t, ComPtr<IDxcBlob>> mShadersMap;
+        UniquePtr<HAL::ShaderCompiler> mShaderCompiler;
     };
 } // namespace Engine::Render

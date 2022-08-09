@@ -5,6 +5,7 @@
 #include <Scene/SceneObject.h>
 #include <Scene/Components/MovingComponent.h>
 #include <Scene/Components/LocalTransformComponent.h>
+#include <Scene/Components/WorldTransformComponent.h>
 
 #include <entt/entt.hpp>
 

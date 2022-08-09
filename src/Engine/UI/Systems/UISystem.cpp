@@ -150,7 +150,7 @@ namespace Engine::UI::Systems
                 camera.frustum.GetCorners(corners);
             }
 
-            if (ImGui::Combo("", &currentCameraIndex, cameraNames))
+            if (ImGui::Combo("Select Camera", &currentCameraIndex, cameraNames))
             {
                 registry.remove<Scene::Components::MainCameraComponent>(currentCameraEntity);
                 currentCameraEntity = cameraEntities[currentCameraIndex];
