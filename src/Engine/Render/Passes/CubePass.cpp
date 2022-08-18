@@ -28,6 +28,7 @@
 #include <Memory/Texture.h>
 #include <Memory/IndexBuffer.h>
 #include <Memory/UploadBuffer.h>
+#include <Memory/DescriptorAllocatorPool.h>
 
 #include <d3d12.h>
 
@@ -43,10 +44,10 @@ namespace Engine::Render::Passes
     {
         float clear[4] = {0};
         Memory::TextureCreationInfo rtTexture = {
-            .description = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R16G16B16A16_FLOAT, 0, 0, 1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET),
+            .description = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R16G16B16A16_FLOAT, 0, 0, 1, 1),
             .clearValue = CD3DX12_CLEAR_VALUE(DXGI_FORMAT_R16G16B16A16_FLOAT, clear)
         };
-        planner->NewRenderTarget(ResourceNames::CubeOutput, rtTexture);
+        planner->WriteRenderTarget(ResourceNames::CubeOutput, ResourceNames::ForwardOutput);
 
         planner->ReadDeptStencil(ResourceNames::ForwardDepth);
     }
@@ -54,8 +55,8 @@ namespace Engine::Render::Passes
     void CubePass::CreateRootSignatures(Render::RootSignatureProvider* rootSignatureProvider)
     {
         RootSignatureBuilder builder = {};
-        builder.AddCBVParameter(0, 0);
-        builder.AddSRVDescriptorTableParameter(0, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+        builder.AddConstantsParameter<uint32>(0, 0);
+        builder.AddCBVParameter(1, 0);
         rootSignatureProvider->BuildRootSignature(RootSignatureNames::Cube, builder);
     }
 
@@ -102,21 +103,21 @@ namespace Engine::Render::Passes
 
         commandRecorder->SetPipelineState(PSONames::Cube);
 
+        auto cubeMap = PassData().cube.cubeMap;
+        auto cubeTexture = cubeMap.texture;
+        auto cubeDescriptorIndex = cubeTexture->GetCubeSRDescriptor().GetFullIndex();
+
+        commandRecorder->SetRoot32BitConstant(0, 0, cubeDescriptorIndex);
+
+       
+
         auto& camera = PassData().camera;
         auto cb = CommandListUtils::GetFrameUniform(camera.viewProjection, camera.eyePosition, static_cast<uint32>(0));
 
         auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(Shader::FrameUniform));
         cbAllocation.CopyTo(&cb);
 
-        commandRecorder->SetRootConstantBufferView(0, 0, cbAllocation.GPU);
-
-        auto cubeMap = PassData().cube.cubeMap;
-
-        auto cubeTexture = cubeMap.texture;
-
-        auto cubeDescriptor = cubeTexture->GetCubeSRDescriptor().GetGPUDescriptor();
-
-        commandRecorder->SetRootDescriptorTable(0, 0, cubeDescriptor);
+        commandRecorder->SetRootConstantBufferView(1, 0, cbAllocation.GPU);
 
         commandRecorder->IASetPrimitiveTopology(cubeMap.primitiveTopology);
         CommandListUtils::BindVertexBuffer(commandRecorder.get(), resourceStateTracker, cubeMap.vertexBuffer.get());

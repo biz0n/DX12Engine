@@ -17,6 +17,8 @@
 #include <Render/FrameResourceProvider.h>
 #include <Render/RenderContext.h>
 
+#include <Graph/Node.h>
+
 #include <Memory/ResourceStateTracker.h>
 #include <Memory/TextureCreationInfo.h>
 #include <Memory/Texture.h>
@@ -44,9 +46,10 @@ namespace Engine::Render
         for (Size i = 0; i < std::size(mFrameContexts); ++i)
         {
             mFrameContexts[i].uploadBuffer = mRenderContext->GetResourceFactory()->CreateUploadBuffer(10 * 1024 * 1024);
+            mFrameContexts[i].uploadBuffer->SetName("Frame Upload Buffer");
         }
 
-        mFrameResourceProvider = MakeUnique<FrameResourceProvider>(mRenderContext->Device(), mRenderContext->GetResourceFactory());
+        mFrameResourceProvider = MakeShared<FrameResourceProvider>(mRenderContext->Device(), mRenderContext->GetSwapChain(), mRenderContext->GetResourceFactory());
     }
 
     void Renderer::Deinitialize()
@@ -55,6 +58,7 @@ namespace Engine::Render
 
     void Renderer::RegisterRenderPass(RenderPassBase* renderPass)
     {
+        mGraphBuilder.AddNode(Graph::Node{ Name(renderPass->GetName()), (int)renderPass->GetQueueType() });
         mRenderPasses.push_back(renderPass);
     }
 
@@ -73,40 +77,42 @@ namespace Engine::Render
     void Renderer::PrepareFrame()
     {
         mPassContexts.reserve(mRenderPasses.size());
-        for (auto& pass : mRenderPasses)
+        mFrameResourceProvider->PrepareResources();
+        for (Index i = 0; i < mRenderPasses.size(); ++i)
         {
-            PassContext passContext(pass);
+            RenderPassBase* pass = mRenderPasses[i];
+            Graph::Node* node = mGraphBuilder.GetNode(i);
+
+            PassContext passContext(pass, node, mFrameResourceProvider);
 
             pass->PrepareResources(passContext.GetResourcePlanner());
-
-            for (auto resource : passContext.GetResourcePlanner()->GetPlannedResources())
-            {
-                auto& creationInfo = resource.creationInfo;
-                if (creationInfo.description.Width == 0 && creationInfo.description.Height == 0)
-                {
-                    creationInfo.description.Width = mRenderContext->GetSwapChain()->GetWidth();
-                    creationInfo.description.Height = mRenderContext->GetSwapChain()->GetHeight();
-                }
-
-                mFrameResourceProvider->CreateResource(resource.name, resource.creationInfo, resource.state);
-            }
 
             pass->CreateRootSignatures(mRenderContext->GetRootSignatureProvider());
             pass->CreatePipelineStates(mRenderContext->GetPipelineStateProvider());
 
             mPassContexts.push_back(std::move(passContext));
         }
+
+        mFrameResourceProvider->CreateResources();
     }
 
     void Renderer::RenderPasses(Scene::SceneObject* scene, const Timer& timer)
     {
-        for (auto& pass : mPassContexts)
+        mGraphBuilder.Build();
+
+        for (auto orderedIndex : mGraphBuilder.GetOrderedIndexes())
         {
-            RenderPass(&pass, scene, timer);
+            auto pass = &mPassContexts[orderedIndex];
+            RenderPass(pass, scene, timer);
         }
 
         mRenderPasses.clear();
         mPassContexts.clear();
+    }
+
+    void Renderer::Reset()
+    {
+        mGraphBuilder.Clear();
     }
 
     void Renderer::RenderPass(PassContext* passContext, Scene::SceneObject* scene, const Timer& timer)
@@ -211,7 +217,7 @@ namespace Engine::Render
         stateTracker->FlushBarriers(commandList);
 
 
-        std::vector<ID3D12CommandList *> commandLists;
+        std::vector<ID3D12CommandList *> commandLists; 
 
         auto barriersCommandList = renderContext->CreateGraphicsCommandList();
 

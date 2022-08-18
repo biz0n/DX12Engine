@@ -3,6 +3,8 @@
 #include <Hash.h>
 #include <Scene/SceneObject.h>
 
+#include <Render/Renderer.h>
+
 #include <Graph/GraphBuilder.h>
 #include <Graph/Node.h>
 #include <Graph/Resource.h>
@@ -24,19 +26,18 @@
 namespace ed = ax::NodeEditor;
 static ed::EditorContext* g_Context = nullptr;
 
-static Engine::Graph::GraphBuilder* g_GraphBuilder = nullptr;
-static std::vector<Engine::Graph::Resource>* g_Resources = nullptr;
-static std::unordered_map<Engine::Graph::Resource, std::unordered_set<Engine::Name>>* g_Reads;
+//static const Engine::Graph::GraphBuilder* g_GraphBuilder = nullptr;
+//static std::vector<Engine::Graph::Resource>* g_Resources = nullptr;
 
 namespace Engine::UI::Systems
 {
-    RenderGraphSystem::RenderGraphSystem() : System()
+    RenderGraphSystem::RenderGraphSystem(SharedPtr<Engine::Render::Renderer> renderer) : System(), mRenderer{ renderer }
     {
         g_Context = ed::CreateEditor();
 
+        /*
         g_GraphBuilder = new Graph::GraphBuilder();
         g_Resources = new std::vector<Graph::Resource>();
-        g_Reads = new std::unordered_map<Engine::Graph::Resource, std::unordered_set<Engine::Name>>();
 
         auto resource1 = g_Resources->emplace_back(Graph::Resource{ "Resource1", 0 });
         auto resource2 = g_Resources->emplace_back(Graph::Resource{ "Resource2", 0 });
@@ -86,6 +87,7 @@ namespace Engine::UI::Systems
         
 
         g_GraphBuilder->Build();
+        
 
         for(auto& node : g_GraphBuilder->GetNodes())
         {
@@ -98,6 +100,7 @@ namespace Engine::UI::Systems
                 g_Reads->at(res).emplace(node.GetName());
             }
         }
+        */
 
         mShowResourcesLinks = true;
         mShowNodesLinks = true;
@@ -111,6 +114,22 @@ namespace Engine::UI::Systems
 
     void RenderGraphSystem::Process(Scene::SceneObject *scene, const Timer& timer)
     {
+
+        auto graphBuilder = &mRenderer->GetGraph();
+        mReads.clear();
+        for (auto& node : graphBuilder->GetNodes())
+        {
+            for (auto& res : node.GetReadResources())
+            {
+                if (!mReads.contains(res))
+                {
+                    mReads.insert({ res, std::unordered_set<Engine::Name>() });
+                }
+                mReads.at(res).emplace(node.GetName());
+            }
+        }
+
+
         ed::SetCurrentEditor(g_Context);
 
         ImVec2 cursor_pos = ImGui::GetIO().MousePos;
@@ -133,14 +152,14 @@ namespace Engine::UI::Systems
            
 
             int index = 0;
-            for(auto& node : g_GraphBuilder->GetNodes())
+            for(auto& node : graphBuilder->GetNodes())
             {
                 ImVec2 headerMin = ImVec2();
                 ImVec2 headerMax = ImVec2();
 
                 ed::BeginNode(node.GetName().id());
                 {
-                    const float nodeWidth = 200;
+                    const float nodeWidth = 250;
                     const float iconSize = 15;
                     index++;
 
@@ -226,7 +245,7 @@ namespace Engine::UI::Systems
                                     ImGui::SetNextWindowPos(tooltip_pos);
 
                                     ImGui::BeginTooltip();
-                                    ImGui::Text("Resource Id: %i %g %g", resource.Id.id(), cursor_pos.x, cursor_pos.y);
+                                    ImGui::Text("Resource Id: %i", resource.Id.id());
                                     ImGui::EndTooltip();
                                 }
                             }
@@ -301,15 +320,15 @@ namespace Engine::UI::Systems
                 
             }
 
-            for(auto& node : g_GraphBuilder->GetNodes())
+            for(auto& node : graphBuilder->GetNodes())
             {
                 if (mShowResourcesLinks)
                 {
                     for (auto& write : node.GetWriteResources())
                     {
-                        if (g_Reads->contains(write))
+                        if (mReads.contains(write))
                         {
-                            for (auto& read : g_Reads->at(write))
+                            for (auto& read : mReads.at(write))
                             {
                                 auto linkId = std::hash_combine(write, node.GetName(), read);
                                 ed::Link(linkId, std::hash_combine(node.GetName(), write), std::hash_combine(read, write));

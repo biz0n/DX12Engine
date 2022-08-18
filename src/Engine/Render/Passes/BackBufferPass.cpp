@@ -33,13 +33,13 @@ namespace Engine::Render::Passes
 
     void BackBufferPass::PrepareResources(Render::ResourcePlanner* planner)
     {
-        planner->ReadRenderTarget(ResourceNames::ForwardOutput);
+        planner->ReadRenderTarget(ResourceNames::TonemappingOutput);
     }
 
     void BackBufferPass::CreateRootSignatures(Render::RootSignatureProvider* rootSignatureProvider)
     {
         RootSignatureBuilder builder = {};
-        builder.AddSRVDescriptorTableParameter(0, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+        builder.AddConstantsParameter<int32>(0, 0, D3D12_SHADER_VISIBILITY_PIXEL);
         rootSignatureProvider->BuildRootSignature(RootSignatureNames::BackBuffer, builder);
     }
 
@@ -80,11 +80,11 @@ namespace Engine::Render::Passes
         commandRecorder->SetPipelineState(PSONames::BackBuffer);
         
         auto* color = passContext.frameResourceProvider->GetTexture(ResourceNames::TonemappingOutput);
-        auto colorSRV = color->GetSRDescriptor().GetGPUDescriptor();
+        auto colorTextureIndex = color->GetSRDescriptor().GetFullIndex();
 
         CommandListUtils::TransitionBarrier(passContext.resourceStateTracker.get(), color->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-        commandRecorder->SetRootDescriptorTable(0, 0, colorSRV);
+        commandRecorder->SetRoot32BitConstant(0, 0, colorTextureIndex);
 
         commandRecorder->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 

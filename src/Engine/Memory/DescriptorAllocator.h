@@ -14,6 +14,7 @@ namespace Engine::Memory
         D3D12_CPU_DESCRIPTOR_HANDLE CpuAddress;
         D3D12_GPU_DESCRIPTOR_HANDLE GpuAddress;
         Index HeapIndex;
+        Size Offset;
     };
 
     struct DescriptorAllocatorConfig

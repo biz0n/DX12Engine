@@ -36,6 +36,7 @@
 #include <UI/Systems/UISystem.h>
 #include <UI/Systems/RenderGraphSystem.h>
 #include <Render/Systems/RenderSystem.h>
+#include <Render/Systems/RenderCleanupSystem.h>
 #include <Render/Systems/DepthPassSystem.h>
 #include <Render/Systems/ForwardPassSystem.h>
 #include <Render/Systems/CubePassSystem.h>
@@ -107,17 +108,21 @@ namespace Engine
         scene->AddSystem(MakeUnique<Scene::Systems::LightCameraSystem>(mRenderContext));
 
         scene->AddSystem(MakeUnique<Render::Systems::DepthPassSystem>(renderer));
-        scene->AddSystem(MakeUnique<Render::Systems::ForwardPassSystem>(renderer));
-        scene->AddSystem(MakeUnique<Render::Systems::CubePassSystem>(renderer));
+        
         scene->AddSystem(MakeUnique<Render::Systems::ToneMappingPassSystem>(renderer));
+        scene->AddSystem(MakeUnique<Render::Systems::CubePassSystem>(renderer));
+        
         scene->AddSystem(MakeUnique<Render::Systems::BackBufferPassSystem>(renderer));
+        scene->AddSystem(MakeUnique<Render::Systems::ForwardPassSystem>(renderer));
 
         scene->AddSystem(MakeUnique<Render::Systems::RenderSystem>(renderer));
 
         scene->AddSystem(MakeUnique<UI::Systems::UISystem>(mRenderContext));
-        scene->AddSystem(MakeUnique<UI::Systems::RenderGraphSystem>());
+        scene->AddSystem(MakeUnique<UI::Systems::RenderGraphSystem>(renderer));
 
         scene->AddSystem(MakeUnique<Scene::Systems::MovingSystem>(mKeyboard));
+
+        scene->AddSystem(MakeUnique<Render::Systems::RenderCleanupSystem>(renderer));
 
 
 

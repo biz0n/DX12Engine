@@ -13,8 +13,8 @@ struct TonemapingPassCB
 [numthreads(16, 16, 1)]
 void mainCS(int3 dispatchThreadId : SV_DispatchThreadId)
 {
-    Texture2D input = Textures2D[PassCB.InputTexIndex];
-    RWTexture2D<float4> output = RWTextures2D_Float4[PassCB.OutputTexIndex];
+    Texture2D input = ResourceDescriptorHeap[PassCB.InputTexIndex];
+    RWTexture2D<float4> output = ResourceDescriptorHeap[PassCB.OutputTexIndex];
 
     float4 color = input[dispatchThreadId.xy];
     float3 mapped = float3(1.0, 1.0, 1.0) - exp(-color.xyz * 5);

@@ -1,8 +1,11 @@
 #include "ShaderTypes.h"
 
-ConstantBuffer<FrameUniform> FrameCB : register(b0);
+cbuffer CubeTexture : register(b0)
+{
+    int CubeTextureIndex;
+};
 
-TextureCube cubeTexture : register(t0);
+ConstantBuffer<FrameUniform> FrameCB : register(b1);
 
 #include "BaseLayout.hlsl"
 
@@ -48,7 +51,8 @@ PixelShaderOutput mainPS(VertexShaderOutput IN)
 {
     PixelShaderOutput OUT;
 
-    float4 baseColor = cubeTexture.Sample(gsamPointWrap, IN.TextureCoord);
+    TextureCube baseColorTexture = ResourceDescriptorHeap[CubeTextureIndex];
+    float4 baseColor = baseColorTexture.Sample(gsamPointWrap, IN.TextureCoord);
     baseColor = float4(SRGBToLinear(baseColor.rgb), baseColor.a);
     OUT.Color = baseColor;
 

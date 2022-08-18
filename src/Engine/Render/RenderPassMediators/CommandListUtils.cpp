@@ -88,27 +88,27 @@ namespace Engine::Render::CommandListUtils
 
         if (material.HasBaseColorTexture())
         {
-            uniform.BaseColorIndex = material.GetBaseColorTexture()->GetSRDescriptor().GetIndex();
+            uniform.BaseColorIndex = material.GetBaseColorTexture()->GetSRDescriptor().GetFullIndex();
         }
 
         if (material.HasMetallicRoughnessTexture())
         {
-            uniform.MetallicRoughnessIndex = material.GetMetallicRoughnessTexture()->GetSRDescriptor().GetIndex();
+            uniform.MetallicRoughnessIndex = material.GetMetallicRoughnessTexture()->GetSRDescriptor().GetFullIndex();
         }
 
         if (material.HasNormalTexture())
         {
-            uniform.NormalIndex = material.GetNormalTexture()->GetSRDescriptor().GetIndex();
+            uniform.NormalIndex = material.GetNormalTexture()->GetSRDescriptor().GetFullIndex();
         }
 
         if (material.HasEmissiveTexture())
         {
-            uniform.EmissiveIndex = material.GetEmissiveTexture()->GetSRDescriptor().GetIndex();
+            uniform.EmissiveIndex = material.GetEmissiveTexture()->GetSRDescriptor().GetFullIndex();
         }
 
         if (material.HasAmbientOcclusionTexture())
         {
-            uniform.OcclusionIndex = material.GetAmbientOcclusionTexture()->GetSRDescriptor().GetIndex();
+            uniform.OcclusionIndex = material.GetAmbientOcclusionTexture()->GetSRDescriptor().GetFullIndex();
         }
 
         return uniform;

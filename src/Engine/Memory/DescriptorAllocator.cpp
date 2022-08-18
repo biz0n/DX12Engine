@@ -250,17 +250,19 @@ namespace Engine::Memory
 
         auto destCpu = mSrvCbvUavHeap.GetCpuAddress(heapIndex, DescriptorAllocatorConfig::SRVRange);
         auto destGpu = mSrvCbvUavHeap.GetGpuAddress(heapIndex, DescriptorAllocatorConfig::SRVRange);
+        auto offset = mSrvCbvUavHeap.GetRangeOffset(DescriptorAllocatorConfig::SRVRange);
         mDevice->CreateShaderResourceView(resource, &desc, destCpu);
 
-        return Descriptor { destCpu, destGpu, heapIndex };
+        return Descriptor { destCpu, destGpu, heapIndex, offset };
     }
 
     Descriptor DescriptorAllocator::AllocateSRDescriptor(Index heapIndex, uint32 strideSize)
     {
         auto destCpu = mSrvCbvUavHeap.GetCpuAddress(heapIndex, DescriptorAllocatorConfig::SRVRange);
         auto destGpu = mSrvCbvUavHeap.GetGpuAddress(heapIndex, DescriptorAllocatorConfig::SRVRange);
+        auto offset = mSrvCbvUavHeap.GetRangeOffset(DescriptorAllocatorConfig::SRVRange);
 
-        return Descriptor { destCpu, destGpu, heapIndex };
+        return Descriptor { destCpu, destGpu, heapIndex, offset };
     }
 
     Descriptor DescriptorAllocator::AllocateSRCubeDescriptor(ID3D12Resource* resource, Index heapIndex)
@@ -298,9 +300,10 @@ namespace Engine::Memory
         
         auto destCpu = mSrvCbvUavHeap.GetCpuAddress(heapIndex, DescriptorAllocatorConfig::SRVRange);
         auto destGpu = mSrvCbvUavHeap.GetGpuAddress(heapIndex, DescriptorAllocatorConfig::SRVRange);
+        auto offset = mSrvCbvUavHeap.GetRangeOffset(DescriptorAllocatorConfig::SRVRange);
         mDevice->CreateShaderResourceView(resource, &desc, destCpu);
 
-        return Descriptor { destCpu, destGpu, heapIndex };
+        return Descriptor { destCpu, destGpu, heapIndex, offset };
     }
 
     Descriptor DescriptorAllocator::AllocateSRRaytracingASDescriptor(ID3D12Resource* resource, Index heapIndex)
@@ -316,9 +319,10 @@ namespace Engine::Memory
 
         auto destCpu = mSrvCbvUavHeap.GetCpuAddress(heapIndex, DescriptorAllocatorConfig::SRVRange);
         auto destGpu = mSrvCbvUavHeap.GetGpuAddress(heapIndex, DescriptorAllocatorConfig::SRVRange);
+        auto offset = mSrvCbvUavHeap.GetRangeOffset(DescriptorAllocatorConfig::SRVRange);
         mDevice->CreateShaderResourceView(nullptr, &desc, destCpu);
 
-        return Descriptor { destCpu, destGpu, heapIndex };
+        return Descriptor { destCpu, destGpu, heapIndex, offset };
     }
 
     Descriptor DescriptorAllocator::AllocateCBDescriptor(ID3D12Resource* resource, Index heapIndex, uint32 strideSize)
@@ -329,9 +333,10 @@ namespace Engine::Memory
 
         auto destCpu = mSrvCbvUavHeap.GetCpuAddress(heapIndex, DescriptorAllocatorConfig::CBVRange);
         auto destGpu = mSrvCbvUavHeap.GetGpuAddress(heapIndex, DescriptorAllocatorConfig::CBVRange);
+        auto offset = mSrvCbvUavHeap.GetRangeOffset(DescriptorAllocatorConfig::CBVRange);
         mDevice->CreateConstantBufferView(&desc, destCpu);
 
-        return Descriptor { destCpu, destGpu, heapIndex };
+        return Descriptor { destCpu, destGpu, heapIndex, offset };
     }
 
     Descriptor DescriptorAllocator::AllocateUADescriptor(ID3D12Resource* resource, Index heapIndex, uint32 strideSize, uint32 mipSlice)
@@ -399,9 +404,10 @@ namespace Engine::Memory
 
         auto destCpu = mSrvCbvUavHeap.GetCpuAddress(heapIndex, DescriptorAllocatorConfig::UAVRange);
         auto destGpu = mSrvCbvUavHeap.GetGpuAddress(heapIndex, DescriptorAllocatorConfig::UAVRange);
+        auto offset = mSrvCbvUavHeap.GetRangeOffset(DescriptorAllocatorConfig::UAVRange);
         mDevice->CreateUnorderedAccessView(resource, nullptr, &desc, destCpu);
 
-        return Descriptor { destCpu, destGpu, heapIndex };
+        return Descriptor { destCpu, destGpu, heapIndex, offset };
     }
 
     Descriptor DescriptorAllocator::AllocateSamplerDescriptor(const D3D12_SAMPLER_DESC& samplerDesc, Index heapIndex)

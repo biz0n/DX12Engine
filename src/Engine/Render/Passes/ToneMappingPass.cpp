@@ -33,7 +33,7 @@ namespace Engine::Render::Passes
 
     void ToneMappingPass::PrepareResources(Render::ResourcePlanner* planner)
     {
-        planner->ReadRenderTarget(ResourceNames::ForwardOutput);
+        planner->ReadRenderTarget(ResourceNames::CubeOutput);
 
         Memory::TextureCreationInfo texture = {
             .description = CD3DX12_RESOURCE_DESC::Tex2D(
@@ -41,10 +41,7 @@ namespace Engine::Render::Passes
                     0,
                     0,
                     1,
-                    1,
-                    1,
-                    0,
-                    D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
+                    1),
         };
         planner->NewTexture(ResourceNames::TonemappingOutput, texture);
     }
@@ -75,7 +72,7 @@ namespace Engine::Render::Passes
 
         commandRecorder->SetPipelineState(PSONames::ToneMapping);
         
-        auto* inputTexture = passContext.frameResourceProvider->GetTexture(ResourceNames::ForwardOutput);
+        auto* inputTexture = passContext.frameResourceProvider->GetTexture(ResourceNames::CubeOutput);
         auto* outputTexture = passContext.frameResourceProvider->GetTexture(ResourceNames::TonemappingOutput);
        // auto colorSRV = color->GetSRDescriptor().GetGPUDescriptor();
 
@@ -88,8 +85,8 @@ namespace Engine::Render::Passes
             uint32 OutputTexIndex;
         } cbData;
 
-        cbData.InputTexIndex = inputTexture->GetSRDescriptor().GetIndex();
-        cbData.OutputTexIndex = outputTexture->GetUADescriptor().GetIndex();
+        cbData.InputTexIndex = inputTexture->GetSRDescriptor().GetFullIndex();
+        cbData.OutputTexIndex = outputTexture->GetUADescriptor().GetFullIndex();
         auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(cbData));
         cbAllocation.CopyTo(&cbData, sizeof(cbData));
         commandRecorder->SetRootConstantBufferView(0, 10, cbAllocation.GPU);

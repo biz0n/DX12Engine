@@ -30,13 +30,6 @@ namespace Engine::Memory
     class ResourceCopyManager
     {
     public:
-        struct WriteAllocation
-        {
-            UniquePtr<Engine::Memory::UploadBuffer> UploadBuffer;
-            Byte *CPU;
-
-        };
-    public:
         ResourceCopyManager() : mCurrentFrame{0}
         {
 

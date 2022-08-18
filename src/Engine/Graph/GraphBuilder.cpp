@@ -25,6 +25,8 @@ namespace Engine::Graph
     void GraphBuilder::SortNodes()
     {
         mOrderedIndexes.clear();
+        mQueueCount = 0;
+        mLayersCount = 0;
 
         auto adjacencyLists = AdjacencyList(mNodes.size());
 
@@ -145,6 +147,15 @@ namespace Engine::Graph
         SortNodes();
         BuildRelationships();
         CullRedundantSyncs();
+    }
+
+    void GraphBuilder::Clear()
+    {
+        mNodes.clear();
+        mOrderedIndexes.clear();
+        mLayers.clear();
+        mQueueCount = 0;
+        mLayersCount = 0;
     }
 
     void GraphBuilder::DepthFirstSearch(Index index, std::vector<bool>& visited, std::vector<bool>& onStack, AdjacencyList& adjacencyList)

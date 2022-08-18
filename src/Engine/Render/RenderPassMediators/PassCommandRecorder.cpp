@@ -149,43 +149,11 @@ namespace Engine::Render
 
         if (mPassContext->GetQueueType() == CommandQueueType::Graphics)
         {
-            mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 10), srDescriptorHandle);
-            mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 11), srDescriptorHandle);
-            mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 12), srDescriptorHandle);
-            mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 13), srDescriptorHandle);
-            mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 14), srDescriptorHandle);
-            mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 15), srDescriptorHandle);
-            mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 16), srDescriptorHandle);
-            mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 17), srDescriptorHandle);
-
-            mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 10), auDescriptorHandle);
-            mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 11), auDescriptorHandle);
-            mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 12), auDescriptorHandle);
-            mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 13), auDescriptorHandle);
-            mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 14), auDescriptorHandle);
-            mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 15), auDescriptorHandle);
-
             mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::Sampler, 0, 10), samplerDescriptorHandle);
             mCommandList->SetGraphicsRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::Sampler, 0, 11), samplerDescriptorHandle);
         }
         else 
         {
-            mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 10), srDescriptorHandle);
-            mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 11), srDescriptorHandle);
-            mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 12), srDescriptorHandle);
-            mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 13), srDescriptorHandle);
-            mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 14), srDescriptorHandle);
-            mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 15), srDescriptorHandle);
-            mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 16), srDescriptorHandle);
-            mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::ShaderResource, 0, 17), srDescriptorHandle);
-
-            mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 10), auDescriptorHandle);
-            mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 11), auDescriptorHandle);
-            mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 12), auDescriptorHandle);
-            mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 13), auDescriptorHandle);
-            mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 14), auDescriptorHandle);
-            mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::UnorderedAccess, 0, 15), auDescriptorHandle);
-
             //mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::Sampler, 0, 10), samplerDescriptorHandle);
             //mCommandList->SetComputeRootDescriptorTable(rs->GetIndex(HAL::RootSignature::RegisterType::Sampler, 0, 11), samplerDescriptorHandle);
         }
@@ -204,6 +172,20 @@ namespace Engine::Render
         mLastPSOName = pso;
 
         SetRootSignature(rootSignature);
+    }
+
+    void PassCommandRecorder::SetRoot32BitConstant(uint32 registerIndex, uint32 registerSpace, int32 value, uint32 destOffsetIn32BitValue)
+    {
+        assert(mLastRootSignature);
+        auto parameterIndex = mLastRootSignature->GetIndex(HAL::RootSignature::RegisterType::ConstantBuffer, registerIndex, registerSpace);
+        if (mPassContext->GetQueueType() == CommandQueueType::Graphics)
+        {
+            mCommandList->SetGraphicsRoot32BitConstant(parameterIndex, value, destOffsetIn32BitValue);
+        }
+        else
+        {
+            mCommandList->SetComputeRoot32BitConstant(parameterIndex, value, destOffsetIn32BitValue);
+        }
     }
 
     void PassCommandRecorder::SetRoot32BitConstants(uint32 registerIndex, uint32 registerSpace, uint32 num32BitValuesToSet, const void *srcData, uint32 destOffsetIn32BitValues)

@@ -43,7 +43,8 @@ float ShadowCalculation(float4 fragPosLightSpace, int shadowIndex)
 
 
     uint width, height, numMips;
-    Textures2D[shadowIndex].GetDimensions(0, width, height, numMips);
+    Texture2D<float4> shadowTexture = ResourceDescriptorHeap[shadowIndex];
+    shadowTexture.GetDimensions(0, width, height, numMips);
 
     // Texel size.
     float dx = 1.0f / (float)width;
@@ -59,7 +60,7 @@ float ShadowCalculation(float4 fragPosLightSpace, int shadowIndex)
     [unroll]
     for(int i = 0; i < 9; ++i)
     {
-        percentLit += Textures2D[shadowIndex].SampleCmpLevelZero(gsamShadow,
+        percentLit += shadowTexture.SampleCmpLevelZero(gsamShadow,
             projCoords.xy + offsets[i], currentDepth).r;
     }
     
@@ -95,7 +96,8 @@ PixelShaderOutput mainPS(VertexShaderOutput IN)
     float4 baseColor = MaterialCB.BaseColor;
     if (MaterialCB.HasBaseColorTexture)
     {
-        baseColor = Textures2D[MaterialCB.BaseColorIndex].Sample(gsamPointWrap, IN.TextureCoord);
+        Texture2D<float4> baseColorTexture = ResourceDescriptorHeap[MaterialCB.BaseColorIndex];
+        baseColor = baseColorTexture.Sample(gsamPointWrap, IN.TextureCoord);
         baseColor = float4(SRGBToLinear(baseColor.rgb), baseColor.a);
     }
 
@@ -104,7 +106,8 @@ PixelShaderOutput mainPS(VertexShaderOutput IN)
     float3 N;
     if (MaterialCB.HasNormalTexture)
     {
-        float3 n = Textures2D[MaterialCB.NormalIndex].Sample(gsamPointWrap, IN.TextureCoord).rgb;
+        Texture2D<float4> normalTexture = ResourceDescriptorHeap[MaterialCB.NormalIndex];
+        float3 n = normalTexture.Sample(gsamPointWrap, IN.TextureCoord).rgb;
         n = float3(n.r, 1-n.g, n.b);
         float scale = MaterialCB.NormalScale;
         N = (n * 2.0 - 1.0) * float3(scale, scale, 1.0);
@@ -119,7 +122,8 @@ PixelShaderOutput mainPS(VertexShaderOutput IN)
     float roughness = MaterialCB.RoughnessFactor;
     if (MaterialCB.HasMetallicRoughnessTexture)
     {
-        float4 metallicRoughness = Textures2D[MaterialCB.MetallicRoughnessIndex].Sample(gsamPointWrap, IN.TextureCoord);
+        Texture2D<float4> metallicRoughnessTexture = ResourceDescriptorHeap[MaterialCB.MetallicRoughnessIndex];
+        float4 metallicRoughness = metallicRoughnessTexture.Sample(gsamPointWrap, IN.TextureCoord);
 
         metallic = metallic * metallicRoughness.b;
         roughness = roughness * clamp(metallicRoughness.g, 0.04, 1.0);
@@ -128,13 +132,15 @@ PixelShaderOutput mainPS(VertexShaderOutput IN)
     float4 emissiveFactor = MaterialCB.EmissiveFactor;
     if (MaterialCB.HasEmissiveTexture)
     {
-        emissiveFactor *= Textures2D[MaterialCB.EmissiveIndex].Sample(gsamPointWrap, IN.TextureCoord);
+        Texture2D<float4> emissiveTexture = ResourceDescriptorHeap[MaterialCB.EmissiveIndex];
+        emissiveFactor *= emissiveTexture.Sample(gsamPointWrap, IN.TextureCoord);
     }
 
     float4 occlusion = MaterialCB.Ambient;
     if (MaterialCB.HasOcclusionTexture)
     {
-        occlusion = Textures2D[MaterialCB.OcclusionIndex].Sample(gsamPointWrap, IN.TextureCoord);
+        Texture2D<float4> occlusionTexture = ResourceDescriptorHeap[MaterialCB.OcclusionIndex];
+        occlusion = occlusionTexture.Sample(gsamPointWrap, IN.TextureCoord);
     }
     
     float3 V = normalize(FrameCB.EyePos - IN.PositionW);

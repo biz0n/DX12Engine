@@ -23,18 +23,18 @@ namespace Engine
 
     }
 
-    Name::Name(Name&& other) : mId(other.mId)
+    Name::Name(Name&& other) noexcept : mId(other.mId)
     {
         
     }
 
-    Name& Name::operator=(const Name& other)
+    Name& Name::operator=(const Name& other) noexcept
     {
         mId = other.mId;
         return *this;
     }
 
-    Name& Name::operator=(Name&& other)
+    Name& Name::operator=(Name&& other) noexcept
     {
         mId = other.mId;
         return *this;

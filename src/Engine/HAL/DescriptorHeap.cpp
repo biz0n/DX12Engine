@@ -35,7 +35,7 @@ namespace Engine::HAL
         {
             CD3DX12_CPU_DESCRIPTOR_HANDLE cpu(mCpu, static_cast<int32>(offset), mDescriptorHandleIncrementSize);
             CD3DX12_GPU_DESCRIPTOR_HANDLE gpu(mGpu, static_cast<int32>(offset), mDescriptorHandleIncrementSize);
-            mRanges.emplace_back(HeapRange{cpu, gpu, range});
+            mRanges.emplace_back(HeapRange{cpu, gpu, range, offset});
             offset += range;
         }
     }

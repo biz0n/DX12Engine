@@ -36,6 +36,7 @@ namespace Engine::Render
 
         void SetPipelineState(const Name& pso);
 
+        void SetRoot32BitConstant(uint32 registerIndex, uint32 registerSpace, int32 value, uint32 destOffsetIn32BitValue = 0);
         void SetRoot32BitConstants(uint32 registerIndex, uint32 registerSpace, uint32 num32BitValuesToSet, const void *srcData, uint32 destOffsetIn32BitValues);
         void SetRootConstantBufferView(uint32 registerIndex, uint32 registerSpace, D3D12_GPU_VIRTUAL_ADDRESS bufferLocation);
         void SetRootShaderResourceView(uint32 registerIndex, uint32 registerSpace, D3D12_GPU_VIRTUAL_ADDRESS bufferLocation);

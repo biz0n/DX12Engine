@@ -35,6 +35,7 @@ namespace Engine::Memory
             D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptor() const { return mCPUDescriptor; }
             D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptor() const { return mGPUDescriptor; }
             Index GetIndex() const { return mIndexInHeap; }
+            Index GetFullIndex() const { return mIndexInHeap + mOffsetInHeap; }
 
             bool IsNull() const;
 
@@ -44,6 +45,7 @@ namespace Engine::Memory
             D3D12_CPU_DESCRIPTOR_HANDLE mCPUDescriptor;
             D3D12_GPU_DESCRIPTOR_HANDLE mGPUDescriptor;
             Index mIndexInHeap;
+            Size mOffsetInHeap;
             FreeCallback mFreeCallback;
     };
 

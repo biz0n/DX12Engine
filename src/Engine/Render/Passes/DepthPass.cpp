@@ -41,7 +41,7 @@ namespace Engine::Render::Passes
         optimizedClearValue.DepthStencil = {1.0f, 0};
 
         Memory::TextureCreationInfo dsTexture = {
-            .description = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, EngineConfig::ShadowWidth, EngineConfig::ShadowHeight, 1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
+            .description = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, EngineConfig::ShadowWidth, EngineConfig::ShadowHeight, 1, 1),
             .clearValue = optimizedClearValue
         };
         planner->NewDepthStencil(ResourceNames::ShadowDepth, dsTexture);

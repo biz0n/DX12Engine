@@ -3,21 +3,25 @@
 namespace Engine::Memory
 {
     DescriptorAllocation::DescriptorAllocation()
-    : mCPUDescriptor{0}, mGPUDescriptor{0}, mIndexInHeap{0}, mFreeCallback{0}
+    : mCPUDescriptor{0}, mGPUDescriptor{0}, mIndexInHeap{0}, mFreeCallback{0}, mOffsetInHeap{0}
     {
     }
 
     DescriptorAllocation::DescriptorAllocation(const Descriptor& descriptor, FreeCallback freeCallback)
-        : mCPUDescriptor{descriptor.CpuAddress}, mGPUDescriptor{descriptor.GpuAddress}, mIndexInHeap{descriptor.HeapIndex}, mFreeCallback{freeCallback}
+        : mCPUDescriptor{ descriptor.CpuAddress }, mGPUDescriptor{ descriptor.GpuAddress }, mIndexInHeap{ descriptor.HeapIndex }, mOffsetInHeap{descriptor.Offset}, mFreeCallback {
+        freeCallback
+    }
     {
     }
 
     DescriptorAllocation::DescriptorAllocation(DescriptorAllocation &&allocation)
-        : mCPUDescriptor{allocation.mCPUDescriptor}, mGPUDescriptor{allocation.mGPUDescriptor}, mIndexInHeap{allocation.mIndexInHeap}, mFreeCallback{allocation.mFreeCallback}
+        : mCPUDescriptor{allocation.mCPUDescriptor}, mGPUDescriptor{allocation.mGPUDescriptor}, mIndexInHeap{allocation.mIndexInHeap}, mOffsetInHeap{ allocation.mOffsetInHeap },
+        mFreeCallback{allocation.mFreeCallback}
     {
         allocation.mCPUDescriptor.ptr = 0;
         allocation.mGPUDescriptor.ptr = 0;
         allocation.mIndexInHeap = 0;
+        allocation.mOffsetInHeap = 0;
         allocation.mFreeCallback = nullptr;
     }
 
@@ -28,11 +32,13 @@ namespace Engine::Memory
         mCPUDescriptor = other.mCPUDescriptor;
         mGPUDescriptor = other.mGPUDescriptor;
         mIndexInHeap = other.mIndexInHeap;
+        mOffsetInHeap = other.mOffsetInHeap;
         mFreeCallback = other.mFreeCallback;
 
         other.mCPUDescriptor.ptr = 0;
         other.mGPUDescriptor.ptr = 0;
         other.mIndexInHeap = 0;
+        other.mOffsetInHeap = 0;
         other.mFreeCallback = nullptr;
 
         return *this;
@@ -58,6 +64,7 @@ namespace Engine::Memory
             mCPUDescriptor.ptr = 0;
             mGPUDescriptor.ptr = 0;
             mIndexInHeap = 0;
+            mOffsetInHeap = 0;
             mFreeCallback = nullptr;
         }
     }

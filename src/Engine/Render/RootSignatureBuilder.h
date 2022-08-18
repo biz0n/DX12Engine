@@ -23,7 +23,17 @@ namespace Engine::Render
         ~RootSignatureBuilder();
 
         template <typename TConstantsType>
-        RootSignatureBuilder& AddConstantsParameter(uint32 registerIndex, uint32 registerSpace, D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL);
+        RootSignatureBuilder& AddConstantsParameter(uint32 registerIndex, uint32 registerSpace, D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL)
+        {
+            CD3DX12_ROOT_PARAMETER1 parameter;
+            auto num32BitValues = static_cast<uint32>(sizeof(TConstantsType) / 4);
+            parameter.InitAsConstants(num32BitValues, registerIndex, registerSpace, visibility);
+
+            mParameters.push_back({ parameter, std::nullopt });
+
+            return *this;
+        }
+
         RootSignatureBuilder& AddCBVParameter(uint32 registerIndex, uint32 registerSpace, D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL);
         RootSignatureBuilder& AddSRVParameter(uint32 registerIndex, uint32 registerSpace, D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL);
         RootSignatureBuilder& AddUAVParameter(uint32 registerIndex, uint32 registerSpace, D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL);

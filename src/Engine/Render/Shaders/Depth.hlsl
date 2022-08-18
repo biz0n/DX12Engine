@@ -32,7 +32,8 @@ void mainPS(VertexShaderOutput IN)
     float4 baseColor = MaterialCB.BaseColor;
     if (MaterialCB.HasBaseColorTexture)
     {
-        baseColor = Textures2D[MaterialCB.BaseColorIndex].Sample(gsamPointWrap, IN.TextureCoord);
+        Texture2D<float4> baseColorTexture = ResourceDescriptorHeap[MaterialCB.BaseColorIndex];
+        baseColor = baseColorTexture.Sample(gsamPointWrap, IN.TextureCoord);
     }
 
     clip(baseColor.a - MaterialCB.Cutoff);

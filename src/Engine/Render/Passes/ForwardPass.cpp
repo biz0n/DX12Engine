@@ -94,10 +94,7 @@ namespace Engine::Render::Passes
                     0,
                     0,
                     1,
-                    1,
-                    1,
-                    0,
-                    D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE),
+                    1),
             .clearValue = D3D12_CLEAR_VALUE{.DepthStencil = {1.0, 0}}
         };
         planner->NewDepthStencil(ResourceNames::ForwardDepth, dsTexture);
@@ -108,6 +105,8 @@ namespace Engine::Render::Passes
             .clearValue = D3D12_CLEAR_VALUE{.Color = {0, 0, 0, 0}}
         };
         planner->NewRenderTarget(ResourceNames::ForwardOutput, rtTexture);
+
+        planner->ReadRenderTarget(ResourceNames::ShadowDepth);
     }
 
     void ForwardPass::Draw(const Scene::Mesh &mesh, const dx::XMMATRIX &world, Render::PassRenderContext &passContext)
@@ -169,7 +168,7 @@ namespace Engine::Render::Passes
             if (light.LightType == DIRECTIONAL_LIGHT)
             {
                 light.HasShadowTexture = true;
-                light.ShadowIndex = depth->GetSRDescriptor().GetIndex();
+                light.ShadowIndex = depth->GetSRDescriptor().GetFullIndex();
             }
             lights.emplace_back(light);
         }

@@ -15,6 +15,7 @@ namespace Engine::HAL
                 D3D12_CPU_DESCRIPTOR_HANDLE CpuAddress;
                 D3D12_GPU_DESCRIPTOR_HANDLE GpuAddress;
                 Size Range;
+                Size Offset;
             };
 
         public:
@@ -28,6 +29,8 @@ namespace Engine::HAL
             ID3D12DescriptorHeap* D3DHeap() const { return mHeap.Get(); }
 
             const HeapRange& GetRange(Index range = 0) const { return mRanges.at(range); }
+
+            const Size GetRangeOffset(Index range) const { return mRanges.at(range).Offset; }
 
         private:
             ComPtr<ID3D12DescriptorHeap> mHeap;

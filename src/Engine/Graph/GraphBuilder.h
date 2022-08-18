@@ -28,9 +28,11 @@ namespace Engine::Graph
             void AddNode(Node&& node);
 
             const std::vector<Node>& GetNodes() const { return mNodes; }
+            Node* GetNode(Index i) { return &mNodes[i]; }
             const std::vector<Index>& GetOrderedIndexes() const { return mOrderedIndexes; }
 
             void Build();
+            void Clear();
         
         private:
             using AdjacencyList = std::vector<std::vector<Index>>;

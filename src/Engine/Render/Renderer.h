@@ -7,6 +7,8 @@
 #include <Memory/MemoryForwards.h>
 #include <Render/RenderForwards.h>
 #include <Scene/SceneForwards.h>
+#include <Graph/GraphForwards.h>
+#include <Graph/GraphBuilder.h>
 
 #include <Render/FrameTransientContext.h>
 
@@ -26,8 +28,11 @@ namespace Engine::Render
         void Deinitialize();
 
         void Render(Scene::SceneObject* scene, const Timer& timer);
+        void Reset();
 
         void RegisterRenderPass(RenderPassBase* renderPass);
+
+        const Graph::GraphBuilder& GetGraph() const { return mGraphBuilder; }
 
     private:
         void PrepareFrame();
@@ -41,6 +46,7 @@ namespace Engine::Render
         SharedPtr<RenderContext> mRenderContext;
         std::vector<RenderPassBase*> mRenderPasses;
         std::vector<PassContext> mPassContexts;
-        UniquePtr<FrameResourceProvider> mFrameResourceProvider;
+        SharedPtr<FrameResourceProvider> mFrameResourceProvider;
+        Graph::GraphBuilder mGraphBuilder;
     };
 } // namespace Engine::Render

@@ -16,10 +16,10 @@ namespace Engine
         Name(const char *name);
 
         Name(const Name &other);
-        Name(Name &&other);
+        Name(Name &&other) noexcept;
 
-        Name &operator=(const Name &other);
-        Name &operator=(Name &&other);
+        Name &operator=(const Name &other) noexcept;
+        Name &operator=(Name &&other) noexcept;
 
         uint32 id() const { return mId; }
 
