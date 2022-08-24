@@ -60,12 +60,9 @@ namespace Engine::Scene
         bool unlit = false;
     };
 
-    class Material
+    struct Material
     {
     public:
-        Material();
-        ~Material();
-
         void SetProperties(const MaterialProperties &properties) { mMaterialProperties = properties; }
         const MaterialProperties &GetProperties() const { return mMaterialProperties; }
 

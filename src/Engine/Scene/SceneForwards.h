@@ -16,6 +16,8 @@ namespace Engine::Scene
     class PunctualLight;
     class Texture;
     class Image;
+    class SceneStorage;
+    class SceneToRegisterLoader;
 
     struct SceneLoadingInfo;
     struct Vertex;

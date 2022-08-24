@@ -7,6 +7,7 @@
 #include <Scene/Components/ComponentsForwards.h>
 #include <Scene/Material.h>
 #include <Scene/Mesh.h>
+#include <Scene/SceneStorage.h>
 #include <entt/fwd.hpp>
 #include <tuple>
 #include <DirectXCollision.h>
@@ -20,7 +21,7 @@ namespace Engine::Scene
     public:
         SceneToRegisterLoader(Memory::ResourceFactory* resourceFactory, Memory::ResourceCopyManager* resourceCopyManager);
         ~SceneToRegisterLoader();
-        void LoadSceneToRegistry(entt::registry& registry, const Loader::SceneDto& scene);
+        SharedPtr<SceneStorage> LoadSceneToRegistry(entt::registry& registry, const Loader::SceneDto& scene);
         void AddCubeMapToScene(entt::registry& registry, String texturePath);
     private:
         bool ParseNode(Context& context, const Loader::Node& node, entt::entity entity, Engine::Scene::Components::RelationshipComponent* relationship);
@@ -29,15 +30,15 @@ namespace Engine::Scene
         static void CreateCameraNode(Context& context, const Loader::CameraDto& cameraDto, entt::entity entity);
 
         SharedPtr<Memory::Texture> GetTexture(const Loader::ImageDto& imageDto);
-        SharedPtr<Material> GetMaterial(Context& context, const Loader::MaterialDto& materialDto);
-        std::tuple<String, Mesh, dx::BoundingBox> GetMesh(Context& context, const Loader::MeshDto& meshDto);
+        Material GetMaterial(Context& context, const Loader::MaterialDto& materialDto);
+        Mesh GetMesh(Context& context, const Loader::MeshDto& meshDto);
     private:
         struct Context
         {
             entt::registry* registry;
             std::vector<SharedPtr<Memory::Texture>> textures;
-            std::vector<SharedPtr<Material>> materials;
-            std::vector<std::tuple<String, Mesh, dx::BoundingBox>> meshes;
+            std::vector<Material> materials;
+            std::vector<Mesh> meshes;
             const Loader::SceneDto* scene;
             bool isMainCameraAssigned;
         };

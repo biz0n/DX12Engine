@@ -10,6 +10,7 @@
 #include <Scene/Components/NameComponent.h>
 #include <Scene/Components/AABBComponent.h>
 #include <Scene/Components/CubeMapComponent.h>
+#include <Scene/SceneStorage.h>
 
 #include <Scene/PunctualLight.h>
 #include <Scene/Camera.h>
@@ -38,24 +39,26 @@ namespace Engine::Scene
 
     SceneToRegisterLoader::~SceneToRegisterLoader() = default;
 
-    void SceneToRegisterLoader::LoadSceneToRegistry(entt::registry &registry, const Loader::SceneDto &scene)
+    SharedPtr<SceneStorage> SceneToRegisterLoader::LoadSceneToRegistry(entt::registry &registry, const Loader::SceneDto &scene)
     {
-        
         Context context = {};
         context.registry = &registry;
         context.scene = &scene;
         context.isMainCameraAssigned = false;
 
+        context.textures.reserve(scene.ImageResources.size());
         for (const auto& image : scene.ImageResources)
         {
             context.textures.push_back(GetTexture(image));
         }
 
+        context.materials.reserve(scene.Materials.size());
         for (const auto& material : scene.Materials)
         {
             context.materials.push_back(GetMaterial(context, material));
         }
 
+        context.meshes.reserve(scene.Meshes.size());
         for (const auto& mesh : scene.Meshes)
         {
             context.meshes.push_back(GetMesh(context, mesh));
@@ -70,6 +73,14 @@ namespace Engine::Scene
             context.registry->emplace<Components::RelationshipComponent>(rootEntity, rootRelationship);
             context.registry->emplace<Components::Root>(rootEntity);
         }
+
+        SharedPtr<SceneStorage> sceneStorage = MakeShared<SceneStorage>();
+        sceneStorage->mMaterials = std::move(context.materials);
+        sceneStorage->mMeshes = std::move(context.meshes);
+        sceneStorage->mTextures = std::move(context.textures);
+
+        return std::move(sceneStorage);
+
     }
 
     bool SceneToRegisterLoader::ParseNode(Context& context, const Loader::Node &node, entt::entity entity, Engine::Scene::Components::RelationshipComponent *relationship)
@@ -166,8 +177,8 @@ namespace Engine::Scene
         for (uint32 i = 0; i < numMeshes; ++i)
         {
             auto meshIndex = node.MeshIndices[i];
-            auto meshData = context.meshes[meshIndex];
-
+            const auto& meshDto = context.scene->Meshes[meshIndex];
+                
             auto meshEntity = nextEntity;
             if (i < (numMeshes - 1))
             {
@@ -180,7 +191,7 @@ namespace Engine::Scene
 
             context.registry->emplace<Components::LocalTransformComponent>(meshEntity, DirectX::XMMatrixIdentity());
 
-            context.registry->emplace<Components::NameComponent>(meshEntity, std::get<0>(meshData));
+            context.registry->emplace<Components::NameComponent>(meshEntity, meshDto.Name);
 
             Components::RelationshipComponent meshRelationship;
             meshRelationship.next = nextEntity;
@@ -189,13 +200,16 @@ namespace Engine::Scene
             context.registry->emplace<Components::RelationshipComponent>(meshEntity, meshRelationship);
 
             Components::MeshComponent meshComponent;
-            meshComponent.mesh = std::get<1>(meshData);
+            meshComponent.MeshIndex = meshIndex;
+            meshComponent.MaterialIndex = meshDto.MaterialIndex;
+            meshComponent.VerticesCount = meshDto.Vertices.size();
+            meshComponent.IndicesCount = meshDto.Indices.size();
 
             context.registry->emplace<Components::MeshComponent>(meshEntity, meshComponent);
 
             Components::AABBComponent aabbComponent = {};
-            aabbComponent.originalBoundingBox = std::get<2>(meshData);
-            aabbComponent.boundingBox = std::get<2>(meshData);
+            aabbComponent.originalBoundingBox = meshDto.AABB;
+            aabbComponent.boundingBox = meshDto.AABB;
             context.registry->emplace<Components::AABBComponent>(meshEntity, aabbComponent);
         }
     }
@@ -290,46 +304,46 @@ namespace Engine::Scene
         return texture;
     }
 
-    SharedPtr<Material> SceneToRegisterLoader::GetMaterial(Context& context, const Loader::MaterialDto& materialDto)
+    Material SceneToRegisterLoader::GetMaterial(Context& context, const Loader::MaterialDto& materialDto)
     {
-        SharedPtr<Material> material = MakeShared<Material>();
-        material->SetProperties(materialDto.MaterialProperties);
+        Material material = {};
+        material.SetProperties(materialDto.MaterialProperties);
 
         if (materialDto.BaseColorTextureIndex)
         {
             auto texture = context.textures[materialDto.BaseColorTextureIndex.value()];
             //texture->SetSRGB(true);
-            material->SetBaseColorTexture(texture);
+            material.SetBaseColorTexture(texture);
         }
 
         if (materialDto.NormalTextureIndex)
         {
             auto texture = context.textures[materialDto.NormalTextureIndex.value()];
-            material->SetNormalTexture(texture);
+            material.SetNormalTexture(texture);
         }
 
         if (materialDto.MetallicRoughnessTextureIndex)
         {
             auto texture = context.textures[materialDto.MetallicRoughnessTextureIndex.value()];
-            material->SetMetallicRoughnessTexture(texture);
+            material.SetMetallicRoughnessTexture(texture);
         }
 
         if (materialDto.AmbientOcclusionTextureIndex)
         {
             auto texture = context.textures[materialDto.AmbientOcclusionTextureIndex.value()];
-            material->SetAmbientOcclusionTexture(texture);
+            material.SetAmbientOcclusionTexture(texture);
         }
 
         if (materialDto.EmissiveTextureIndex)
         {
             auto texture = context.textures[materialDto.EmissiveTextureIndex.value()];
-            material->SetEmissiveTexture(texture);
+            material.SetEmissiveTexture(texture);
         }
 
         return material;
     }
 
-    std::tuple<String, Mesh, dx::BoundingBox> SceneToRegisterLoader::GetMesh(Context& context, const Loader::MeshDto& meshDto)
+    Mesh SceneToRegisterLoader::GetMesh(Context& context, const Loader::MeshDto& meshDto)
     {
         using TIndexType = typename std::decay<decltype(*meshDto.Indices.begin())>::type;
         using TVertexType = typename std::decay<decltype(*meshDto.Vertices.begin())>::type;
@@ -343,13 +357,13 @@ namespace Engine::Scene
         mesh.vertexBuffer = mResourceFactory->CreateVertexBuffer(verticesCount, sizeof(TVertexType), D3D12_RESOURCE_STATE_COMMON);
         mesh.vertexBuffer->SetName("Vertices: " + meshDto.Name);
 
-        mesh.primitiveTopology = meshDto.PrimitiveTopology;
-        mesh.material = context.materials[meshDto.MaterialIndex];
+        mesh.verticesCount = verticesCount;
+        mesh.indicesCount = indicesCount;
 
         Memory::Buffer::ScheduleUploading(mResourceFactory, mResourceCopyManager, mesh.indexBuffer.get(), meshDto.Indices.data(), indicesCount * sizeof(TIndexType), D3D12_RESOURCE_STATE_INDEX_BUFFER);
         Memory::Buffer::ScheduleUploading(mResourceFactory, mResourceCopyManager, mesh.vertexBuffer.get(), meshDto.Vertices.data(), verticesCount * sizeof(TVertexType), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
-        return std::make_tuple(meshDto.Name, mesh, meshDto.AABB);
+        return mesh;
     }
 
     void SceneToRegisterLoader::AddCubeMapToScene(entt::registry &registry, String texturePath)
@@ -364,69 +378,6 @@ namespace Engine::Scene
         Loader::ImageDto imageDto {image};
         cubeMap.texture = GetTexture(imageDto);
         cubeMap.texture->SetName(image->GetName());
-
-        cubeMap.primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-
-        std::vector<Vertex> vertices = {};
-        vertices.reserve(8);
-        vertices.assign(8, {});
-
-        auto* v = vertices.data();
-
-        float w = 1.0f;
-        float h = 1.0f;
-        float d = 1.0f;
-
-        // Fill in the front face vertex data.
-        v[0].Vertex = {-w, -h, -d};
-        v[1].Vertex = {-w, +h, -d};
-        v[2].Vertex = {+w, +h, -d};
-        v[3].Vertex = {+w, -h, -d};
-
-        // Fill in the back face vertex data.
-        v[4].Vertex = {-w, -h, +d};
-        v[5].Vertex = {+w, -h, +d};
-        v[6].Vertex = {+w, +h, +d};
-        v[7].Vertex = {-w, +h, +d};
-
-        std::vector<uint16> indices = {};
-        indices.reserve(36);
-        indices.assign(36, 0);
-
-        auto* i = indices.data();
-
-        // Fill in the front face index data
-        i[0] = 0; i[1] = 1; i[2] = 2;
-        i[3] = 0; i[4] = 2; i[5] = 3;
-
-        // Fill in the back face index data
-        i[6] = 4; i[7]  = 5; i[8]  = 6;
-        i[9] = 4; i[10] = 6; i[11] = 7;
-
-        // Fill in the top face index data
-        i[12] = 1; i[13] =  7; i[14] = 6;
-        i[15] = 1; i[16] = 6; i[17] = 2;
-
-        // Fill in the bottom face index data
-        i[18] = 0;  i[19] = 3; i[20] = 5;
-        i[21] = 0;  i[22] = 5; i[23] = 4;
-
-        // Fill in the left face index data
-        i[24] = 4; i[25] = 7; i[26] = 1;
-        i[27] = 4; i[28] = 1;  i[29] = 0;
-
-        // Fill in the right face index data
-        i[30] = 3;  i[31] = 2;  i[32] = 6;
-        i[33] = 3;  i[34] = 6; i[35] = 5;
-
-        cubeMap.indexBuffer = mResourceFactory->CreateIndexBuffer(indices.size(), sizeof(uint16), D3D12_RESOURCE_STATE_INDEX_BUFFER);
-        cubeMap.indexBuffer->SetName("CubeMap Indices");
-
-        cubeMap.vertexBuffer = mResourceFactory->CreateVertexBuffer(vertices.size(), sizeof(Vertex), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-        cubeMap.vertexBuffer->SetName("CubeMap Vertices");
-
-        Memory::Buffer::ScheduleUploading(mResourceFactory, mResourceCopyManager, cubeMap.indexBuffer.get(), indices.data(), indices.size() * sizeof(uint16), D3D12_RESOURCE_STATE_INDEX_BUFFER);
-        Memory::Buffer::ScheduleUploading(mResourceFactory, mResourceCopyManager, cubeMap.vertexBuffer.get(), vertices.data(), vertices.size() * sizeof(Vertex), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
         auto cubeMapEntity = registry.create();
 

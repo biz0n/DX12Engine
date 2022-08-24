@@ -72,7 +72,7 @@ namespace Engine::HAL
 
         std::vector<std::wstring> arguments;
 
-        arguments.push_back(L"/all_resources_bound");
+        arguments.push_back(DXC_ARG_ALL_RESOURCES_BOUND);
         //-E for the entry point (eg. PSMain)
         arguments.push_back(L"-E");
         arguments.push_back(wEntryPoint);

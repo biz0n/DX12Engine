@@ -9,12 +9,46 @@ ConstantBuffer<FrameUniform> FrameCB : register(b1);
 
 #include "BaseLayout.hlsl"
 
-struct VertexPosColor
+static const float3 Vertices[8] =
 {
-    float3 PositionL : POSITION;
-    float3 NormalL : NORMAL;
-    float2 TextureCoord : TEXCOORD;
-    float4 Tangent : TANGENT;
+    // Fill in the front face vertex data.
+    float3(-1.0, -1.0, -1.0),
+    float3(-1.0, +1.0, -1.0),
+    float3(+1.0, +1.0, -1.0),
+    float3(+1.0, -1.0, -1.0),
+
+    // Fill in the back face vertex data.
+    float3(-1.0, -1.0, +1.0),
+    float3(+1.0, -1.0, +1.0),
+    float3(+1.0, +1.0, +1.0),
+    float3(-1.0, +1.0, +1.0)
+};
+
+static const uint Indices[36] =
+{
+    // Fill in the front face index data
+    0, 1, 2,
+    0, 2, 3,
+
+    // Fill in the back face index data
+    4, 5, 6,
+    4, 6, 7,
+
+    // Fill in the top face index data
+    1, 7, 6,
+    1, 6, 2,
+
+    // Fill in the bottom face index data
+    0, 3, 5,
+    0, 5, 4,
+
+    // Fill in the left face index data
+    4, 7, 1,
+    4, 1, 0,
+
+    // Fill in the right face index data
+    3, 2, 6,
+    3, 6, 5
 };
 
 struct VertexShaderOutput
@@ -36,13 +70,13 @@ float3 SRGBToLinear(float3 sRGBCol)
     return linearRGB;
 }
 
-VertexShaderOutput mainVS(VertexPosColor IN)
+VertexShaderOutput mainVS(uint indexId : SV_VertexID)
 {
     VertexShaderOutput OUT;
- 
-    float3 posW = IN.PositionL + FrameCB.EyePos;
+    float3 positionL = Vertices[Indices[indexId]];
+    float3 posW = positionL + FrameCB.EyePos;
     OUT.PositionH = mul(float4(posW, 1.0f), FrameCB.ViewProj).xyww;
-    OUT.TextureCoord = IN.PositionL;
+    OUT.TextureCoord = positionL;
 
     return OUT;
 }

@@ -20,8 +20,7 @@ namespace Engine::Render
             ComPtr<ID3D12GraphicsCommandList> commandList,
             Memory::ResourceStateTracker *resourceStateTracker,
             RenderContext *renderContext,
-            const FrameResourceProvider *frameResourceProvider,
-            FrameTransientContext* frameTransientContext);
+            const FrameResourceProvider *frameResourceProvider);
         ~PassCommandRecorder();
 
         ComPtr<ID3D12GraphicsCommandList> GetD3D12CommandList() const { return mCommandList; }
@@ -43,10 +42,6 @@ namespace Engine::Render
         void SetRootUnorderedAccessView(uint32 registerIndex, uint32 registerSpace, D3D12_GPU_VIRTUAL_ADDRESS bufferLocation);
         void SetRootDescriptorTable(uint32 registerIndex, uint32 registerSpace, D3D12_GPU_DESCRIPTOR_HANDLE descriptorHandle);
 
-        void IASetVertexBuffers(const Memory::VertexBuffer* vertexBuffer);
-        void IASetIndexBuffer(const Memory::IndexBuffer* indexBuffer);
-        void IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY topology);
-
         void Draw(uint32 vertexCount, uint32 vertexStart);
         void DrawInstanced(uint32 vertexCount, uint32 vertexStart, uint32 instanceCount);
         void DrawIndexed(uint32 vertexStart, uint32 indexCount, uint32 indexStart);
@@ -63,7 +58,6 @@ namespace Engine::Render
         Memory::ResourceStateTracker *mResourceStateTracker;
         RenderContext *mRenderContext;
         const FrameResourceProvider *mFrameResourceProvider;
-        FrameTransientContext* mFrameTransientContext;
 
         Name mLastRootSignatureName;
         Name mLastPSOName;

@@ -13,7 +13,6 @@
 #include <Render/PipelineStateProvider.h>
 #include <Render/RenderContext.h>
 #include <Render/FrameResourceProvider.h>
-#include <Render/FrameTransientContext.h>
 
 #include <Memory/TextureCreationInfo.h>
 #include <Memory/Texture.h>
@@ -54,8 +53,6 @@ namespace Engine::Render::Passes
 
         PipelineStateProxy pipelineState = {
             .rootSignatureName = RootSignatureNames::BackBuffer,
-            .inputLayout = {},
-            .primitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
             .vertexShaderName = Shaders::BackBufferVS,
             .pixelShaderName = Shaders::BackBufferPS,
             .dsvFormat = DXGI_FORMAT_D32_FLOAT,
@@ -85,8 +82,6 @@ namespace Engine::Render::Passes
         CommandListUtils::TransitionBarrier(passContext.resourceStateTracker.get(), color->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
         commandRecorder->SetRoot32BitConstant(0, 0, colorTextureIndex);
-
-        commandRecorder->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
         commandRecorder->Draw(3, 0);
     }

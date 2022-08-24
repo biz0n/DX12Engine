@@ -60,33 +60,15 @@ namespace Engine::Render::Systems
 
         dx::XMStoreFloat4x4(&data.shadowTransform, dx::XMMatrixTranspose(dx::XMMatrixTranspose(shadowCameraComponent.viewProjection) * T));
 
-        const auto &lightsView = registry.view<Scene::Components::LightComponent, Scene::Components::WorldTransformComponent>();
-        
-        data.lights.reserve(lightsView.size_hint());
-        for (auto &&[entity, lightComponent, transformComponent] : lightsView.each())
-        {
-            if (lightComponent.light.IsEnabled())
-            {
-                Render::Passes::LightData lightData = {};
-                lightData.light = lightComponent.light;
-                lightData.worldTransform = transformComponent.transform;
-                data.lights.emplace_back(lightData);
-            }
-        }
-
         const auto &meshsView = registry.view<
             Scene::Components::MeshComponent, 
-            Scene::Components::WorldTransformComponent, 
-            Scene::Components::AABBComponent,
-            Scene::Components::NameComponent>(entt::exclude<Scene::Components::IsDisabledComponent>);
+            Scene::Components::AABBComponent>(entt::exclude<Scene::Components::IsDisabledComponent>);
         data.meshes.reserve(meshsView.size_hint());
-        for (auto &&[entity, meshComponent, transformComponent, aabbComponent, name] : meshsView.each())
+        for (auto &&[entity, meshComponent, aabbComponent] : meshsView.each())
         {
-            if (camera.frustum.Intersects(aabbComponent.boundingBox) && name.Name.find("decal") == std::string::npos)
+            if (camera.frustum.Intersects(aabbComponent.boundingBox))
             {
-                Render::Passes::MeshData meshData = {};
-                meshData.mesh = meshComponent.mesh;
-                meshData.worldTransform = transformComponent.transform;
+                Render::Passes::MeshData meshData = {meshComponent.MeshIndex};
 
                 data.meshes.push_back(meshData);
             }

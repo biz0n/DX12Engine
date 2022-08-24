@@ -10,6 +10,7 @@
 #include <Memory/ResourceAllocator.h>
 #include <Memory/ResourceFactory.h>
 #include <Memory/ResourceCopyManager.h>
+#include <Memory/UploadBuffer.h>
 
 #include <HAL/SwapChain.h>
 #include <HAL/CommandQueue.h>
@@ -81,6 +82,12 @@ namespace Engine::Render
         mShaderProvider = MakeUnique<Render::ShaderProvider>();
         mRootSignatureProvider = MakeUnique<Render::RootSignatureProvider>(Device());
         mPipelineStateProvider = MakeUnique<Render::PipelineStateProvider>(Device(), mShaderProvider.get(), mRootSignatureProvider.get());
+
+        for (Size i = 0; i < std::size(mUploadBuffers); ++i)
+        {
+            mUploadBuffers[i] = mResourceFactory->CreateUploadBuffer(10 * 1024 * 1024);
+            mUploadBuffers[i]->SetName("Frame Upload Buffer");
+        }
     }
 
     RenderContext::~RenderContext() = default;
@@ -141,6 +148,7 @@ namespace Engine::Render
 
         mDescriptorAllocatorPool->ReleaseStaleDescriptors(mFrameValues[currentBackBufferIndex]);
         mDescriptorAllocatorPool->SetCurrentFrame(mFrameValues[currentBackBufferIndex]);
+        GetUploadBuffer()->Reset();
 
         mCommandAllocators[currentBackBufferIndex]->Reset();
 

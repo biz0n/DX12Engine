@@ -14,7 +14,7 @@ namespace Engine::UI::Systems
     class UISystem : public Scene::Systems::System
     {
         public:
-            UISystem(SharedPtr<Render::RenderContext> renderContext);
+            UISystem(SharedPtr<Render::RenderContext> renderContext, SharedPtr<Scene::SceneStorage> sceneStorage);
             ~UISystem() override;
         public:
             void Process(Scene::SceneObject *scene, const Timer& timer) override;

@@ -3,6 +3,7 @@
 #include <Scene/SceneForwards.h>
 #include <Render/RenderPassMediators/RenderPassBase.h>
 #include <Render/Passes/Data/PassData.h>
+#include <Scene/Components/MeshComponent.h>
 
 #include <DirectXMath.h>
 #include <d3d12.h>
@@ -14,7 +15,6 @@ namespace Engine::Render::Passes
     {
         CameraData camera;
         std::vector<MeshData> meshes;
-        std::vector<LightData> lights;
         dx::XMFLOAT4X4 shadowTransform;
     };
 
@@ -34,7 +34,7 @@ namespace Engine::Render::Passes
 
     private:
 
-        void Draw(const Scene::Mesh& node, const dx::XMMATRIX& world, Render::PassRenderContext& passContext);
+        void Draw(const MeshData& meshData, Render::PassRenderContext& passContext);
     };
 
 } // namespace Engine

@@ -38,6 +38,12 @@ struct MeshUniform
 {
     float4x4 World;
     float4x4 InverseTranspose;
+
+    int VertexBufferIndex;
+    int IndexBufferIndex;
+    int MaterialIndex;
+
+    float __Padding;
 };
 
 struct MaterialUniform
@@ -65,16 +71,13 @@ struct MaterialUniform
     int OcclusionIndex;
     int EmissiveIndex;
     float Cutoff;
-    float Padding;
+    float __Padding;
 };
 
 struct LightUniform
 {
     float3 PositionWS;
     int LightType;
-
-    float3 DirectionWS;
-    aligned_bool HasShadowTexture;
 
     float3 Color;
     float ConstantAttenuation;
@@ -84,24 +87,29 @@ struct LightUniform
     float InnerConeAngle;
     float OuterConeAngle;
 
-    int ShadowIndex;
-    float3 Padding;
+    float3 DirectionWS;
+    float __Padding;
 };
 
 struct FrameUniform
 {
     float4x4 ViewProj;
     float4x4 ShadowTransform;
+
     float3 EyePos;
     int LightsCount;
+
+    aligned_bool HasShadowTexture;
+    int ShadowIndex;
+    float2 __Padding;
 };
 
 struct Camera
 {
     float4x4 ViewProj;
-    float3 EyePos;
 
-    float Padding;
+    float3 EyePos;
+    float __Padding;
 };
 
 

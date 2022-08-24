@@ -17,8 +17,6 @@ namespace Engine::Render
     struct PipelineStateProxy
     {
         Name rootSignatureName;
-        std::vector<D3D12_INPUT_ELEMENT_DESC> inputLayout;
-        D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType;
         std::string vertexShaderName;
         std::string pixelShaderName;
         std::string geometryShaderName;
@@ -91,8 +89,6 @@ namespace std
         {    
             return std::hash_combine(
                 key.rootSignatureName,
-                std::hash_combine(key.inputLayout.begin(), key.inputLayout.end()),
-                key.primitiveTopologyType,
                 key.vertexShaderName,
                 key.pixelShaderName,
                 key.geometryShaderName,

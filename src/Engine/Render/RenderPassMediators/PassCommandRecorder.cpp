@@ -10,7 +10,6 @@
 #include <Render/RenderContext.h>
 #include <Render/FrameResourceProvider.h>
 #include <Render/RootSignatureProvider.h>
-#include <Render/FrameTransientContext.h>
 #include <Render/PipelineStateProvider.h>
 
 #include <Memory/Texture.h>
@@ -27,13 +26,11 @@ namespace Engine::Render
         ComPtr<ID3D12GraphicsCommandList> commandList,
         Memory::ResourceStateTracker *resourceStateTracker,
         RenderContext *renderContext,
-        const FrameResourceProvider *frameResourceProvider,
-        FrameTransientContext* frameTransientContext) : mPassContext{passContext}, 
+        const FrameResourceProvider *frameResourceProvider) : mPassContext{passContext}, 
                                                         mCommandList(commandList),
                                                         mResourceStateTracker(resourceStateTracker),
                                                         mRenderContext(renderContext),
-                                                        mFrameResourceProvider(frameResourceProvider),
-                                                        mFrameTransientContext(frameTransientContext)
+                                                        mFrameResourceProvider(frameResourceProvider)
     {
     }
 
@@ -169,6 +166,11 @@ namespace Engine::Render
         mCommandList->SetPipelineState(mRenderContext->GetPipelineStateProvider()->GetPipelineState(pso).Get());
         auto rootSignature = mRenderContext->GetPipelineStateProvider()->GetAssociatedRootSignatureName(pso);
         
+        if (mPassContext->GetQueueType() == CommandQueueType::Graphics)
+        {
+            mCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        }
+
         mLastPSOName = pso;
 
         SetRootSignature(rootSignature);
@@ -256,26 +258,6 @@ namespace Engine::Render
         {
             mCommandList->SetComputeRootDescriptorTable(parameterIndex, descriptorHandle);
         }
-    }
-
-    void PassCommandRecorder::IASetIndexBuffer(const Memory::IndexBuffer *indexBuffer)
-    {
-        assert(mPassContext->GetQueueType() == CommandQueueType::Graphics);
-        mCommandList->IASetIndexBuffer(&indexBuffer->GetIndexBufferView());
-        indexBuffer->GetSRDescriptor();
-    }
-
-    void PassCommandRecorder::IASetVertexBuffers(const Memory::VertexBuffer* vertexBuffer)
-    {
-        assert(mPassContext->GetQueueType() == CommandQueueType::Graphics);
-        mCommandList->IASetVertexBuffers(0, 1, &vertexBuffer->GetVertexBufferView());
-        vertexBuffer->GetSRDescriptor();
-    }
-
-    void PassCommandRecorder::IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY topology)
-    {
-        assert(mPassContext->GetQueueType() == CommandQueueType::Graphics);
-        mCommandList->IASetPrimitiveTopology(topology);
     }
 
     void PassCommandRecorder::Draw(uint32 vertexCount, uint32 vertexStart)

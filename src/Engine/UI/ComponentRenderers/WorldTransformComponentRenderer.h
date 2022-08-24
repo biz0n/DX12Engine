@@ -93,7 +93,7 @@ namespace Engine::UI::ComponentRenderers
 
                 static bool useSnap(false);
 
-                ImGui::Checkbox("", &useSnap);
+                ImGui::Checkbox("Use Snap", &useSnap);
                 ImGui::SameLine();
                 static dx::XMFLOAT3 snap;
                 switch (mCurrentGizmoOperation)

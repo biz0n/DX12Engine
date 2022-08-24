@@ -2,13 +2,18 @@
 #include "LightUtils.hlsl"
 #include "Vertex.hlsl"
  
-ConstantBuffer<MeshUniform> ObjectCB : register(b0);
+cbuffer Mesh : register(b0)
+{
+    int MeshIndex;
+};
 
 ConstantBuffer<FrameUniform> FrameCB : register(b1);
 
-ConstantBuffer<MaterialUniform> MaterialCB : register(b2);
+StructuredBuffer<MeshUniform> Meshes : register(t0, space1);
 
-StructuredBuffer<LightUniform> Lights : register(t0, space1);
+StructuredBuffer<LightUniform> Lights : register(t1, space1);
+
+StructuredBuffer<MaterialUniform> Materials : register(t2, space1);
 
 #include "BaseLayout.hlsl"
 
@@ -67,8 +72,17 @@ float ShadowCalculation(float4 fragPosLightSpace, int shadowIndex)
     return percentLit / 9.0f;
 }
 
-VertexShaderOutput mainVS(Vertex1P1N1UV1T IN)
+VertexShaderOutput mainVS(uint indexId : SV_VertexID)
 {
+    MeshUniform ObjectCB = Meshes[MeshIndex];
+    StructuredBuffer<Vertex1P1N1UV1T> vertices = ResourceDescriptorHeap[ObjectCB.VertexBufferIndex];
+    StructuredBuffer<uint> indices = ResourceDescriptorHeap[ObjectCB.IndexBufferIndex];
+
+    uint vertexId = indices[indexId];
+
+    Vertex1P1N1UV1T IN = vertices[vertexId];
+
+
     VertexShaderOutput OUT;
  
     float4 posW = mul(float4(IN.PositionL, 1.0f), ObjectCB.World);
@@ -93,6 +107,8 @@ VertexShaderOutput mainVS(Vertex1P1N1UV1T IN)
 
 PixelShaderOutput mainPS(VertexShaderOutput IN)
 {
+    MaterialUniform MaterialCB = Materials[Meshes[MeshIndex].MaterialIndex];
+    
     float4 baseColor = MaterialCB.BaseColor;
     if (MaterialCB.HasBaseColorTexture)
     {
@@ -161,9 +177,9 @@ PixelShaderOutput mainPS(VertexShaderOutput IN)
             {
                 luminance = ApplyDirectionalLight(light, IN.PositionW, F0, N, V, baseColor.rgb, metallic, roughness);
 
-                if (light.HasShadowTexture)
+                if (FrameCB.HasShadowTexture)
                 {
-                    luminance *= ShadowCalculation(IN.ShadowPosH, light.ShadowIndex);
+                    luminance *= ShadowCalculation(IN.ShadowPosH, FrameCB.ShadowIndex);
                 }
             }
             break;

@@ -16,7 +16,7 @@ namespace Engine::Render
     RootSignatureBuilder& RootSignatureBuilder::AddCBVParameter(uint32 registerIndex, uint32 registerSpace, D3D12_SHADER_VISIBILITY visibility)
     {
         CD3DX12_ROOT_PARAMETER1 parameter;
-        parameter.InitAsConstantBufferView(registerIndex, registerSpace, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE,  visibility);
+        parameter.InitAsConstantBufferView(registerIndex, registerSpace, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC,  visibility);
 
         mParameters.push_back({parameter, std::nullopt});
 
@@ -26,7 +26,7 @@ namespace Engine::Render
     RootSignatureBuilder& RootSignatureBuilder::AddSRVParameter(uint32 registerIndex, uint32 registerSpace, D3D12_SHADER_VISIBILITY visibility)
     {
         CD3DX12_ROOT_PARAMETER1 parameter;
-        parameter.InitAsShaderResourceView(registerIndex, registerSpace, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE, visibility);
+        parameter.InitAsShaderResourceView(registerIndex, registerSpace, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, visibility);
 
         mParameters.push_back({parameter, std::nullopt});
 
@@ -36,7 +36,7 @@ namespace Engine::Render
     RootSignatureBuilder& RootSignatureBuilder::AddUAVParameter(uint32 registerIndex, uint32 registerSpace, D3D12_SHADER_VISIBILITY visibility)
     {
         CD3DX12_ROOT_PARAMETER1 parameter;
-        parameter.InitAsUnorderedAccessView(registerIndex, registerSpace, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE, visibility);
+        parameter.InitAsUnorderedAccessView(registerIndex, registerSpace, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, visibility);
 
         mParameters.push_back({parameter, std::nullopt});
 

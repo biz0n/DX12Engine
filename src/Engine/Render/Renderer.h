@@ -9,10 +9,6 @@
 #include <Scene/SceneForwards.h>
 #include <Graph/GraphForwards.h>
 #include <Graph/GraphBuilder.h>
-
-#include <Render/FrameTransientContext.h>
-
-
 #include <vector>
 
 namespace Engine::Render
@@ -20,7 +16,7 @@ namespace Engine::Render
     class Renderer
     {
     public:
-        Renderer(SharedPtr<RenderContext> renderContext);
+        Renderer(SharedPtr<RenderContext> renderContext, SharedPtr<Scene::SceneStorage> sceneStorage);
         ~Renderer();
 
     public:
@@ -39,11 +35,10 @@ namespace Engine::Render
         void RenderPasses(Scene::SceneObject* scene, const Timer& timer);
         void RenderPass(PassContext* passContext, Scene::SceneObject* scene, const Timer& timer);
         void UploadResources(SharedPtr<RenderContext> renderContext);
-    private:
-        FrameTransientContext mFrameContexts[EngineConfig::SwapChainBufferCount];
 
     private:
         SharedPtr<RenderContext> mRenderContext;
+        SharedPtr<Scene::SceneStorage> mSceneStorage;
         std::vector<RenderPassBase*> mRenderPasses;
         std::vector<PassContext> mPassContexts;
         SharedPtr<FrameResourceProvider> mFrameResourceProvider;

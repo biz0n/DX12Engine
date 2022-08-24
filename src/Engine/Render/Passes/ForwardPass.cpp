@@ -14,6 +14,7 @@
 #include <Scene/Camera.h>
 #include <Scene/PunctualLight.h>
 #include <Scene/Vertex.h>
+#include <Scene/SceneStorage.h>
 
 #include <Render/RootSignatureBuilder.h>
 #include <Render/RenderPassMediators/CommandListUtils.h>
@@ -22,7 +23,6 @@
 #include <Render/PipelineStateStream.h>
 #include <Render/RenderContext.h>
 #include <Render/FrameResourceProvider.h>
-#include <Render/FrameTransientContext.h>
 #include <Render/ShaderProvider.h>
 #include <Render/PipelineStateProvider.h>
 #include <Render/RootSignatureProvider.h>
@@ -52,10 +52,11 @@ namespace Engine::Render::Passes
     {
         Render::RootSignatureBuilder builder = {};
         builder
-            .AddCBVParameter(0, 0, D3D12_SHADER_VISIBILITY_VERTEX)
+            .AddConstantsParameter<int32>(0, 0)
             .AddCBVParameter(1, 0, D3D12_SHADER_VISIBILITY_ALL)
-            .AddCBVParameter(2, 0, D3D12_SHADER_VISIBILITY_PIXEL)
-            .AddSRVParameter(0, 1, D3D12_SHADER_VISIBILITY_PIXEL);
+            .AddSRVParameter(0, 1, D3D12_SHADER_VISIBILITY_ALL)
+            .AddSRVParameter(1, 1, D3D12_SHADER_VISIBILITY_PIXEL)
+            .AddSRVParameter(2, 1, D3D12_SHADER_VISIBILITY_PIXEL);
 
         rootSignatureProvider->BuildRootSignature(RootSignatureNames::Forward, builder);
     }
@@ -68,8 +69,6 @@ namespace Engine::Render::Passes
 
         Render::PipelineStateProxy pipelineStateCullModeBack = {
             .rootSignatureName = RootSignatureNames::Forward,
-            .inputLayout = Scene::Vertex::GetInputLayout(),
-            .primitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
             .vertexShaderName = Shaders::ForwardVS,
             .pixelShaderName = Shaders::ForwardPS,
             .dsvFormat = DXGI_FORMAT_D32_FLOAT,
@@ -101,7 +100,7 @@ namespace Engine::Render::Passes
 
         float clear[4] = {0, 0, 0, 0};
         Memory::TextureCreationInfo rtTexture = {
-            .description = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R16G16B16A16_FLOAT, 0, 0, 1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET),
+            .description = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R16G16B16A16_FLOAT, 0, 0, 1, 1),
             .clearValue = D3D12_CLEAR_VALUE{.Color = {0, 0, 0, 0}}
         };
         planner->NewRenderTarget(ResourceNames::ForwardOutput, rtTexture);
@@ -109,19 +108,16 @@ namespace Engine::Render::Passes
         planner->ReadRenderTarget(ResourceNames::ShadowDepth);
     }
 
-    void ForwardPass::Draw(const Scene::Mesh &mesh, const dx::XMMATRIX &world, Render::PassRenderContext &passContext)
+    void ForwardPass::Draw(const MeshData& meshData, Render::PassRenderContext& passContext)
     {
         auto commandRecorder = passContext.commandRecorder;
 
-        auto cb = CommandListUtils::GetMeshUniform(world);
-        auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(Shader::MeshUniform));
-        cbAllocation.CopyTo(&cb);
+        const auto& mesh = passContext.sceneStorage->GetMeshes()[meshData.meshIndex];
+        const auto& meshUniform = passContext.sceneStorage->GetMeshUniforms()[meshData.meshIndex];
 
-        commandRecorder->SetRootConstantBufferView(0, 0, cbAllocation.GPU);
+        const auto& material = passContext.sceneStorage->GetMaterials()[meshUniform.MaterialIndex];
 
-        auto resourceStateTracker = passContext.resourceStateTracker;
-
-        if (mesh.material->GetProperties().doubleSided)
+        if (material.GetProperties().doubleSided)
         {
             commandRecorder->SetPipelineState(PSONames::ForwardCullNone);
         }
@@ -130,18 +126,9 @@ namespace Engine::Render::Passes
             commandRecorder->SetPipelineState(PSONames::ForwardCullBack);
         }
 
-        commandRecorder->IASetPrimitiveTopology(mesh.primitiveTopology);
+        commandRecorder->SetRoot32BitConstant(0, 0, meshData.meshIndex);
 
-        auto materialGpuAddress = CommandListUtils::BindMaterial(
-            resourceStateTracker,
-            passContext.frameContext->uploadBuffer,
-            mesh.material);
-        CommandListUtils::BindVertexBuffer(commandRecorder.get(), resourceStateTracker, mesh.vertexBuffer.get());
-        CommandListUtils::BindIndexBuffer(commandRecorder.get(), resourceStateTracker, mesh.indexBuffer.get());
-
-        commandRecorder->SetRootConstantBufferView(2, 0, materialGpuAddress);
-
-        commandRecorder->DrawIndexed(0, static_cast<uint32>(mesh.indexBuffer->GetElementsCount()), 0);
+        commandRecorder->Draw(mesh.indicesCount, 0);
     }
 
     void ForwardPass::Render(Render::PassRenderContext &passContext)
@@ -157,43 +144,31 @@ namespace Engine::Render::Passes
 
         commandRecorder->SetPipelineState(PSONames::ForwardCullBack);
 
-        auto& lightsData = PassData().lights;
-        std::vector<Shader::LightUniform> lights;
-        lights.reserve(lightsData.size());
-
         auto* depth = passContext.frameResourceProvider->GetTexture(ResourceNames::ShadowDepth);
-        for (auto& lightData : lightsData)
-        {
-            Shader::LightUniform light = CommandListUtils::GetLightUniform(lightData.light, lightData.worldTransform);
-            if (light.LightType == DIRECTIONAL_LIGHT)
-            {
-                light.HasShadowTexture = true;
-                light.ShadowIndex = depth->GetSRDescriptor().GetFullIndex();
-            }
-            lights.emplace_back(light);
-        }
 
         auto& camera = PassData().camera;
-        auto cb = CommandListUtils::GetFrameUniform(camera.viewProjection, camera.eyePosition, static_cast<uint32>(lights.size()));
+        auto cb = CommandListUtils::GetFrameUniform(camera.viewProjection, camera.eyePosition, static_cast<uint32>(passContext.sceneStorage->GetLightsCount()));
         cb.ShadowTransform = PassData().shadowTransform;
+        cb.HasShadowTexture = passContext.sceneStorage->HasDirectionalLight();
+        cb.ShadowIndex = depth->GetSRDescriptor().GetFullIndex();
 
-        auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(Shader::FrameUniform));
+        auto cbAllocation = passContext.uploadBuffer->Allocate(sizeof(Shader::FrameUniform));
         cbAllocation.CopyTo(&cb);
 
         commandRecorder->SetRootConstantBufferView(1, 0, cbAllocation.GPU);
 
-        auto lightsAllocation = passContext.frameContext->uploadBuffer->Allocate(lights.size() * sizeof(Shader::LightUniform), sizeof(Shader::LightUniform));
+        commandRecorder->SetRootShaderResourceView(0, 1, passContext.sceneStorage->GetMeshUniformsAllocation().GPU);
 
-        lightsAllocation.CopyTo(lights);
+        commandRecorder->SetRootShaderResourceView(1, 1, passContext.sceneStorage->GetLightUniformsAllocation().GPU);
 
-        commandRecorder->SetRootShaderResourceView(0, 1, lightsAllocation.GPU);
+        commandRecorder->SetRootShaderResourceView(2, 1, passContext.sceneStorage->GetMaterialUniformsAllocation().GPU);
 
         CommandListUtils::TransitionBarrier(passContext.resourceStateTracker.get(), depth->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
         auto& meshes = PassData().meshes;
-        for (auto &mesh : meshes)
+        for (auto& mesh : meshes)
         {
-            Draw(mesh.mesh, mesh.worldTransform, passContext);
+            Draw(mesh, passContext);
         }
     }
 

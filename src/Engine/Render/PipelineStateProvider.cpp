@@ -46,8 +46,6 @@ namespace Engine::Render
         PipelineStateStream stateStream;
         stateStream.depthStencil = CD3DX12_DEPTH_STENCIL_DESC(pipelineStateProxy.depthStencil);
         stateStream.dsvFormat = pipelineStateProxy.dsvFormat;
-        stateStream.inputLayout = {pipelineStateProxy.inputLayout.data(), static_cast<uint32>(pipelineStateProxy.inputLayout.size())};
-        stateStream.primitiveTopologyType = pipelineStateProxy.primitiveTopologyType;
         stateStream.PS = mShaderProvider->GetShader({pipelineStateProxy.pixelShaderName, "mainPS", "ps_6_6"});
         stateStream.VS = mShaderProvider->GetShader({pipelineStateProxy.vertexShaderName, "mainVS", "vs_6_6"});
         if (!pipelineStateProxy.geometryShaderName.empty())
@@ -57,6 +55,7 @@ namespace Engine::Render
         stateStream.rasterizer = CD3DX12_RASTERIZER_DESC(pipelineStateProxy.rasterizer);
         stateStream.rootSignature = mRootSignatureProvider->GetRootSignature(pipelineStateProxy.rootSignatureName)->GetD3D12RootSignature().Get();
         stateStream.rtvFormats = rtFormats;
+        stateStream.primitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
         D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc = { 
             sizeof(PipelineStateStream), 

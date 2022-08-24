@@ -6,6 +6,7 @@
 #include <Memory/Texture.h>
 
 #include <Scene/SceneObject.h>
+#include <Scene/SceneStorage.h>
 #include <Scene/Components/NameComponent.h>
 #include <Scene/Components/RelationshipComponent.h>
 #include <Scene/Components/MeshComponent.h>
@@ -24,12 +25,12 @@
 
 namespace Engine::UI::Systems
 {
-    UISystem::UISystem(SharedPtr<Render::RenderContext> renderContext)
+    UISystem::UISystem(SharedPtr<Render::RenderContext> renderContext, SharedPtr<Scene::SceneStorage> sceneStorage)
         : System(), mRenderContext(renderContext)
     {
         mComponentRenderers.push_back(MakeUnique<UI::ComponentRenderers::StateComponentsRenderer>());
         mComponentRenderers.push_back(MakeUnique<UI::ComponentRenderers::WorldTransformComponentRenderer>());
-        mComponentRenderers.push_back(MakeUnique<UI::ComponentRenderers::MeshComponentRenderer>());
+        mComponentRenderers.push_back(MakeUnique<UI::ComponentRenderers::MeshComponentRenderer>(sceneStorage));
         mComponentRenderers.push_back(MakeUnique<UI::ComponentRenderers::LightComponentRenderer>());
         mComponentRenderers.push_back(MakeUnique<UI::ComponentRenderers::CameraComponentRenderer>());
     }

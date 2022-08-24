@@ -2,7 +2,7 @@
 
 #include <Types.h>
 #include <Render/RenderForwards.h>
-
+#include <Memory/MemoryForwards.h>
 #include <Scene/SceneForwards.h>
 #include <Timer.h>
 
@@ -18,7 +18,9 @@ namespace Engine::Render
 
         const FrameResourceProvider* frameResourceProvider;
 
-        FrameTransientContext  * frameContext;
+        SharedPtr<Memory::UploadBuffer> uploadBuffer;
+
+        SharedPtr<const Scene::SceneStorage> sceneStorage;
 
         const Timer * timer;
     };

@@ -1,11 +1,16 @@
 #include "ShaderTypes.h"
 #include "Vertex.hlsl"
 
-ConstantBuffer<MeshUniform> ObjectCB : register(b0);
+cbuffer Mesh : register(b0)
+{
+    int MeshIndex;
+};
 
 ConstantBuffer<FrameUniform> FrameCB : register(b1);
 
-ConstantBuffer<MaterialUniform> MaterialCB : register(b2);
+StructuredBuffer<MeshUniform> Meshes : register(t0, space1);
+
+StructuredBuffer<MaterialUniform> Materials : register(t1, space1);
 
 #include "BaseLayout.hlsl"
 
@@ -15,8 +20,16 @@ struct VertexShaderOutput
     float4 PositionH : SV_Position;
 };
 
-VertexShaderOutput mainVS(Vertex1P1N1UV1T IN)
+VertexShaderOutput mainVS(uint indexId : SV_VertexID)
 {
+    MeshUniform ObjectCB = Meshes[MeshIndex];
+    StructuredBuffer<Vertex1P1N1UV1T> vertices = ResourceDescriptorHeap[ObjectCB.VertexBufferIndex];
+    StructuredBuffer<uint> indices = ResourceDescriptorHeap[ObjectCB.IndexBufferIndex];
+
+    uint vertexId = indices[indexId];
+
+    Vertex1P1N1UV1T IN = vertices[vertexId];
+
     VertexShaderOutput OUT;
 
     OUT.TextureCoord = IN.TextureCoord;
@@ -29,6 +42,8 @@ VertexShaderOutput mainVS(Vertex1P1N1UV1T IN)
 
 void mainPS(VertexShaderOutput IN)
 {
+    MaterialUniform MaterialCB = Materials[Meshes[MeshIndex].MaterialIndex];
+    
     float4 baseColor = MaterialCB.BaseColor;
     if (MaterialCB.HasBaseColorTexture)
     {

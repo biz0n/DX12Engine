@@ -12,7 +12,6 @@
 #include <Render/PipelineStateProvider.h>
 #include <Render/RenderContext.h>
 #include <Render/FrameResourceProvider.h>
-#include <Render/FrameTransientContext.h>
 
 #include <Render/RenderPassMediators/PassCommandRecorder.h>
 #include <Render/RenderPassMediators/CommandListUtils.h>
@@ -73,8 +72,6 @@ namespace Engine::Render::Passes
 
         PipelineStateProxy pipelineState = {
             .rootSignatureName = RootSignatureNames::Cube,
-            .inputLayout = Scene::Vertex::GetInputLayout(),
-            .primitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
             .vertexShaderName = Shaders::CubeVS,
             .pixelShaderName = Shaders::CubePS,
             .dsvFormat = DXGI_FORMAT_D32_FLOAT,
@@ -103,26 +100,20 @@ namespace Engine::Render::Passes
 
         commandRecorder->SetPipelineState(PSONames::Cube);
 
-        auto cubeMap = PassData().cube.cubeMap;
+        const auto& cubeMap = PassData().cube.cubeMap;
         auto cubeTexture = cubeMap.texture;
         auto cubeDescriptorIndex = cubeTexture->GetCubeSRDescriptor().GetFullIndex();
 
         commandRecorder->SetRoot32BitConstant(0, 0, cubeDescriptorIndex);
 
-       
-
-        auto& camera = PassData().camera;
+        const auto& camera = PassData().camera;
         auto cb = CommandListUtils::GetFrameUniform(camera.viewProjection, camera.eyePosition, static_cast<uint32>(0));
 
-        auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(Shader::FrameUniform));
+        auto cbAllocation = passContext.uploadBuffer->Allocate(sizeof(Shader::FrameUniform));
         cbAllocation.CopyTo(&cb);
 
         commandRecorder->SetRootConstantBufferView(1, 0, cbAllocation.GPU);
 
-        commandRecorder->IASetPrimitiveTopology(cubeMap.primitiveTopology);
-        CommandListUtils::BindVertexBuffer(commandRecorder.get(), resourceStateTracker, cubeMap.vertexBuffer.get());
-        CommandListUtils::BindIndexBuffer(commandRecorder.get(), resourceStateTracker, cubeMap.indexBuffer.get());
-
-        commandRecorder->DrawIndexed(0, static_cast<uint32>(cubeMap.indexBuffer->GetElementsCount()), 0);
+        commandRecorder->Draw(36, 0);
     }
 } // namespace Engine::Render::Passes

@@ -13,14 +13,7 @@ namespace Engine::Render::Passes
 {
     struct MeshData
     {
-        Scene::Mesh mesh;
-        dx::XMMATRIX worldTransform;
-    };
-
-    struct LightData
-    {
-        Scene::PunctualLight light;
-        dx::XMMATRIX worldTransform;
+        Index meshIndex;
     };
 
     struct CameraData

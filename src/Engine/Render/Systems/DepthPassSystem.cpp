@@ -52,21 +52,17 @@ namespace Engine::Render::Systems
 
         const auto &meshsView = registry.view<
             Scene::Components::MeshComponent, 
-            Scene::Components::WorldTransformComponent, 
             Scene::Components::AABBComponent>(entt::exclude<Scene::Components::IsDisabledComponent>);
         data.meshes.reserve(meshsView.size_hint());
-        for (auto &&[entity, meshComponent, transformComponent, aabbComponent] : meshsView.each())
+        for (auto &&[entity, meshComponent, aabbComponent] : meshsView.each())
         {
             if (camera.frustum.Intersects(aabbComponent.boundingBox))
             {
-                Render::Passes::MeshData meshData = {};
-                meshData.mesh = meshComponent.mesh;
-                meshData.worldTransform = transformComponent.transform;
+                Render::Passes::MeshData meshData = {meshComponent.MeshIndex};
 
                 data.meshes.push_back(meshData);
             }
         }
-
         mDepthPass->SetPassData(data);
 
         mRenderer->RegisterRenderPass(mDepthPass.get());

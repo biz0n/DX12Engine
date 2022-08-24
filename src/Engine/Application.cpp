@@ -22,6 +22,7 @@
 #include <Scene/SceneLoadingInfo.h>
 #include <Scene/Loader/SceneLoader.h>
 #include <Scene/SceneToRegistryLoader.h>
+#include <Scene/SceneStorage.h>
 
 #include <Scene/Components/RelationshipComponent.h>
 #include <Scene/Components/LocalTransformComponent.h>
@@ -42,6 +43,7 @@
 #include <Render/Systems/CubePassSystem.h>
 #include <Render/Systems/ToneMappingPassSystem.h>
 #include <Render/Systems/BackBufferPassSystem.h>
+#include <Render/Systems/UploadSceneSystem.h>
 
 #include <Exceptions.h>
 
@@ -90,10 +92,10 @@ namespace Engine
         UniquePtr<Scene::SceneObject> scene = MakeUnique<Scene::SceneObject>();
 
         Scene::SceneToRegisterLoader toRegisterLoader{mRenderContext->GetResourceFactory(), mRenderContext->GetResourceCopyManager()};
-        toRegisterLoader.LoadSceneToRegistry(scene->GetRegistry(), sceneDto);
+        SharedPtr<Scene::SceneStorage> sceneStorage = toRegisterLoader.LoadSceneToRegistry(scene->GetRegistry(), sceneDto);
         toRegisterLoader.AddCubeMapToScene(scene->GetRegistry(), R"(Resources\Scenes\cubemaps\snowcube1024.dds)");
 
-        auto renderer = MakeShared<Render::Renderer>(mRenderContext);
+        auto renderer = MakeShared<Render::Renderer>(mRenderContext, sceneStorage);
 
         auto& registry = scene->GetRegistry();
         auto [cameraEntity, camera] = scene->GetMainCamera();
@@ -115,9 +117,11 @@ namespace Engine
         scene->AddSystem(MakeUnique<Render::Systems::BackBufferPassSystem>(renderer));
         scene->AddSystem(MakeUnique<Render::Systems::ForwardPassSystem>(renderer));
 
+        scene->AddSystem(MakeUnique<Render::Systems::UploadSceneSystem>(sceneStorage, mRenderContext));
+
         scene->AddSystem(MakeUnique<Render::Systems::RenderSystem>(renderer));
 
-        scene->AddSystem(MakeUnique<UI::Systems::UISystem>(mRenderContext));
+        scene->AddSystem(MakeUnique<UI::Systems::UISystem>(mRenderContext, sceneStorage));
         scene->AddSystem(MakeUnique<UI::Systems::RenderGraphSystem>(renderer));
 
         scene->AddSystem(MakeUnique<Scene::Systems::MovingSystem>(mKeyboard));

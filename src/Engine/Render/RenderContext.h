@@ -43,6 +43,8 @@ namespace Engine::Render
 
         Memory::ResourceFactory* GetResourceFactory() { return mResourceFactory.get(); }
         Memory::ResourceCopyManager* GetResourceCopyManager() { return mResourceCopyManager.get(); }
+        SharedPtr<Memory::UploadBuffer> GetUploadBuffer() { return mUploadBuffers[GetCurrentBackBufferIndex()]; }
+
 
         EventTracker &GetEventTracker() { return mEventTracker; }
 
@@ -75,6 +77,7 @@ namespace Engine::Render
         SharedPtr<HAL::CommandQueue> mDirectCommandQueue;
         SharedPtr<HAL::CommandQueue> mComputeCommandQueue;
         SharedPtr<HAL::CommandQueue> mCopyCommandQueue;
+        SharedPtr<Memory::UploadBuffer> mUploadBuffers[EngineConfig::SwapChainBufferCount] = {0};
 
         UniquePtr<Memory::CommandAllocatorPool> mCommandAllocators[EngineConfig::SwapChainBufferCount];
 

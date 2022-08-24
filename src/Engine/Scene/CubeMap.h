@@ -11,9 +11,6 @@ namespace Engine::Scene
     class CubeMap
     {
     public:
-        SharedPtr<Memory::IndexBuffer> indexBuffer;
-        SharedPtr<Memory::VertexBuffer> vertexBuffer;
         SharedPtr<Memory::Texture> texture;
-        D3D_PRIMITIVE_TOPOLOGY primitiveTopology;
     };
 }

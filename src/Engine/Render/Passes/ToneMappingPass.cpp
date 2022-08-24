@@ -13,7 +13,6 @@
 #include <Render/PipelineStateProvider.h>
 #include <Render/RenderContext.h>
 #include <Render/FrameResourceProvider.h>
-#include <Render/FrameTransientContext.h>
 
 #include <Memory/TextureCreationInfo.h>
 #include <Memory/Texture.h>
@@ -34,6 +33,7 @@ namespace Engine::Render::Passes
     void ToneMappingPass::PrepareResources(Render::ResourcePlanner* planner)
     {
         planner->ReadRenderTarget(ResourceNames::CubeOutput);
+        //planner->ReadRenderTarget(ResourceNames::ShadowDepth);
 
         Memory::TextureCreationInfo texture = {
             .description = CD3DX12_RESOURCE_DESC::Tex2D(
@@ -66,15 +66,10 @@ namespace Engine::Render::Passes
         auto resourceStateTracker = passContext.resourceStateTracker;
         auto commandRecorder = passContext.commandRecorder;
 
-       // commandRecorder->SetViewPort();
-
-        //commandRecorder->SetBackBufferAsRenderTarget();
-
         commandRecorder->SetPipelineState(PSONames::ToneMapping);
         
         auto* inputTexture = passContext.frameResourceProvider->GetTexture(ResourceNames::CubeOutput);
         auto* outputTexture = passContext.frameResourceProvider->GetTexture(ResourceNames::TonemappingOutput);
-       // auto colorSRV = color->GetSRDescriptor().GetGPUDescriptor();
 
         CommandListUtils::TransitionBarrier(passContext.resourceStateTracker.get(), inputTexture->D3DResource(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
         CommandListUtils::TransitionBarrier(passContext.resourceStateTracker.get(), outputTexture->D3DResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
@@ -87,7 +82,7 @@ namespace Engine::Render::Passes
 
         cbData.InputTexIndex = inputTexture->GetSRDescriptor().GetFullIndex();
         cbData.OutputTexIndex = outputTexture->GetUADescriptor().GetFullIndex();
-        auto cbAllocation = passContext.frameContext->uploadBuffer->Allocate(sizeof(cbData));
+        auto cbAllocation = passContext.uploadBuffer->Allocate(sizeof(cbData));
         cbAllocation.CopyTo(&cbData, sizeof(cbData));
         commandRecorder->SetRootConstantBufferView(0, 10, cbAllocation.GPU);
 
@@ -98,21 +93,16 @@ namespace Engine::Render::Passes
 
         commandRecorder->UAVBarrier(outputTexture->D3DResource());
 
-       // commandRecorder->SetRootDescriptorTable(0, 0, colorSRV);
+        /*
+        auto* depth = passContext.frameResourceProvider->GetTexture(ResourceNames::ShadowDepth);
 
-       // commandRecorder->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        CommandListUtils::TransitionBarrier(passContext.resourceStateTracker.get(), depth->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-       // commandRecorder->Draw(3, 0);
+        auto depsDescriptor = depth->GetSRDescriptor().GetGPUDescriptor();
 
-    //    auto* depth = passContext.frameResourceProvider->GetTexture(ResourceNames::ShadowDepth);
-
-     //   CommandListUtils::TransitionBarrier(passContext.resourceStateTracker.get(), depth->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-
-     //   auto depsDescriptor = depth->GetSRDescriptor().GetGPUDescriptor();
-
-     //   ImGui::Begin("ShadowMap");
-    //    ImGui::Image(IMGUI_TEXTURE_ID(depsDescriptor), {512, 512});
-    //    ImGui::End();
-
+        ImGui::Begin("ShadowMap");
+        ImGui::Image(IMGUI_TEXTURE_ID(depsDescriptor), {512, 512});
+        ImGui::End();
+        */
     }
 } // namespace Engine::Render::Passes

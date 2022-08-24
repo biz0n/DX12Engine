@@ -1,11 +1,14 @@
 #pragma once
 
-#include <Scene/Mesh.h>
+#include <Types.h>
 
 namespace Engine::Scene::Components
 {
     struct MeshComponent
     {
-        Mesh mesh;
+        Index MeshIndex;
+        Size IndicesCount;
+        Size VerticesCount;
+        Index MaterialIndex;
     };
 }

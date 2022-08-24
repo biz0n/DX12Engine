@@ -3,6 +3,7 @@
 #include <Scene/SceneForwards.h>
 #include <Render/RenderPassMediators/RenderPassBase.h>
 #include <Render/Passes/Data/PassData.h>
+#include <Scene/Components/MeshComponent.h>
 
 #include <DirectXMath.h>
 #include <d3d12.h>
@@ -31,7 +32,7 @@ namespace Engine::Render::Passes
         void Render(Render::PassRenderContext& passContext) override;
 
     private:
-        void Draw(const Scene::Mesh& node, const dx::XMMATRIX& world, Render::PassRenderContext& passContext);
+        void Draw(const MeshData& meshData, Render::PassRenderContext& passContext);
     };
 
 } // namespace Engine

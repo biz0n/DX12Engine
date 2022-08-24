@@ -33,7 +33,7 @@
 
 namespace Engine::Render
 {
-    Renderer::Renderer(SharedPtr<RenderContext> renderContext) : mRenderContext(renderContext)
+    Renderer::Renderer(SharedPtr<RenderContext> renderContext, SharedPtr<Scene::SceneStorage> sceneStorage) : mRenderContext(renderContext), mSceneStorage{sceneStorage}
     {
 
     }
@@ -43,12 +43,6 @@ namespace Engine::Render
     void Renderer::Initialize()
     {
         auto cbvSrvUavDescriptorSize = mRenderContext->Device()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        for (Size i = 0; i < std::size(mFrameContexts); ++i)
-        {
-            mFrameContexts[i].uploadBuffer = mRenderContext->GetResourceFactory()->CreateUploadBuffer(10 * 1024 * 1024);
-            mFrameContexts[i].uploadBuffer->SetName("Frame Upload Buffer");
-        }
-
         mFrameResourceProvider = MakeShared<FrameResourceProvider>(mRenderContext->Device(), mRenderContext->GetSwapChain(), mRenderContext->GetResourceFactory());
     }
 
@@ -65,7 +59,6 @@ namespace Engine::Render
     void Renderer::Render(Scene::SceneObject* scene, const Timer& timer)
     {
         auto currentBackbufferIndex = mRenderContext->GetCurrentBackBufferIndex();
-        mFrameContexts[currentBackbufferIndex].Reset();
 
         UploadResources(mRenderContext);
 
@@ -136,18 +129,18 @@ namespace Engine::Render
 
         PassRenderContext passRenderContext = {};
 
-        passRenderContext.frameContext = &mFrameContexts[currentBackbufferIndex];
+        passRenderContext.uploadBuffer = mRenderContext->GetUploadBuffer();
         passRenderContext.frameResourceProvider = mFrameResourceProvider.get();
         passRenderContext.timer = &timer;
         passRenderContext.resourceStateTracker = MakeShared<Memory::ResourceStateTracker>(mRenderContext->GetGlobalResourceStateTracker());
+        passRenderContext.sceneStorage = mSceneStorage;
 
         passRenderContext.commandRecorder = MakeShared<PassCommandRecorder>(
             passContext,
             commandList,
             passRenderContext.resourceStateTracker.get(),
             mRenderContext.get(),
-            mFrameResourceProvider.get(),
-            &mFrameContexts[currentBackbufferIndex]);
+            mFrameResourceProvider.get());
 
         pass->Render(passRenderContext);
 
