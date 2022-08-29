@@ -1,4 +1,4 @@
-#include "SceneToRegistryLoader.h"
+#include "SceneToGPULoader.h"
 
 #include <StringUtils.h>
 
@@ -9,7 +9,6 @@
 #include <Scene/Components/MeshComponent.h>
 #include <Scene/Components/NameComponent.h>
 #include <Scene/Components/AABBComponent.h>
-#include <Scene/Components/CubeMapComponent.h>
 #include <Scene/SceneStorage.h>
 
 #include <Scene/PunctualLight.h>
@@ -31,20 +30,20 @@
 
 namespace Engine::Scene
 {
-    SceneToRegisterLoader::SceneToRegisterLoader(Memory::ResourceFactory* resourceFactory, Memory::ResourceCopyManager* resourceCopyManager) :
+    SceneToGPULoader::SceneToGPULoader(Memory::ResourceFactory* resourceFactory, Memory::ResourceCopyManager* resourceCopyManager) :
     mResourceFactory{resourceFactory}, mResourceCopyManager{resourceCopyManager}
     {
 
     }
 
-    SceneToRegisterLoader::~SceneToRegisterLoader() = default;
-
-    SharedPtr<SceneStorage> SceneToRegisterLoader::LoadSceneToRegistry(entt::registry &registry, const Loader::SceneDto &scene)
+    SharedPtr<SceneStorage> SceneToGPULoader::LoadSceneToGPU(entt::registry &registry, const Loader::SceneDto &scene, const SceneDataDto& sceneDataDto)
     {
         Context context = {};
         context.registry = &registry;
         context.scene = &scene;
         context.isMainCameraAssigned = false;
+
+        SceneData sceneData = CreateSceneData(sceneDataDto);
 
         context.textures.reserve(scene.ImageResources.size());
         for (const auto& image : scene.ImageResources)
@@ -55,7 +54,7 @@ namespace Engine::Scene
         context.materials.reserve(scene.Materials.size());
         for (const auto& material : scene.Materials)
         {
-            context.materials.push_back(GetMaterial(context, material));
+            context.materials.push_back(GetMaterial(context, material, sceneData));
         }
 
         context.meshes.reserve(scene.Meshes.size());
@@ -74,16 +73,13 @@ namespace Engine::Scene
             context.registry->emplace<Components::Root>(rootEntity);
         }
 
-        SharedPtr<SceneStorage> sceneStorage = MakeShared<SceneStorage>();
-        sceneStorage->mMaterials = std::move(context.materials);
-        sceneStorage->mMeshes = std::move(context.meshes);
-        sceneStorage->mTextures = std::move(context.textures);
-
-        return std::move(sceneStorage);
+      
+        SharedPtr<SceneStorage> sceneStorage = MakeShared<SceneStorage>(std::move(context.textures), std::move(context.materials), std::move(context.meshes), std::move(sceneData));
+        return sceneStorage;
 
     }
 
-    bool SceneToRegisterLoader::ParseNode(Context& context, const Loader::Node &node, entt::entity entity, Engine::Scene::Components::RelationshipComponent *relationship)
+    bool SceneToGPULoader::ParseNode(Context& context, const Loader::Node &node, entt::entity entity, Engine::Scene::Components::RelationshipComponent *relationship)
     {
         auto registry = context.registry;
         const auto scene = context.scene;
@@ -144,14 +140,13 @@ namespace Engine::Scene
         return true;
     }
 
-    void SceneToRegisterLoader::CreateLightNode(Context& context, const Loader::LightDto& lightDto, entt::entity entity)
+    void SceneToGPULoader::CreateLightNode(Context& context, const Loader::LightDto& lightDto, entt::entity entity)
     {
         PunctualLight light;
 
         light.SetEnabled(true);
 
         light.SetLightType(lightDto.LightType);
-        light.SetDirection(lightDto.Direction);
         light.SetColor(lightDto.Color);
         light.SetIntensity(lightDto.Intensity);
         light.SetConstantAttenuation(lightDto.ConstantAttenuation);
@@ -162,15 +157,16 @@ namespace Engine::Scene
 
         Components::LightComponent lightComponent;
         lightComponent.light = light;
+        context.lights.push_back(light);
 
         context.registry->emplace<Components::LightComponent>(entity, lightComponent);
         context.registry->emplace<Components::CameraComponent>(entity, Camera());
     }
 
-    void SceneToRegisterLoader::CreateMeshNode(Context& context, const Loader::Node& node, entt::entity entity, Engine::Scene::Components::RelationshipComponent* relationship)
+    void SceneToGPULoader::CreateMeshNode(Context& context, const Loader::Node& node, entt::entity entity, Engine::Scene::Components::RelationshipComponent* relationship)
     {
         auto numMeshes = node.MeshIndices.size();
-        entt::entity nextEntity = context.registry->create();;
+        entt::entity nextEntity = context.registry->create();
         relationship->first = nextEntity;
         relationship->childsCount = numMeshes;
 
@@ -214,7 +210,7 @@ namespace Engine::Scene
         }
     }
 
-    void SceneToRegisterLoader::CreateCameraNode(Context& context, const Loader::CameraDto& cameraDto, entt::entity entity)
+    void SceneToGPULoader::CreateCameraNode(Context& context, const Loader::CameraDto& cameraDto, entt::entity entity)
     {
         Camera camera;
 
@@ -235,7 +231,7 @@ namespace Engine::Scene
         }
     }
 
-    SharedPtr<Memory::Texture> SceneToRegisterLoader::GetTexture(const Loader::ImageDto& imageDto)
+    SharedPtr<Memory::Texture> SceneToGPULoader::GetTexture(const Loader::ImageDto& imageDto)
     {
         auto state = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
         auto texture = mResourceFactory->CreateTexture(imageDto.Image->GetDescription(false), state);
@@ -304,7 +300,14 @@ namespace Engine::Scene
         return texture;
     }
 
-    Material SceneToRegisterLoader::GetMaterial(Context& context, const Loader::MaterialDto& materialDto)
+    SharedPtr<Memory::Texture> SceneToGPULoader::CreateTexture(DirectX::XMFLOAT4 color, String name)
+    {
+        Loader::ImageDto imageDto;
+        imageDto.Image = Image::CreateFromColor(color, name);
+        return GetTexture(imageDto);
+    }
+
+    Material SceneToGPULoader::GetMaterial(Context& context, const Loader::MaterialDto& materialDto, const SceneData& sceneData)
     {
         Material material = {};
         material.SetProperties(materialDto.MaterialProperties);
@@ -343,7 +346,7 @@ namespace Engine::Scene
         return material;
     }
 
-    Mesh SceneToRegisterLoader::GetMesh(Context& context, const Loader::MeshDto& meshDto)
+    Mesh SceneToGPULoader::GetMesh(Context& context, const Loader::MeshDto& meshDto)
     {
         using TIndexType = typename std::decay<decltype(*meshDto.Indices.begin())>::type;
         using TVertexType = typename std::decay<decltype(*meshDto.Vertices.begin())>::type;
@@ -366,21 +369,22 @@ namespace Engine::Scene
         return mesh;
     }
 
-    void SceneToRegisterLoader::AddCubeMapToScene(entt::registry &registry, String texturePath)
+    Engine::Scene::SceneData SceneToGPULoader::CreateSceneData(const SceneDataDto& sceneDataDto)
     {
-        if (!std::filesystem::exists(texturePath))
+        SceneData sceneData = {};
+
+        sceneData.whiteTexture = CreateTexture({ 1.f, 1.f, 1.f, 1.f }, "White");
+        sceneData.blackTexture = CreateTexture({ 0.f, 0.f, 0.f, 1.f }, "Black");
+        sceneData.fuchsiaTexture = CreateTexture({ 1.f, 0.f, 1.f, 1.f }, "Fuchsia");
+
+        if (std::filesystem::exists(sceneDataDto.skyBoxPath))
         {
-            return;
+            auto image = Scene::Image::LoadImageFromFile(sceneDataDto.skyBoxPath);
+            Loader::ImageDto imageDto{ image };
+            sceneData.skyBoxTexture = GetTexture(imageDto);
+            sceneData.skyBoxTexture->SetName(image->GetName());
         }
 
-        CubeMap cubeMap;
-        auto image = Scene::Image::LoadImageFromFile(texturePath);
-        Loader::ImageDto imageDto {image};
-        cubeMap.texture = GetTexture(imageDto);
-        cubeMap.texture->SetName(image->GetName());
-
-        auto cubeMapEntity = registry.create();
-
-        registry.emplace<Components::CubeMapComponent>(cubeMapEntity, cubeMap);
+        return sceneData;
     }
 }

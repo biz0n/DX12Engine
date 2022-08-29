@@ -65,7 +65,7 @@ namespace Engine::Render::Passes
         pipelineStateProvider->CreatePipelineState(PSONames::BackBuffer, pipelineState);
     }
 
-    void BackBufferPass::Render(Render::PassRenderContext& passContext)
+    void BackBufferPass::Render(const RenderRequest& renderRequest, Render::PassRenderContext& passContext, const Timer& timer)
     {
         auto resourceStateTracker = passContext.resourceStateTracker;
         auto commandRecorder = passContext.commandRecorder;

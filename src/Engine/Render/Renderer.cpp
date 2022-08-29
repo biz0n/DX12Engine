@@ -2,8 +2,6 @@
 
 #include <StringUtils.h>
 
-#include <Scene/SceneObject.h>
-
 #include <HAL/CommandQueue.h>
 #include <HAL/SwapChain.h>
 
@@ -28,22 +26,20 @@
 #include <Memory/ResourceFactory.h>
 #include <Memory/ResourceCopyManager.h>
 
-#include <entt/entt.hpp>
 #include <d3d12.h>
 
 namespace Engine::Render
 {
-    Renderer::Renderer(SharedPtr<RenderContext> renderContext, SharedPtr<Scene::SceneStorage> sceneStorage) : mRenderContext(renderContext), mSceneStorage{sceneStorage}
+    Renderer::Renderer(SharedPtr<RenderContext> renderContext) : mRenderContext(renderContext)
     {
-
+        mFrameResourceProvider = MakeShared<FrameResourceProvider>(mRenderContext->Device(), mRenderContext->GetSwapChain(), mRenderContext->GetResourceFactory());
     }
 
     Renderer::~Renderer() = default;
 
     void Renderer::Initialize()
     {
-        auto cbvSrvUavDescriptorSize = mRenderContext->Device()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        mFrameResourceProvider = MakeShared<FrameResourceProvider>(mRenderContext->Device(), mRenderContext->GetSwapChain(), mRenderContext->GetResourceFactory());
+        
     }
 
     void Renderer::Deinitialize()
@@ -56,7 +52,7 @@ namespace Engine::Render
         mRenderPasses.push_back(renderPass);
     }
 
-    void Renderer::Render(Scene::SceneObject* scene, const Timer& timer)
+    void Renderer::Render(const RenderRequest& renderRequest, const Timer& timer)
     {
         auto currentBackbufferIndex = mRenderContext->GetCurrentBackBufferIndex();
 
@@ -64,7 +60,7 @@ namespace Engine::Render
 
         PrepareFrame();
 
-        RenderPasses(scene, timer);
+        RenderPasses(renderRequest, timer);
     }
 
     void Renderer::PrepareFrame()
@@ -89,14 +85,14 @@ namespace Engine::Render
         mFrameResourceProvider->CreateResources();
     }
 
-    void Renderer::RenderPasses(Scene::SceneObject* scene, const Timer& timer)
+    void Renderer::RenderPasses(const RenderRequest& renderRequest, const Timer& timer)
     {
         mGraphBuilder.Build();
 
         for (auto orderedIndex : mGraphBuilder.GetOrderedIndexes())
         {
             auto pass = &mPassContexts[orderedIndex];
-            RenderPass(pass, scene, timer);
+            RenderPass(pass, renderRequest, timer);
         }
 
         mRenderPasses.clear();
@@ -108,7 +104,7 @@ namespace Engine::Render
         mGraphBuilder.Clear();
     }
 
-    void Renderer::RenderPass(PassContext* passContext, Scene::SceneObject* scene, const Timer& timer)
+    void Renderer::RenderPass(PassContext* passContext, const RenderRequest& renderRequest, const Timer& timer)
     {
         auto* pass = passContext->GetRenderPass();
         auto currentBackbufferIndex = mRenderContext->GetCurrentBackBufferIndex();
@@ -130,10 +126,8 @@ namespace Engine::Render
         PassRenderContext passRenderContext = {};
 
         passRenderContext.uploadBuffer = mRenderContext->GetUploadBuffer();
-        passRenderContext.frameResourceProvider = mFrameResourceProvider.get();
-        passRenderContext.timer = &timer;
+        passRenderContext.frameResourceProvider = mFrameResourceProvider;
         passRenderContext.resourceStateTracker = MakeShared<Memory::ResourceStateTracker>(mRenderContext->GetGlobalResourceStateTracker());
-        passRenderContext.sceneStorage = mSceneStorage;
 
         passRenderContext.commandRecorder = MakeShared<PassCommandRecorder>(
             passContext,
@@ -142,7 +136,7 @@ namespace Engine::Render
             mRenderContext.get(),
             mFrameResourceProvider.get());
 
-        pass->Render(passRenderContext);
+        pass->Render(renderRequest, passRenderContext, timer);
 
         passRenderContext.resourceStateTracker->FlushBarriers(commandList);
 

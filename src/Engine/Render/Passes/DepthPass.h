@@ -2,7 +2,6 @@
 
 #include <Scene/SceneForwards.h>
 #include <Render/RenderPassMediators/RenderPassBase.h>
-#include <Render/Passes/Data/PassData.h>
 #include <Scene/Components/MeshComponent.h>
 
 #include <DirectXMath.h>
@@ -11,13 +10,7 @@
 
 namespace Engine::Render::Passes
 {
-    struct DepthPassData
-    {
-        CameraData camera;
-        std::vector<MeshData> meshes;
-    };
-
-    class DepthPass : public RenderPassBaseWithData<DepthPassData>
+    class DepthPass : public RenderPassBase
     {
     public:
         DepthPass();
@@ -29,10 +22,10 @@ namespace Engine::Render::Passes
 
         void CreatePipelineStates(Render::PipelineStateProvider* pipelineStateProvider) override;
 
-        void Render(Render::PassRenderContext& passContext) override;
+        void Render(const RenderRequest& renderRequest, Render::PassRenderContext& passContext, const Timer& timer) override;
 
     private:
-        void Draw(const MeshData& meshData, Render::PassRenderContext& passContext);
+        void Draw(const RenderRequest& renderRequest, Index meshIndex, Render::PassRenderContext& passContext);
     };
 
 } // namespace Engine

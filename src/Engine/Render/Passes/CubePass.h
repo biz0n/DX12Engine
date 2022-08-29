@@ -1,18 +1,10 @@
 #pragma once
 
 #include <Render/RenderPassMediators/RenderPassBase.h>
-#include <Render/Passes/Data/PassData.h>
 
 namespace Engine::Render::Passes
 {
-    struct CubePassData
-    {
-        CameraData camera;
-        CubeData cube;
-        bool hasCube;
-    };
-
-    class CubePass : public RenderPassBaseWithData<CubePassData>
+    class CubePass : public RenderPassBase
     {
     public:
         CubePass();
@@ -24,6 +16,6 @@ namespace Engine::Render::Passes
 
         void CreatePipelineStates(Render::PipelineStateProvider* pipelineStateProvider) override;
 
-        void Render(Render::PassRenderContext& passContext) override;
+        void Render(const RenderRequest& renderRequest, Render::PassRenderContext& passContext, const Timer& timer) override;
     }; 
 } // namespace Engine::Render::Passes

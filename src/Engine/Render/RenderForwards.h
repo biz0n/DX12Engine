@@ -18,6 +18,7 @@ namespace Engine::Render
     class RenderPassBase;
     template <class TPassData> class RenderPassBaseWithData;
     class Renderer;
+    class RenderRequest;
 
     struct PipelineStateProxy;
     struct PipelineStateStream;

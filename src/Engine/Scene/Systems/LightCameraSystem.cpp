@@ -58,24 +58,13 @@ namespace Engine::Scene::Systems
             dx::XMMATRIX projectionMatrix;
             CameraType cameraType;
 
+            dx::XMVECTOR direction = dx::XMVector4Transform(forward, world);
+
             switch(light.GetLightType())
             {
                 case LightType::SpotLight:
                 {
-                    const auto direction = DirectX::XMVector4Transform(
-                        dx::XMVectorSet(light.GetDirection().x, light.GetDirection().y, light.GetDirection().z, 0),
-                        world);
-
-                    const auto dot = std::abs(dx::XMVectorGetX(dx::XMVector4Dot(direction, up)));
-                    auto newUp = up;
-                    if (dot <= 0.0001f || std::abs(dot - 1) <= 0.0001f)
-                    {
-                        newUp = forward;
-                    }
-                    viewMatrix = dx::XMMatrixLookAtLH(tr, tr + direction, newUp);
-                    dx::XMVECTOR D;
-                    const auto inverseView = dx::XMMatrixInverse(&D, viewMatrix);
-                    dx::XMMatrixDecompose(&unused, &rt, &unused, inverseView);
+                    viewMatrix = dx::XMMatrixLookToLH(tr, direction, up);
                     camera.SetType(CameraType::Perspective);
                     projectionMatrix = camera.GetProjectionMatrix(EngineConfig::ShadowWidth, EngineConfig::ShadowHeight);
                     camera.SetFoV(light.GetOuterConeAngle());
@@ -83,7 +72,7 @@ namespace Engine::Scene::Systems
                 }
                 break;
                 case LightType::PointLight: // not supported for now, but light will show only forward camera
-                    viewMatrix = dx::XMMatrixLookAtLH(tr, tr + forward, up);
+                    viewMatrix = dx::XMMatrixLookToLH(tr, forward, up);
                     camera.SetType(CameraType::Perspective);
                     projectionMatrix = camera.GetProjectionMatrix(EngineConfig::ShadowWidth, EngineConfig::ShadowHeight);
                     camera.SetFoV(dx::XMConvertToRadians(90));
@@ -91,14 +80,7 @@ namespace Engine::Scene::Systems
                 break;
                 case LightType::DirectionalLight:
                 {
-                    const auto direction = DirectX::XMVector4Transform(dx::XMLoadFloat3(&light.GetDirection()), world);
-                    const auto dot = std::abs(dx::XMVectorGetX(dx::XMVector4Dot(direction, up)));
-                    auto newUp = up;
-                    if (dot <= 0.0001f || std::abs(dot - 1) <= 0.0001f)
-                    {
-                        newUp = forward;
-                    }
-                    viewMatrix = dx::XMMatrixLookAtLH(tr, tr + direction, newUp);
+                    viewMatrix = dx::XMMatrixLookToLH(tr, direction, up);
                     dx::XMVECTOR D;
                     const auto inverseView = dx::XMMatrixInverse(&D, viewMatrix);
                     dx::XMMatrixDecompose(&unused, &rt, &unused, inverseView);
@@ -147,7 +129,7 @@ namespace Engine::Scene::Systems
                     camera.SetNearPlane(nearPlane);
                     camera.SetFarPlane(farPlane);
 
-                    viewMatrix = dx::XMMatrixLookAtLH(tr, tr + direction, newUp);
+                    viewMatrix = dx::XMMatrixLookToLH(tr, direction, up);
                     const auto maxDimension = 2 * std::max(boxWidth, boxHeight);
                     projectionMatrix = camera.GetProjectionMatrix(maxDimension, maxDimension);
                 }

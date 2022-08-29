@@ -44,6 +44,8 @@ namespace Engine::Scene::Loader
             Index defaultSamplerIndex;
 
             SceneDto* sceneDTO;
+
+            const aiScene* aScene;
         };
 
     //! Values for the Sampler::magFilter field
@@ -84,5 +86,6 @@ namespace Engine::Scene::Loader
         MeshDto ParseMesh(const aiMesh* aMesh);
         MaterialDto ParseMaterial(const aiMaterial* aMaterial, LoadingContext& context);
         Index ParseSampler(const aiMaterial* aMaterial, aiTextureType textureType, unsigned int idx, LoadingContext& context);
+        DirectX::XMMATRIX LightMatrixFix(const aiLight* aLight, DirectX::XMMATRIX srt);
     }; 
 } // namespace Engine::Scene

@@ -8,21 +8,26 @@
 #include <Scene/Material.h>
 #include <Scene/Mesh.h>
 #include <Scene/SceneStorage.h>
+#include <Scene/PunctualLight.h>
 #include <entt/fwd.hpp>
 #include <tuple>
 #include <DirectXCollision.h>
 
 namespace Engine::Scene
 {
-    class SceneToRegisterLoader
+    class SceneToGPULoader
     {
+    public:
+        struct SceneDataDto
+        {
+            String skyBoxPath;
+        };
     private:
         struct Context;
     public:
-        SceneToRegisterLoader(Memory::ResourceFactory* resourceFactory, Memory::ResourceCopyManager* resourceCopyManager);
-        ~SceneToRegisterLoader();
-        SharedPtr<SceneStorage> LoadSceneToRegistry(entt::registry& registry, const Loader::SceneDto& scene);
-        void AddCubeMapToScene(entt::registry& registry, String texturePath);
+        SceneToGPULoader(Memory::ResourceFactory* resourceFactory, Memory::ResourceCopyManager* resourceCopyManager);
+        ~SceneToGPULoader() = default;
+        SharedPtr<SceneStorage> LoadSceneToGPU(entt::registry& registry, const Loader::SceneDto& scene, const SceneDataDto& sceneData);
     private:
         bool ParseNode(Context& context, const Loader::Node& node, entt::entity entity, Engine::Scene::Components::RelationshipComponent* relationship);
         static void CreateLightNode(Context& context, const Loader::LightDto& lightDto, entt::entity entity);
@@ -30,8 +35,10 @@ namespace Engine::Scene
         static void CreateCameraNode(Context& context, const Loader::CameraDto& cameraDto, entt::entity entity);
 
         SharedPtr<Memory::Texture> GetTexture(const Loader::ImageDto& imageDto);
-        Material GetMaterial(Context& context, const Loader::MaterialDto& materialDto);
+        Material GetMaterial(Context& context, const Loader::MaterialDto& materialDto, const SceneData& sceneData);
         Mesh GetMesh(Context& context, const Loader::MeshDto& meshDto);
+        SharedPtr<Memory::Texture> CreateTexture(DirectX::XMFLOAT4 color, String name);
+        Engine::Scene::SceneData CreateSceneData(const SceneDataDto& sceneData);
     private:
         struct Context
         {
@@ -39,6 +46,7 @@ namespace Engine::Scene
             std::vector<SharedPtr<Memory::Texture>> textures;
             std::vector<Material> materials;
             std::vector<Mesh> meshes;
+            std::vector<PunctualLight> lights;
             const Loader::SceneDto* scene;
             bool isMainCameraAssigned;
         };

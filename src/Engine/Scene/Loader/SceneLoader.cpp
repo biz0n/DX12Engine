@@ -25,7 +25,6 @@
 #include <Scene/Components/MeshComponent.h>
 #include <Scene/Components/NameComponent.h>
 #include <Scene/Components/AABBComponent.h>
-#include <Scene/Components/CubeMapComponent.h>
 
 #include <Memory/IndexBuffer.h>
 #include <Memory/VertexBuffer.h>
@@ -70,7 +69,7 @@ namespace Engine::Scene::Loader
 
             aScene = importer.ReadFile(filePath.string(), preprocessFlags);
 
-            if (aScene)
+           // if (aScene)
             {
                 // Export the preprocessed scene file for faster loading next time.
                  //Assimp::Exporter exporter;
@@ -83,6 +82,7 @@ namespace Engine::Scene::Loader
         LoadingContext context = {};
         context.RootPath = filePath.parent_path().string();
         context.sceneDTO = &sceneDTO;
+        context.aScene = aScene;
 
         context.sceneDTO->ImageResources.reserve(aScene->mNumTextures);
         for (uint32 i = 0; i < aScene->mNumTextures; ++i)
@@ -192,7 +192,6 @@ namespace Engine::Scene::Loader
         light2.QuadraticAttenuation = 1;
         light2.InnerConeAngle = 0;
         light2.OuterConeAngle = 0;
-        light2.Direction = { 1, 0, 0 };
         light2.LightType = LightType::DirectionalLight;
 
        // addLight(light2, DirectX::XMMatrixTranslation(0.0f, 2.0f, 0.0f));
@@ -230,8 +229,9 @@ namespace Engine::Scene::Loader
         else if (IsLightNode(aNode, context))
         {
             node.Name = "Light_" + name;
-            node.LocalTransform = srt;
             node.LightIndex = context.lightsIndexMap[name];
+            const auto* light = context.aScene->mLights[*node.LightIndex];
+            node.LocalTransform = LightMatrixFix(light, srt);
         }
         else if (IsCameraNode(aNode, context))
         {
@@ -467,9 +467,6 @@ namespace Engine::Scene::Loader
                 break;
         }
 
-        DirectX::XMFLOAT3 direction{aLight->mDirection.x, aLight->mDirection.z, aLight->mDirection.y};
-        light.Direction = direction;
-
         float intensity = std::max(1.0f, std::max(aLight->mColorDiffuse.r, std::max(aLight->mColorDiffuse.g, aLight->mColorDiffuse.b)));
         DirectX::XMFLOAT3 color{aLight->mColorDiffuse.r / intensity, aLight->mColorDiffuse.g / intensity, aLight->mColorDiffuse.b / intensity};
         light.Color = color;
@@ -538,20 +535,6 @@ namespace Engine::Scene::Loader
         mesh.Indices = std::move(indices);
 
         mesh.MaterialIndex = aMesh->mMaterialIndex;
-
-        switch (aMesh->mPrimitiveTypes)
-        {
-            case aiPrimitiveType_POINT:
-                mesh.PrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
-                break;
-            case aiPrimitiveType_LINE:
-                mesh.PrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_LINELIST;
-                break;
-            case aiPrimitiveType_TRIANGLE:
-            default:
-                mesh.PrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-                break;
-        }
 
         const auto& aabbMin = aMesh->mAABB.mMin;
         const auto& aabbMax = aMesh->mAABB.mMax;
@@ -690,6 +673,26 @@ namespace Engine::Scene::Loader
         material.MaterialProperties = properties;
 
         return material;
+    }
+
+    DirectX::XMMATRIX SceneLoader::LightMatrixFix(const aiLight* aLight, DirectX::XMMATRIX srt)
+    {
+        dx::XMVECTOR direction = dx::XMVectorSet(aLight->mDirection.x, aLight->mDirection.z, aLight->mDirection.y, 0.f );
+        dx::XMVECTOR up = dx::XMVectorSet( aLight->mUp.x, aLight->mUp.z, aLight->mUp.y, 0.f );
+
+        if (aLight->mType != aiLightSource_POINT)
+        {
+            auto local = dx::XMMatrixLookToLH(dx::XMVectorZero(), direction, up);
+
+            dx::XMVECTOR d;
+            auto inv = dx::XMMatrixInverse(&d, local);
+
+            return dx::XMMatrixMultiply(inv, srt);
+        }
+        else
+        {
+            return srt;
+        }
     }
 
 } // namespace Engine::Scene::Loader

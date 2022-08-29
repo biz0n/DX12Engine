@@ -26,6 +26,7 @@
 #include <Render/ShaderProvider.h>
 #include <Render/PipelineStateProvider.h>
 #include <Render/RootSignatureProvider.h>
+#include <Render/RenderRequest.h>
 
 #include <Render/RenderPassMediators/ResourcePlanner.h>
 #include <Render/RenderPassMediators/PassCommandRecorder.h>
@@ -42,7 +43,7 @@
 
 namespace Engine::Render::Passes
 {
-    ForwardPass::ForwardPass() : Render::RenderPassBaseWithData<ForwardPassData>("Forward Pass", CommandQueueType::Graphics)
+    ForwardPass::ForwardPass() : Render::RenderPassBase("Forward Pass", CommandQueueType::Graphics)
     {
     }
 
@@ -108,14 +109,14 @@ namespace Engine::Render::Passes
         planner->ReadRenderTarget(ResourceNames::ShadowDepth);
     }
 
-    void ForwardPass::Draw(const MeshData& meshData, Render::PassRenderContext& passContext)
+    void ForwardPass::Draw(const RenderRequest& renderRequest, Index meshIndex, Render::PassRenderContext& passContext)
     {
         auto commandRecorder = passContext.commandRecorder;
 
-        const auto& mesh = passContext.sceneStorage->GetMeshes()[meshData.meshIndex];
-        const auto& meshUniform = passContext.sceneStorage->GetMeshUniforms()[meshData.meshIndex];
+        const auto& meshUniform = renderRequest.GetMeshes().meshes[meshIndex];
+        const auto& mesh = renderRequest.GetSceneStorage()->GetMeshes()[meshUniform.Id];
 
-        const auto& material = passContext.sceneStorage->GetMaterials()[meshUniform.MaterialIndex];
+        const auto& material = renderRequest.GetSceneStorage()->GetMaterials()[meshUniform.MaterialIndex];
 
         if (material.GetProperties().doubleSided)
         {
@@ -126,12 +127,12 @@ namespace Engine::Render::Passes
             commandRecorder->SetPipelineState(PSONames::ForwardCullBack);
         }
 
-        commandRecorder->SetRoot32BitConstant(0, 0, meshData.meshIndex);
+        commandRecorder->SetRoot32BitConstant(0, 0, meshIndex);
 
         commandRecorder->Draw(mesh.indicesCount, 0);
     }
 
-    void ForwardPass::Render(Render::PassRenderContext &passContext)
+    void ForwardPass::Render(const RenderRequest& renderRequest, Render::PassRenderContext& passContext, const Timer& timer)
     {
         auto commandRecorder = passContext.commandRecorder;
 
@@ -144,31 +145,44 @@ namespace Engine::Render::Passes
 
         commandRecorder->SetPipelineState(PSONames::ForwardCullBack);
 
-        auto* depth = passContext.frameResourceProvider->GetTexture(ResourceNames::ShadowDepth);
+        
 
-        auto& camera = PassData().camera;
-        auto cb = CommandListUtils::GetFrameUniform(camera.viewProjection, camera.eyePosition, static_cast<uint32>(passContext.sceneStorage->GetLightsCount()));
-        cb.ShadowTransform = PassData().shadowTransform;
-        cb.HasShadowTexture = passContext.sceneStorage->HasDirectionalLight();
-        cb.ShadowIndex = depth->GetSRDescriptor().GetFullIndex();
+        auto& camera = renderRequest.GetCamera();
+        auto cb = CommandListUtils::GetFrameUniform(camera.viewProjection, camera.eyePosition, static_cast<uint32>(renderRequest.GetLightsCount()));
+        cb.HasShadowTexture = !renderRequest.GetShadowCameras().empty();
+
+        if (cb.HasShadowTexture)
+        {
+            auto* depth = passContext.frameResourceProvider->GetTexture(ResourceNames::ShadowDepth);
+            cb.ShadowIndex = depth->GetSRDescriptor().GetFullIndex();
+
+            const auto& shadowCamera = renderRequest.GetShadowCameras()[0];
+
+            const dx::XMMATRIX T(
+                0.5f, 0.0f, 0.0f, 0.0f,
+                0.0f, -0.5f, 0.0f, 0.0f,
+                0.0f, 0.0f, 1.0f, 0.0f,
+                0.5f, 0.5f, 0.0f, 1.0f);
+
+            dx::XMStoreFloat4x4(&cb.ShadowTransform, dx::XMMatrixTranspose(dx::XMMatrixTranspose(shadowCamera.viewProjection) * T));
+
+            CommandListUtils::TransitionBarrier(passContext.resourceStateTracker.get(), depth->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        }
 
         auto cbAllocation = passContext.uploadBuffer->Allocate(sizeof(Shader::FrameUniform));
         cbAllocation.CopyTo(&cb);
 
         commandRecorder->SetRootConstantBufferView(1, 0, cbAllocation.GPU);
 
-        commandRecorder->SetRootShaderResourceView(0, 1, passContext.sceneStorage->GetMeshUniformsAllocation().GPU);
+        commandRecorder->SetRootShaderResourceView(0, 1, renderRequest.GetMeshAllocation().GPU);
 
-        commandRecorder->SetRootShaderResourceView(1, 1, passContext.sceneStorage->GetLightUniformsAllocation().GPU);
+        commandRecorder->SetRootShaderResourceView(1, 1, renderRequest.GetLightAllocation().GPU);
 
-        commandRecorder->SetRootShaderResourceView(2, 1, passContext.sceneStorage->GetMaterialUniformsAllocation().GPU);
+        commandRecorder->SetRootShaderResourceView(2, 1, renderRequest.GetMaterialAllocation().GPU);
 
-        CommandListUtils::TransitionBarrier(passContext.resourceStateTracker.get(), depth->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-
-        auto& meshes = PassData().meshes;
-        for (auto& mesh : meshes)
+        for (Index meshIndex : renderRequest.GetMeshes().opaque)
         {
-            Draw(mesh, passContext);
+            Draw(renderRequest, meshIndex, passContext);
         }
     }
 

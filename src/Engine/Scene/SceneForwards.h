@@ -17,7 +17,7 @@ namespace Engine::Scene
     class Texture;
     class Image;
     class SceneStorage;
-    class SceneToRegisterLoader;
+    class SceneToGPULoader;
 
     struct SceneLoadingInfo;
     struct Vertex;

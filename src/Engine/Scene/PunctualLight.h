@@ -21,7 +21,6 @@ namespace Engine::Scene
          , mEnabled(false)
          , mColor({0.0f, 0.0f, 0.0f})
          , mIntensity(1)
-         , mDirection({0.0f, -1.0f, 0.0f})
          , mConstantAttenuation(0)
          , mLinearAttenuation(0)
          , mQuadraticAttenuation(0)
@@ -34,9 +33,6 @@ namespace Engine::Scene
 
         void SetEnabled(bool enabled) { mEnabled = enabled; }
         bool IsEnabled() const { return mEnabled; }
-
-        void SetDirection(const DirectX::XMFLOAT3& direction) { mDirection = direction; }
-        const DirectX::XMFLOAT3& GetDirection() const { return mDirection; }
 
         void SetColor(const DirectX::XMFLOAT3& color) { mColor = color; }
         const DirectX::XMFLOAT3& GetColor() const { return mColor; }
@@ -62,7 +58,6 @@ namespace Engine::Scene
     private:
         LightType mLightType;
         bool mEnabled;
-        DirectX::XMFLOAT3 mDirection;
         DirectX::XMFLOAT3 mColor;
         float mIntensity;
         float mConstantAttenuation;

@@ -20,8 +20,9 @@ namespace Engine::Scene
         ~SceneObject();
     public:
         entt::registry& GetRegistry();
+        const entt::registry& GetRegistry() const;
 
-        std::tuple<entt::entity, Scene::Components::CameraComponent> GetMainCamera();
+        const std::tuple<entt::entity, Scene::Components::CameraComponent> GetMainCamera() const;
 
         void AddSystem(UniquePtr<Systems::System> system);
 

@@ -21,6 +21,7 @@
 #include <Render/RenderContext.h>
 #include <Render/FrameResourceProvider.h>
 #include <Render/RenderPassMediators/PassCommandRecorder.h>
+#include <Render/RenderRequest.h>
 
 #include <Memory/Texture.h>
 #include <Memory/IndexBuffer.h>
@@ -28,7 +29,7 @@
 
 namespace Engine::Render::Passes
 {
-    DepthPass::DepthPass() : Render::RenderPassBaseWithData<DepthPassData>("Depth Pass", CommandQueueType::Graphics)
+    DepthPass::DepthPass() : Render::RenderPassBase("Depth Pass", CommandQueueType::Graphics)
     {
 
     }
@@ -80,7 +81,7 @@ namespace Engine::Render::Passes
         pipelineStateProvider->CreatePipelineState(PSONames::Depth, pipelineState);
     }
 
-    void DepthPass::Render(Render::PassRenderContext& passContext)
+    void DepthPass::Render(const RenderRequest& renderRequest, Render::PassRenderContext& passContext, const Timer& timer)
     {
         auto commandRecorder = passContext.commandRecorder;
 
@@ -92,7 +93,7 @@ namespace Engine::Render::Passes
 
         commandRecorder->ClearDepthStencil(ResourceNames::ShadowDepth);
 
-        auto& camera = PassData().camera;
+        const auto& camera = renderRequest.GetShadowCameras()[0];
         auto cb = CommandListUtils::GetFrameUniform(camera.viewProjection, camera.eyePosition, 0);
 
         auto cbAllocation = passContext.uploadBuffer->Allocate(sizeof(Shader::FrameUniform));
@@ -100,23 +101,22 @@ namespace Engine::Render::Passes
 
         commandRecorder->SetRootConstantBufferView(1, 0, cbAllocation.GPU);
 
-        commandRecorder->SetRootShaderResourceView(0, 1, passContext.sceneStorage->GetMeshUniformsAllocation().GPU);
-        commandRecorder->SetRootShaderResourceView(1, 1, passContext.sceneStorage->GetMaterialUniformsAllocation().GPU);
+        commandRecorder->SetRootShaderResourceView(0, 1, renderRequest.GetMeshAllocation().GPU);
+        commandRecorder->SetRootShaderResourceView(1, 1, renderRequest.GetMaterialAllocation().GPU);
 
-        auto& meshes = PassData().meshes;
-        for (auto &mesh : meshes)
+        for (auto meshIndex : renderRequest.GetMeshes().opaque)
         {
-            Draw(mesh, passContext);
+            Draw(renderRequest, meshIndex, passContext);
         }
     }
 
-    void DepthPass::Draw(const MeshData& meshData, Render::PassRenderContext &passContext)
+    void DepthPass::Draw(const RenderRequest& renderRequest, Index meshIndex, Render::PassRenderContext &passContext)
     {
-        const auto& mesh = passContext.sceneStorage->GetMeshes()[meshData.meshIndex];
-        const auto& meshUniform = passContext.sceneStorage->GetMeshUniforms()[meshData.meshIndex];
+        const auto& meshUniform = renderRequest.GetMeshes().meshes[meshIndex];
+        const auto& mesh = renderRequest.GetSceneStorage()->GetMeshes()[meshUniform.Id];
         auto commandRecorder = passContext.commandRecorder;
 
-        commandRecorder->SetRoot32BitConstant(0, 0, meshData.meshIndex);
+        commandRecorder->SetRoot32BitConstant(0, 0, meshIndex);
 
         commandRecorder->Draw(mesh.indicesCount, 0);
     }

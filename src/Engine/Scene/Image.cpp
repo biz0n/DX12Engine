@@ -116,6 +116,27 @@ namespace Engine::Scene
         return image;
     }
 
+    SharedPtr<Image> Image::CreateFromColor(DirectX::XMFLOAT4 color, String name)
+    {
+        uint8_t maxValue = std::numeric_limits<uint8_t>::max();
+        uint8_t c[4] = { maxValue * color.x, maxValue * color.y, maxValue * color.z, maxValue * color.w };
+
+        UniquePtr<DirectX::ScratchImage> scratch = MakeUnique<DirectX::ScratchImage>();
+        DirectX::Image dxImage = {};
+        dxImage.width = 1;
+        dxImage.height = 1;
+        dxImage.rowPitch = 4;
+        dxImage.format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        dxImage.pixels = &c[0];
+
+        scratch->InitializeFromImage(dxImage, false);
+
+        SharedPtr<Image> image = MakeShared<Image>();
+        image->mImage = std::move(scratch);
+        image->SetName(name);
+        return image;
+    }
+
     D3D12_RESOURCE_DESC Image::GetDescription(bool makeSRGB) const
     {
         const auto& metadata = mImage->GetMetadata();

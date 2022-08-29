@@ -2,8 +2,8 @@
 
 #include <Scene/SceneForwards.h>
 #include <Render/RenderPassMediators/RenderPassBase.h>
-#include <Render/Passes/Data/PassData.h>
 #include <Scene/Components/MeshComponent.h>
+#include <Render/Shaders/ShaderTypes.h>
 
 #include <DirectXMath.h>
 #include <d3d12.h>
@@ -11,14 +11,7 @@
 
 namespace Engine::Render::Passes
 {
-    struct ForwardPassData
-    {
-        CameraData camera;
-        std::vector<MeshData> meshes;
-        dx::XMFLOAT4X4 shadowTransform;
-    };
-
-    class ForwardPass : public RenderPassBaseWithData<ForwardPassData>
+    class ForwardPass : public RenderPassBase
     {
     public:
         ForwardPass();
@@ -30,11 +23,11 @@ namespace Engine::Render::Passes
 
         void CreatePipelineStates(Render::PipelineStateProvider* pipelineStateProvider) override;
 
-        void Render(Render::PassRenderContext& passContext) override;
+        void Render(const RenderRequest& renderRequest, Render::PassRenderContext& passContext, const Timer& timer) override;
 
     private:
 
-        void Draw(const MeshData& meshData, Render::PassRenderContext& passContext);
+        void Draw(const RenderRequest& renderRequest, Index meshIndex, Render::PassRenderContext& passContext);
     };
 
 } // namespace Engine

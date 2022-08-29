@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Types.h>
+#include <Timer.h>
 
 #include <Render/RenderForwards.h>
 
@@ -30,7 +31,7 @@ namespace Engine::Render
 
         virtual void CreatePipelineStates(Render::PipelineStateProvider *pipelineStateProvider) {}
 
-        virtual void Render(Render::PassRenderContext &passContext) {}
+        virtual void Render(const RenderRequest& renderRequest, Render::PassRenderContext &passContext, const Timer &timer) {}
 
         const std::string &GetName() const { return mPassName; }
         CommandQueueType GetQueueType() const { return mCommandQueueType; }
@@ -38,20 +39,5 @@ namespace Engine::Render
     private:
         std::string mPassName;
         CommandQueueType mCommandQueueType;
-    };
-
-    template <class TPassData>
-    class RenderPassBaseWithData : public RenderPassBase
-    {
-    public:
-        RenderPassBaseWithData(const std::string &passName, CommandQueueType queueType) : RenderPassBase(passName, queueType), mPassData{} {}
-        ~RenderPassBaseWithData() override = default;
-
-        const TPassData &PassData() const { return mPassData; }
-
-        void SetPassData(const TPassData &passData) { mPassData = passData; }
-
-    private:
-        TPassData mPassData;
     };
 } // namespace Engine::Render

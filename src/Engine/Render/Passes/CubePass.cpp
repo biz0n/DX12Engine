@@ -17,6 +17,7 @@
 #include <Render/RenderPassMediators/CommandListUtils.h>
 #include <Render/RenderPassMediators/PassRenderContext.h>
 #include <Render/RenderPassMediators/ResourcePlanner.h>
+#include <Render/RenderRequest.h>
 
 #include <Scene/Vertex.h>
 #include <Scene/SceneObject.h>
@@ -33,7 +34,7 @@
 
 namespace Engine::Render::Passes
 {
-    CubePass::CubePass() : RenderPassBaseWithData<CubePassData>("Cube Pass", CommandQueueType::Graphics)
+    CubePass::CubePass() : RenderPassBase("Cube Pass", CommandQueueType::Graphics)
     {
 
     }
@@ -84,9 +85,10 @@ namespace Engine::Render::Passes
         pipelineStateProvider->CreatePipelineState(PSONames::Cube, pipelineState);
     }
 
-    void CubePass::Render(Render::PassRenderContext& passContext)
+    void CubePass::Render(const RenderRequest& renderRequest, Render::PassRenderContext& passContext, const Timer& timer)
     {
-        if (!PassData().hasCube)
+        auto skyBoxTexture = renderRequest.GetSceneStorage()->GetSceneData().skyBoxTexture;
+        if (skyBoxTexture == nullptr)
         {
             return;
         }
@@ -100,13 +102,11 @@ namespace Engine::Render::Passes
 
         commandRecorder->SetPipelineState(PSONames::Cube);
 
-        const auto& cubeMap = PassData().cube.cubeMap;
-        auto cubeTexture = cubeMap.texture;
-        auto cubeDescriptorIndex = cubeTexture->GetCubeSRDescriptor().GetFullIndex();
+        auto cubeDescriptorIndex = skyBoxTexture->GetCubeSRDescriptor().GetFullIndex();
 
         commandRecorder->SetRoot32BitConstant(0, 0, cubeDescriptorIndex);
 
-        const auto& camera = PassData().camera;
+        const auto& camera =renderRequest.GetCamera();
         auto cb = CommandListUtils::GetFrameUniform(camera.viewProjection, camera.eyePosition, static_cast<uint32>(0));
 
         auto cbAllocation = passContext.uploadBuffer->Allocate(sizeof(Shader::FrameUniform));

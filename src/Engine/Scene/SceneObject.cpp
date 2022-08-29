@@ -13,12 +13,17 @@ namespace Engine::Scene
         return registry; 
     }
 
-    std::tuple<entt::entity, Scene::Components::CameraComponent> SceneObject::GetMainCamera()
+    const entt::registry& SceneObject::GetRegistry() const
+    {
+        return registry;
+    }
+
+    const std::tuple<entt::entity, Scene::Components::CameraComponent> SceneObject::GetMainCamera() const
     {
         entt::entity cameraEntity = entt::null;
         Scene::Components::CameraComponent component{};
 
-        for (auto &&[e, c] : registry.view<Scene::Components::CameraComponent, Scene::Components::MainCameraComponent>().each())
+        for (const auto &&[e, c] : registry.view<Scene::Components::CameraComponent, Scene::Components::MainCameraComponent>().each())
         {
             cameraEntity = e;
             component = c;

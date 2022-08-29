@@ -43,7 +43,7 @@ struct MeshUniform
     int IndexBufferIndex;
     int MaterialIndex;
 
-    float __Padding;
+    int Id;
 };
 
 struct MaterialUniform

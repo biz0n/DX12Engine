@@ -13,6 +13,9 @@
 #include <Render/Passes/ForwardPass.h>
 #include <Render/Passes/ToneMappingPass.h>
 #include <Render/Passes/CubePass.h>
+#include <Render/Passes/ForwardPass.h>
+#include <Render/Passes/DepthPass.h>
+#include <Render/Passes/BackBufferPass.h>
 
 #include <HAL/SwapChain.h>
 #include <HAL/CommandQueue.h>
@@ -21,7 +24,7 @@
 #include <Scene/SceneObject.h>
 #include <Scene/SceneLoadingInfo.h>
 #include <Scene/Loader/SceneLoader.h>
-#include <Scene/SceneToRegistryLoader.h>
+#include <Scene/SceneToGPULoader.h>
 #include <Scene/SceneStorage.h>
 
 #include <Scene/Components/RelationshipComponent.h>
@@ -36,14 +39,9 @@
 #include <Scene/Systems/LightCameraSystem.h>
 #include <UI/Systems/UISystem.h>
 #include <UI/Systems/RenderGraphSystem.h>
-#include <Render/Systems/RenderSystem.h>
-#include <Render/Systems/RenderCleanupSystem.h>
-#include <Render/Systems/DepthPassSystem.h>
-#include <Render/Systems/ForwardPassSystem.h>
-#include <Render/Systems/CubePassSystem.h>
-#include <Render/Systems/ToneMappingPassSystem.h>
-#include <Render/Systems/BackBufferPassSystem.h>
-#include <Render/Systems/UploadSceneSystem.h>
+#include <Render/RenderRequestBuilder.h>
+
+#include <Scene/Image.h>
 
 #include <Exceptions.h>
 
@@ -83,19 +81,23 @@ namespace Engine
              { "sPONZA_NEW", R"(C:\Users\Maxim\Downloads\Main\Main\NewSponza_Main_Blender_glTF - Copy.gltf)"}
         };
 
+        mRenderer = MakeShared<Render::Renderer>(mRenderContext);
+
         mSceneLoadingInfo->scenePath = mSceneLoadingInfo->scenes["Sponza"];
         mSceneLoadingInfo->loadScene = true;
     }
 
-    void Application::InitScene(Scene::Loader::SceneDto sceneDto)
+    void Application::InitScene(const Scene::Loader::SceneDto &sceneDto)
     {
         UniquePtr<Scene::SceneObject> scene = MakeUnique<Scene::SceneObject>();
 
-        Scene::SceneToRegisterLoader toRegisterLoader{mRenderContext->GetResourceFactory(), mRenderContext->GetResourceCopyManager()};
-        SharedPtr<Scene::SceneStorage> sceneStorage = toRegisterLoader.LoadSceneToRegistry(scene->GetRegistry(), sceneDto);
-        toRegisterLoader.AddCubeMapToScene(scene->GetRegistry(), R"(Resources\Scenes\cubemaps\snowcube1024.dds)");
+        Scene::SceneToGPULoader toRegisterLoader{mRenderContext->GetResourceFactory(), mRenderContext->GetResourceCopyManager()};
 
-        auto renderer = MakeShared<Render::Renderer>(mRenderContext, sceneStorage);
+        Scene::SceneToGPULoader::SceneDataDto sceneData = {};
+        sceneData.skyBoxPath = R"(Resources\Scenes\cubemaps\snowcube1024.dds)";
+        SharedPtr<Scene::SceneStorage> sceneStorage = toRegisterLoader.LoadSceneToGPU(scene->GetRegistry(), sceneDto, sceneData);
+
+        
 
         auto& registry = scene->GetRegistry();
         auto [cameraEntity, camera] = scene->GetMainCamera();
@@ -109,28 +111,30 @@ namespace Engine
         scene->AddSystem(MakeUnique<Scene::Systems::CameraSystem>(mRenderContext));
         scene->AddSystem(MakeUnique<Scene::Systems::LightCameraSystem>(mRenderContext));
 
-        scene->AddSystem(MakeUnique<Render::Systems::DepthPassSystem>(renderer));
+       // scene->AddSystem(MakeUnique<Render::Systems::DepthPassSystem>(renderer));
         
-        scene->AddSystem(MakeUnique<Render::Systems::ToneMappingPassSystem>(renderer));
-        scene->AddSystem(MakeUnique<Render::Systems::CubePassSystem>(renderer));
+      //  scene->AddSystem(MakeUnique<Render::Systems::ToneMappingPassSystem>(renderer));
+      //  scene->AddSystem(MakeUnique<Render::Systems::CubePassSystem>(renderer));
         
-        scene->AddSystem(MakeUnique<Render::Systems::BackBufferPassSystem>(renderer));
-        scene->AddSystem(MakeUnique<Render::Systems::ForwardPassSystem>(renderer));
-
-        scene->AddSystem(MakeUnique<Render::Systems::UploadSceneSystem>(sceneStorage, mRenderContext));
-
-        scene->AddSystem(MakeUnique<Render::Systems::RenderSystem>(renderer));
-
-        scene->AddSystem(MakeUnique<UI::Systems::UISystem>(mRenderContext, sceneStorage));
-        scene->AddSystem(MakeUnique<UI::Systems::RenderGraphSystem>(renderer));
+      //  scene->AddSystem(MakeUnique<Render::Systems::BackBufferPassSystem>(renderer));
+      //  scene->AddSystem(MakeUnique<Render::Systems::ForwardPassSystem>(renderer));
 
         scene->AddSystem(MakeUnique<Scene::Systems::MovingSystem>(mKeyboard));
 
-        scene->AddSystem(MakeUnique<Render::Systems::RenderCleanupSystem>(renderer));
+      //  scene->AddSystem(MakeUnique<Render::Systems::UploadSceneSystem>(sceneStorage, mRenderContext));
+
+       // scene->AddSystem(MakeUnique<Render::Systems::RenderSystem>(mRenderer));
+
+       // scene->AddSystem(MakeUnique<UI::Systems::UISystem>(mRenderContext, sceneStorage));
+        //scene->AddSystem(MakeUnique<UI::Systems::RenderGraphSystem>(renderer));
+
+       // scene->AddSystem(MakeUnique<Render::Systems::RenderCleanupSystem>(renderer));
 
 
-
+        mUiSystem = MakeUnique<UI::Systems::UISystem>(mRenderContext, sceneStorage);
+        mRenderGraphSystem = MakeUnique<UI::Systems::RenderGraphSystem>(mRenderer);
         mScene = std::move(scene);
+        mSceneStorage = sceneStorage;
     }
 
     void Application::Destroy()
@@ -176,17 +180,48 @@ namespace Engine
                 mSceneLoadingInfo->sceneFuture = {};
             }
 
+            if (mScene != nullptr)
+            {
+                mScene->Process(timer);
+            }
+
             mRenderContext->BeginFrame();
 
             if (mScene != nullptr)
             {
-                mScene->Process(timer);
+                RenderWork();
             }
 
             mSceneLoadingInfo->DrawSelector();
 
             mRenderContext->EndFrame();
         }
+    }
+
+    void Application::RenderWork()
+    {
+        auto renderRequest = Render::RenderRequestBuilder::BuildRequest(mScene.get(), mSceneStorage);
+
+        renderRequest.UploadUniforms(mRenderContext->GetUploadBuffer());
+
+        auto tmp = MakeUnique<Render::Passes::ToneMappingPass>();
+        auto bbp = MakeUnique<Render::Passes::BackBufferPass>();
+        auto dp = MakeUnique<Render::Passes::DepthPass>();
+        auto fp = MakeUnique<Render::Passes::ForwardPass>();
+        auto cp = MakeUnique<Render::Passes::CubePass>();
+
+        mRenderer->RegisterRenderPass(tmp.get());
+        mRenderer->RegisterRenderPass(bbp.get());
+        mRenderer->RegisterRenderPass(dp.get());
+        mRenderer->RegisterRenderPass(fp.get());
+        mRenderer->RegisterRenderPass(cp.get());
+
+        mRenderer->Render(renderRequest, timer);
+
+        mUiSystem->Process(mScene.get(), timer);
+        mRenderGraphSystem->Process(mScene.get(), timer);
+
+        mRenderer->Reset();
     }
 
     void Application::OnActiveChanged(bool isActive)

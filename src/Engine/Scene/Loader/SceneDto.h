@@ -21,7 +21,6 @@ namespace Engine::Scene::Loader
         String Name;
         std::vector<Vertex> Vertices;
         std::vector<uint32> Indices;
-        D3D_PRIMITIVE_TOPOLOGY PrimitiveTopology;
         Index MaterialIndex;
         dx::BoundingBox AABB;
     };
@@ -46,7 +45,6 @@ namespace Engine::Scene::Loader
     {
         String Name;
         LightType LightType;
-        DirectX::XMFLOAT3 Direction;
         DirectX::XMFLOAT3 Color;
         float Intensity;
         float ConstantAttenuation;
