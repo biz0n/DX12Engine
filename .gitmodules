@@ -10,3 +10,6 @@
 [submodule "src/Libraries/DirectX-Headers"]
 	path = src/Libraries/DirectX-Headers
 	url = git@github.com:microsoft/DirectX-Headers.git
+[submodule "src/Libraries/DirectXMesh"]
+	path = src/Libraries/DirectXMesh
+	url = git@github.com:microsoft/DirectXMesh.git

@@ -25,6 +25,8 @@ add_subdirectory( src/Libraries/assimp )
 
 add_subdirectory( src/Libraries/DirectXTex )
 
+add_subdirectory( src/Libraries/DirectXMesh )
+
 add_subdirectory( src/Libraries/entt )
 
 add_subdirectory( src/Libraries/DirectX-Headers )
@@ -76,6 +78,7 @@ target_link_libraries(d3d12 PRIVATE
 "dxguid.lib" 
 "assimp" 
 "DirectXTex" 
+"DirectXMesh"
 "EnTT"  
 "DirectX-Headers" 
 "${CMAKE_SOURCE_DIR}/src/Libraries/PIX/WinPixEventRuntime.lib"
