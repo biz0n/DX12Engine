@@ -1,0 +1,6 @@
+externalproject "DirectXTex"
+   location "%{LIBRARY_PATH}/DirectXTex/DirectXTex"
+   filename "DirectXTex_Desktop_2022_Win10"
+   uuid "371B9FA9-4C90-4AC6-A123-ACED756D6C77"
+   kind "StaticLib"
+   language "C++"

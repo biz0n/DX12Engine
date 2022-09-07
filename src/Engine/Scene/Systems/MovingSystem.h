@@ -6,8 +6,6 @@
 #include <Scene/Systems/System.h>
 #include <IO/Keyboard.h>
 
-#include <entt/fwd.hpp>
-
 namespace Engine::Scene::Systems
 {
     class MovingSystem : public System

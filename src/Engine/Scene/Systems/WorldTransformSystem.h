@@ -4,7 +4,7 @@
 #include <Scene/SceneForwards.h>
 #include <Scene/Systems/System.h>
 
-#include <entt/fwd.hpp>
+#include <entt/entt.hpp>
 
 namespace Engine::Scene::Systems
 {

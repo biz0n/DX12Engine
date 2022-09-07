@@ -783,4 +783,4 @@ namespace DirectX
 } // namespace DirectX;
 #endif
 
-#endif // __D3DX_DXGI_FORMAT_CONVERT_INL___
+#endif // __D3DX_DXGI_FORMAT_CONVERT_INL__

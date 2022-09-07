@@ -9,6 +9,10 @@ install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
 _deps
+*.filters
+*.user
+*.vcxproj
+*.sln
 
 imgui.ini
 .vs
@@ -18,6 +22,7 @@ cmake-build-*/
 build*/
 out
 bin
+bin-int
 /src/Engine/Resources/Scenes/*
 !/src/Engine/Resources/Scenes/gltf2
 /src/Engine/Resources/Scenes/gltf2/*

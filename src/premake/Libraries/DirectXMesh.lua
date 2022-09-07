@@ -1,0 +1,6 @@
+externalproject "DirectXMesh"
+   location "%{LIBRARY_PATH}/DirectXMesh/DirectXMesh"
+   filename "DirectXMesh_Desktop_2022"
+   uuid "6857F086-F6FE-4150-9ED7-7446F1C1C220"
+   kind "StaticLib"
+   language "C++"

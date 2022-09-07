@@ -3,8 +3,6 @@
 #include <Timer.h>
 #include <Scene/SceneForwards.h>
 
-#include <entt/fwd.hpp>
-
 namespace Engine::Scene::Systems
 {
     class System

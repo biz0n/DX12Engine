@@ -6,8 +6,6 @@
 #include <Scene/Systems/System.h>
 #include <Render/RenderForwards.h>
 
-#include <entt/fwd.hpp>
-
 namespace Engine::Scene::Systems
 {
     class LightCameraSystem : public System

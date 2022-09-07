@@ -9,7 +9,7 @@
 #include <Scene/Mesh.h>
 #include <Scene/SceneStorage.h>
 #include <Scene/PunctualLight.h>
-#include <entt/fwd.hpp>
+#include <entt/entt.hpp>
 #include <tuple>
 #include <DirectXCollision.h>
 
