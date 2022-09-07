@@ -16,7 +16,7 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui/imgui_internal.h>
 #include <imgui/imgui.h>
-#include <imgui/imgui_node_editor.h>
+#include <imgui-node-editor/imgui_node_editor.h>
 
 #include <vector>
 #include <unordered_map>

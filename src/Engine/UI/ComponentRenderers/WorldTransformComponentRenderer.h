@@ -13,7 +13,7 @@
 
 #include <entt/entt.hpp>
 #include <imgui/imgui.h>
-#include <imgui/ImGuizmo.h>
+#include <ImGuizmo/ImGuizmo.h>
 
 #include <DirectXMath.h>
 

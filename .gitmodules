@@ -13,3 +13,12 @@
 [submodule "src/Libraries/DirectXMesh"]
 	path = src/Libraries/DirectXMesh
 	url = git@github.com:microsoft/DirectXMesh.git
+[submodule "src/Libraries/imgui/imgui"]
+	path = src/Libraries/imgui/imgui
+	url = git@github.com:ocornut/imgui.git
+[submodule "src/Libraries/imgui/ImGuizmo"]
+	path = src/Libraries/imgui/ImGuizmo
+	url = git@github.com:CedricGuillemet/ImGuizmo.git
+[submodule "src/Libraries/imgui/imgui-node-editor"]
+	path = src/Libraries/imgui/imgui-node-editor
+	url = git@github.com:thedmd/imgui-node-editor.git

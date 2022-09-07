@@ -5,6 +5,7 @@ project "Engine"
     flags { "NoPCH" }
     systemversion "latest"
     characterset "MBCS"
+    location "%{ENGINE_PATH}"
 
     targetdir (bin_location .. "/%{prj.name}")
     objdir (obj_location .. "/%{prj.name}")
@@ -27,6 +28,7 @@ project "Engine"
         "%{IncludeDir.DirectXTex}",
         "%{IncludeDir.EnTT}",
         "%{IncludeDir.ImGui}",
+        "%{IncludeDir.ImGui}/imgui",
         "%{IncludeDir.PIX}",
     }
 
@@ -43,7 +45,9 @@ project "Engine"
         "DirectXTex", 
         "DirectXMesh",
         "AssImp",
-        "ImGui"
+        "ImGui",
+        "ImGuizmo",
+        "ImGuiNodeEditor",
     }
 
     links

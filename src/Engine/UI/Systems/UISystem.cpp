@@ -20,7 +20,7 @@
 #include <UI/ComponentRenderers/CameraComponentRenderer.h>
 
 #include <imgui/imgui.h>
-#include <imgui/ImGuizmo.h>
+#include <ImGuizmo/ImGuizmo.h>
 #include <entt/entt.hpp>
 
 namespace Engine::UI::Systems
