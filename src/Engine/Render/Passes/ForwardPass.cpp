@@ -74,7 +74,8 @@ namespace Engine::Render::Passes
             .pixelShaderName = Shaders::ForwardPS,
             .dsvFormat = DXGI_FORMAT_D32_FLOAT,
             .rtvFormats = {
-                DXGI_FORMAT_R16G16B16A16_FLOAT
+                DXGI_FORMAT_R16G16B16A16_FLOAT,
+                DXGI_FORMAT_R8G8B8A8_UNORM
             },
             .rasterizer = rasterizer,
             .depthStencil = CD3DX12_DEPTH_STENCIL_DESC{D3D12_DEFAULT}};
@@ -104,7 +105,14 @@ namespace Engine::Render::Passes
             .description = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R16G16B16A16_FLOAT, 0, 0, 1, 1),
             .clearValue = D3D12_CLEAR_VALUE{.Color = {0, 0, 0, 0}}
         };
+
+        Memory::TextureCreationInfo visTexture = {
+            .description = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, 0, 0, 1, 1),
+            .clearValue = D3D12_CLEAR_VALUE{.Color = {0, 0, 0, 0}}
+        };
+
         planner->NewRenderTarget(ResourceNames::ForwardOutput, rtTexture);
+        planner->NewRenderTarget(ResourceNames::VisibilityOutput, visTexture);
 
         planner->ReadRenderTarget(ResourceNames::ShadowDepth);
     }
@@ -138,9 +146,9 @@ namespace Engine::Render::Passes
 
         commandRecorder->SetViewPort();
 
-        commandRecorder->SetRenderTargets({ResourceNames::ForwardOutput}, ResourceNames::ForwardDepth);
+        commandRecorder->SetRenderTargets({ResourceNames::ForwardOutput, ResourceNames::VisibilityOutput}, ResourceNames::ForwardDepth);
 
-        commandRecorder->ClearRenderTargets({ResourceNames::ForwardOutput});
+        commandRecorder->ClearRenderTargets({ResourceNames::ForwardOutput, ResourceNames::VisibilityOutput });
         commandRecorder->ClearDepthStencil(ResourceNames::ForwardDepth);
 
         commandRecorder->SetPipelineState(PSONames::ForwardCullBack);

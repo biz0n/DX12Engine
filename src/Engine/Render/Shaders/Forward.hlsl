@@ -25,11 +25,13 @@ struct VertexShaderOutput
     float2 TextureCoord : TEXCOORD;
     float3x3 TBN : TBN;
     float4 PositionH : SV_Position;
+    uint indexId : INDEX;
 };
  
 struct PixelShaderOutput
 {
     float4 Color : SV_TARGET0;
+    float4 VisibilityBuffer : SV_Target1;
 };
 
 float3 SRGBToLinear(float3 sRGBCol)
@@ -72,6 +74,14 @@ float ShadowCalculation(float4 fragPosLightSpace, int shadowIndex)
     return percentLit / 9.0f;
 }
 
+float4 unpackUnorm4x8(uint p)
+{
+    return float4(float(p & 0x000000FF) / 255.0,
+				  float((p & 0x0000FF00) >> 8) / 255.0,
+				  float((p & 0x00FF0000) >> 16) / 255.0,
+				  float((p & 0xFF000000) >> 24) / 255.0);
+}
+
 VertexShaderOutput mainVS(uint indexId : SV_VertexID)
 {
     MeshUniform ObjectCB = Meshes[MeshIndex];
@@ -101,6 +111,7 @@ VertexShaderOutput mainVS(uint indexId : SV_VertexID)
     OUT.PositionH = mul(posW, FrameCB.ViewProj);
     OUT.TBN = TBN;
     OUT.TextureCoord = IN.TextureCoord;
+    OUT.indexId = indexId;
  
     return OUT;
 }
@@ -149,7 +160,9 @@ PixelShaderOutput mainPS(VertexShaderOutput IN)
     if (MaterialCB.HasEmissiveTexture)
     {
         Texture2D<float4> emissiveTexture = ResourceDescriptorHeap[MaterialCB.EmissiveIndex];
-        emissiveFactor *= emissiveTexture.Sample(gsamPointWrap, IN.TextureCoord);
+        float4 emissiveColor = emissiveTexture.Sample(gsamPointWrap, IN.TextureCoord);
+        emissiveColor = float4(SRGBToLinear(emissiveColor.rgb), emissiveColor.a);
+        emissiveFactor *= emissiveColor;
     }
 
     float4 occlusion = MaterialCB.Ambient;
@@ -205,5 +218,16 @@ PixelShaderOutput mainPS(VertexShaderOutput IN)
  
     PixelShaderOutput output;
     output.Color = finalColor;
+    
+    uint meshIdIndexId = ((MeshIndex << 23) & 0x7F800000) | (IN.indexId & 0x007FFFFF);
+    float f = (float) IN.indexId;
+    
+    float4 cc = float4(
+            float(IN.indexId & 1),
+            float(IN.indexId & 5) / 4,
+            float(IN.indexId & 9) / 8, 1);
+    
+    output.VisibilityBuffer = cc;//
+    //half4(sin(f / 10), sin(f / 100), sin(f / 1000), 1) * 0.3 + 0.7;
     return output;
 }

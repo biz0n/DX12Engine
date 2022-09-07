@@ -32,6 +32,7 @@ namespace Engine::Render::Passes
         inline Name ForwardDepth {"ForwardDepth"};
         inline Name ShadowDepth {"Depth::Shadow"};
         inline Name TonemappingOutput {"Tonemaping::Output"};
+        inline Name VisibilityOutput { "VisibilityOutput" };
     }
 
     namespace PSONames

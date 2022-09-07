@@ -33,7 +33,7 @@ namespace Engine::Render::Passes
     void ToneMappingPass::PrepareResources(Render::ResourcePlanner* planner)
     {
         planner->ReadRenderTarget(ResourceNames::CubeOutput);
-        //planner->ReadRenderTarget(ResourceNames::ShadowDepth);
+        planner->ReadRenderTarget(ResourceNames::VisibilityOutput);
 
         Memory::TextureCreationInfo texture = {
             .description = CD3DX12_RESOURCE_DESC::Tex2D(
@@ -93,8 +93,8 @@ namespace Engine::Render::Passes
 
         commandRecorder->UAVBarrier(outputTexture->D3DResource());
 
-        /*
-        auto* depth = passContext.frameResourceProvider->GetTexture(ResourceNames::ShadowDepth);
+        
+        auto* depth = passContext.frameResourceProvider->GetTexture(ResourceNames::VisibilityOutput);
 
         CommandListUtils::TransitionBarrier(passContext.resourceStateTracker.get(), depth->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
@@ -103,6 +103,6 @@ namespace Engine::Render::Passes
         ImGui::Begin("ShadowMap");
         ImGui::Image(IMGUI_TEXTURE_ID(depsDescriptor), {512, 512});
         ImGui::End();
-        */
+        
     }
 } // namespace Engine::Render::Passes

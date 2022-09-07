@@ -93,6 +93,11 @@ namespace Engine::Render::Passes
 
         commandRecorder->ClearDepthStencil(ResourceNames::ShadowDepth);
 
+        if (renderRequest.GetShadowCameras().empty())
+        {
+            return;
+        }
+
         const auto& camera = renderRequest.GetShadowCameras()[0];
         auto cb = CommandListUtils::GetFrameUniform(camera.viewProjection, camera.eyePosition, 0);
 
