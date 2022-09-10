@@ -20,6 +20,7 @@ project "Engine"
     includedirs
     {
         "%{ENGINE_PATH}",
+        "%{SCENE_PATH}",
         "%{IncludeDir.AssImp}",
         "%{IncludeDir.AssImpEx}",
         "%{IncludeDir.DirectXHeaders}",
@@ -42,6 +43,7 @@ project "Engine"
 
     links
     {
+        "Scene",
         "DirectXTex", 
         "DirectXMesh",
         "AssImp",

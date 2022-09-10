@@ -23,11 +23,15 @@ obj_location = ("%{wks.location}/bin-int/" .. outputdir)
 group "Dependencies"
     include "src/premake/Libraries"
 
+group "Tools"
+include "src/premake/SceneConverter"
+
 group ""
     include "src/premake/Engine"
+    include "src/premake/Scene"
 
 
-project "Premake"
+project "_Premake"
     kind "Utility"
 
     targetdir (bin_location .. "/%{prj.name}")

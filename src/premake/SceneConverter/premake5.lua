@@ -1,0 +1,44 @@
+project "SceneConverter"
+    kind "ConsoleApp"
+    language "C++"
+    cppdialect "C++20"
+    flags { "NoPCH" }
+    systemversion "latest"
+    characterset "MBCS"
+    location "%{SCENE_CONVERTER_PATH}"
+
+    targetdir (bin_location .. "/%{prj.name}")
+    objdir (obj_location .. "/%{prj.name}")
+
+    includedirs 
+    {
+        '%{SCENE_CONVERTER_PATH}',
+        "%{SCENE_PATH}",
+        "%{IncludeDir.AssImp}",
+        "%{IncludeDir.AssImpEx}",
+        "%{IncludeDir.DirectXMesh}",
+        "%{IncludeDir.DirectXTex}",
+    }
+
+    links
+    {
+        "Scene",
+        "DirectXMesh",
+        "DirectXTex",
+        "AssImp",
+    }
+
+    files {
+        '%{SCENE_CONVERTER_PATH}/*.h',
+        '%{SCENE_CONVERTER_PATH}/*.cpp'
+    }
+
+    filter "configurations:Debug"
+        defines "DEBUG"
+        runtime "Debug"
+        symbols "on"
+
+    filter "configurations:Release"
+        defines "RELEASE"
+        runtime "Release"
+        optimize "on"

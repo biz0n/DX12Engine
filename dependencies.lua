@@ -1,6 +1,9 @@
 
 ENGINE_PATH = "%{wks.location}/src/Engine"
+SCENE_PATH = "%{wks.location}/src/Scene"
+SCENE_CONVERTER_PATH = "%{wks.location}/src/SceneConverter"
 LIBRARY_PATH = "%{wks.location}/src/Libraries"
+SHADERS_PATH = "%{ENGINE_PATH}/Render/Shaders"
 
 IncludeDir = {}
 IncludeDir["AssImp"] = "%{LIBRARY_PATH}/assimp/include"
