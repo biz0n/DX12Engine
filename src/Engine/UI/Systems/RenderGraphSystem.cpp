@@ -112,6 +112,44 @@ namespace Engine::UI::Systems
         ed::DestroyEditor(g_Context);
     }
 
+    RenderGraphSystem::NodeSizes RenderGraphSystem::CalculateNodeSizes(const Engine::Graph::Node* node)
+    {
+        NodeSizes sizes;
+
+        float titleWidth = ImGui::CalcTextSize(node->GetName().string().c_str()).x;
+
+        float maxReadResourceName = 0;
+        float maxWriteResourceName = 0;
+
+        for (Size index = 0; index < std::max(node->GetReadResources().size(), node->GetWriteResources().size()); ++index)
+        {
+            if (index < node->GetReadResources().size())
+            {
+                auto& resource = node->GetReadResources()[index];
+                auto resourceName = std::format("{}:{}", resource.Id.c_str(), resource.Subresource);
+
+                float width = ImGui::CalcTextSize(resourceName.c_str()).x;
+                maxReadResourceName = std::max(maxReadResourceName, width);
+            }
+
+            if (index < node->GetWriteResources().size())
+            {
+                auto& resource = node->GetWriteResources()[index];
+                auto resourceName = std::format("{}:{}", resource.Id.c_str(), resource.Subresource);
+
+                float width = ImGui::CalcTextSize(resourceName.c_str()).x;
+                maxWriteResourceName = std::max(maxWriteResourceName, width);
+            }
+        }
+
+        sizes.TitleWidth = titleWidth;
+        sizes.NodeWidth = std::max(titleWidth, maxReadResourceName + 0 + maxWriteResourceName);
+        sizes.ReadWidth = maxReadResourceName;
+        sizes.WriteWidth = maxWriteResourceName;
+
+        return sizes;
+    }
+
     void RenderGraphSystem::Process(Scene::SceneObject *scene, const Timer& timer)
     {
 
@@ -135,12 +173,9 @@ namespace Engine::UI::Systems
         ImVec2 cursor_pos = ImGui::GetIO().MousePos;
 
 
-        if (ImGui::Begin("Editor") && !ImGui::IsWindowCollapsed())
+        if (ImGui::Begin("Editor"))
         {
-
-
-
-            ImGui::BeginChild("Editor settings", { 200, 500 });
+            if (ImGui::BeginChild("Editor settings", {200, 500}))
             {
                 bool v = false;
                 ImGui::Checkbox("Show resources links", &mShowResourcesLinks);
@@ -149,99 +184,94 @@ namespace Engine::UI::Systems
             }
             ImGui::EndChild();
             ImGui::SameLine();
-
-            ed::Begin("My Editor");
+            
+            if (ImGui::BeginChild("Editor child"))
             {
-
-
-                int index = 0;
-                for (auto& node : graphBuilder->GetNodes())
+                ed::Begin("My Editor");
                 {
-                    ImVec2 headerMin = ImVec2();
-                    ImVec2 headerMax = ImVec2();
+                    float spacing = ImGui::GetStyle().ItemSpacing.x;
 
-                    ed::BeginNode(node.GetName().id());
+                    int index = 0;
+                    for (auto& node : graphBuilder->GetNodes())
                     {
-                        const float nodeWidth = 250;
-                        const float iconSize = 15;
-                        index++;
+                        auto sizes = CalculateNodeSizes(&node);
 
-                        ImGui::BeginGroup();
-                        if (ImGui::BeginTable(("header" + node.GetName().string()).c_str(), 3))
+                        ImVec2 headerMin = ImVec2();
+                        ImVec2 headerMax = ImVec2();
+
+                        ed::BeginNode(node.GetName().id());
                         {
+                            const ImVec2 iconSize = { 15, 15 };
+                            index++;
 
-                            ImGui::TableSetupColumn("input", ImGuiTableColumnFlags_WidthFixed, iconSize);
-                            ImGui::TableSetupColumn("name", ImGuiTableColumnFlags_WidthFixed, nodeWidth - iconSize * 2);
-                            ImGui::TableSetupColumn("output", ImGuiTableColumnFlags_WidthFixed, iconSize);
+                            // Header
+                            ImGui::BeginGroup();
+                            {
+                                auto syncInId = std::hash_combine(node.GetName(), 0);
 
+                                ed::BeginPin(syncInId, ed::PinKind::Input);
+                                {
+                                    ax::Widgets::Icon(iconSize, ax::Drawing::IconType::Diamond, true, { 1,0,0,1 }, { 1,0,0,0 });
+                                }
+                                ed::EndPin();
 
-                            auto syncInId = std::hash_combine(node.GetName(), 0);
+                                ImGui::SameLine();
 
-                            ImGui::TableNextColumn();
+                                
+                                ImGui::Text(node.GetName().string().c_str());
+                                ImGui::SameLine();
+                                ImGui::Dummy({ sizes.NodeWidth - sizes.TitleWidth + spacing * 2, 0 });
 
+                                
+                                ImGui::SameLine();
+                                auto syncOutId = std::hash_combine(node.GetName(), 1);
+                                ed::BeginPin(syncOutId, ed::PinKind::Output);
+                                {
+                                    ax::Widgets::Icon(iconSize, ax::Drawing::IconType::Diamond, true, { 0,1,0,1 }, { 0,1,0,0 });
+                                }
+                                ed::EndPin();
+                            }
+                            ImGui::EndGroup();
 
+                            headerMin = ImGui::GetItemRectMin();
+                            headerMax = ImGui::GetItemRectMax();
 
-                            ed::BeginPin(syncInId, ed::PinKind::Input);
-                            ax::Widgets::Icon({ 15, 15 }, ax::Drawing::IconType::Diamond, true, { 1,0,0,1 }, { 1,0,0,0 });
-                            ed::EndPin();
+                            // Content
+                            ImGui::BeginGroup();
+                            {
+                                ImGui::Text("Queue: %i", node.GetQueueIndex());
+                                ImGui::Text("Layer: %i", node.GetRelations().Layer);
+                                ImGui::Text("Execution index: %i", node.GetRelations().ExecutionIndex);
+                                ImGui::Text("Queue index: %i", node.GetRelations().IndexInQueue);
+                                ImGui::Text("Layer index: %i", node.GetRelations().IndexInLayer);
+                                ImGui::Text("Ordered index: %i", node.GetRelations().OrderedIndex);
+                            }
+                            ImGui::EndGroup();
 
+                            ImGui::Spacing();
+                            ImGui::Spacing();
+                            ImGui::Spacing();
 
-
-                            ImGui::TableNextColumn();
-                            ImGui::Text(node.GetName().string().c_str());
-
-                            ImGui::TableNextColumn();
-
-                            auto syncOutId = std::hash_combine(node.GetName(), 1);
-                            ed::BeginPin(syncOutId, ed::PinKind::Output);
-                            ax::Widgets::Icon({ iconSize, iconSize }, ax::Drawing::IconType::Diamond, true, { 0,1,0,1 }, { 0,1,0,0 });
-                            ed::EndPin();
-
-                            //ImGui::EndGroup();
-
-                            ImGui::EndTable();
-                        }
-                        ImGui::EndGroup();
-
-                        headerMin = ImGui::GetItemRectMin();
-                        headerMax = ImGui::GetItemRectMax();
-
-
-
-                        ImGui::Text("Queue: %i", node.GetQueueIndex());
-                        ImGui::Text("Layer: %i", node.GetRelations().Layer);
-                        ImGui::Text("Execution index: %i", node.GetRelations().ExecutionIndex);
-                        ImGui::Text("Queue index: %i", node.GetRelations().IndexInQueue);
-                        ImGui::Text("Layer index: %i", node.GetRelations().IndexInLayer);
-                        ImGui::Text("Ordered index: %i", node.GetRelations().OrderedIndex);
-
-
-                        if (ImGui::BeginTable(("resources" + node.GetName().string()).c_str(), 4, ImGuiTableFlags_NoPadInnerX | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_NoHostExtendX))
-                        {
-                            ImGui::TableSetupColumn("input_pins", ImGuiTableColumnFlags_WidthFixed, iconSize);
-                            ImGui::TableSetupColumn("input_names", ImGuiTableColumnFlags_WidthFixed, nodeWidth / 2 - iconSize);
-                            ImGui::TableSetupColumn("output_names", ImGuiTableColumnFlags_WidthFixed, nodeWidth / 2 - iconSize);
-                            ImGui::TableSetupColumn("output_pins", ImGuiTableColumnFlags_WidthFixed, iconSize);
-
-
+                            // Pins
                             for (Size index = 0; index < std::max(node.GetReadResources().size(), node.GetWriteResources().size()); ++index)
                             {
-                                ImGui::TableNextRow();
-
+                                    
                                 if (index < node.GetReadResources().size())
                                 {
-                                    ImGui::TableSetColumnIndex(0);
                                     auto& resource = node.GetReadResources()[index];
 
                                     auto id = std::hash_combine(node.GetName(), resource);
                                     ed::BeginPin(id, ed::PinKind::Input);
-                                    ax::Widgets::Icon({ iconSize, iconSize }, ax::Drawing::IconType::Flow, false, { 1,0,0,1 }, { 1,0,0,0 });
+                                    {
+                                        ax::Widgets::Icon(iconSize, ax::Drawing::IconType::Flow, false, { 1,0,0,1 }, { 1,0,0,0 });
+                                    }
                                     ed::EndPin();
-                                    ImGui::TableSetColumnIndex(1);
 
-                                    ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + ImGui::GetColumnWidth());
-                                    ImGui::TextWrapped("%s:%i", resource.Id.c_str(), resource.Subresource);
-                                    ImGui::PopTextWrapPos();
+                                    ImGui::SameLine();
+
+                                    ImGui::Text("%s:%i", resource.Id.c_str(), resource.Subresource);
+                                    float textWidth = ImGui::GetItemRectSize().x;
+
                                     if (ImGui::IsItemHovered())
                                     {
                                         ImVec2 tooltip_pos = cursor_pos + ImVec2(16 * ImGui::GetCurrentContext()->Style.MouseCursorScale, 8 * ImGui::GetCurrentContext()->Style.MouseCursorScale);
@@ -251,26 +281,35 @@ namespace Engine::UI::Systems
                                         ImGui::Text("Resource Id: %i", resource.Id.id());
                                         ImGui::EndTooltip();
                                     }
+
+                                    ImGui::SameLine();
+                                    ImGui::Dummy({ sizes.ReadWidth - textWidth - spacing , 0 });
                                 }
+                                else
+                                {
+                                    ImGui::Dummy({ sizes.ReadWidth + spacing + iconSize.x , 0 });
+                                }
+
+                                ImGui::SameLine();
+                                ImGui::Dummy({ 0, 0 });
+                                ImGui::SameLine();
 
                                 if (index < node.GetWriteResources().size())
                                 {
-                                    ImGui::TableSetColumnIndex(2);
                                     auto& resource = node.GetWriteResources()[index];
 
                                     auto id = std::hash_combine(node.GetName(), resource);
 
                                     auto resourceName = std::format("{}:{}", resource.Id.c_str(), resource.Subresource);
-                                    auto posX = (ImGui::GetCursorPosX() + ImGui::GetColumnWidth() - ImGui::CalcTextSize(resourceName.c_str()).x);
-                                    if (posX > ImGui::GetCursorPosX())
-                                    {
-                                        ImGui::SetCursorPosX(posX);
-                                    }
-                                    posX = ImGui::GetCursorPos().x;
-                                    auto width = ImGui::GetColumnWidth();
-                                    ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + ImGui::GetColumnWidth());
-                                    ImGui::TextWrapped(resourceName.c_str());
-                                    ImGui::PopTextWrapPos();
+
+                                    float textWidth = ImGui::CalcTextSize(resourceName.c_str()).x;
+                                    ImGui::Dummy({ sizes.WriteWidth - textWidth - spacing , 0});
+
+                                    ImGui::SameLine();
+
+                                    ImGui::Text(resourceName.c_str());
+                                        
+                                    
                                     if (ImGui::IsItemHovered())
                                     {
                                         ImVec2 tooltip_pos = cursor_pos + ImVec2(16 * ImGui::GetCurrentContext()->Style.MouseCursorScale, 8 * ImGui::GetCurrentContext()->Style.MouseCursorScale);
@@ -281,93 +320,97 @@ namespace Engine::UI::Systems
                                         ImGui::EndTooltip();
                                     }
 
-                                    ImGui::TableSetColumnIndex(3);
+                                    ImGui::SameLine();
+
                                     ed::BeginPin(id, ed::PinKind::Output);
-                                    ax::Widgets::Icon({ iconSize, iconSize }, ax::Drawing::IconType::Flow, false, { 0,1,0,1 }, { 0,1,0,0 });
+                                    {
+                                        ax::Widgets::Icon(iconSize, ax::Drawing::IconType::Flow, false, { 0,1,0,1 }, { 0,1,0,0 });
+                                    }
                                     ed::EndPin();
                                 }
-                            }
-
-                            ImGui::EndTable();
-                        }
-                    }
-                    ed::EndNode();
-
-                    if (ImGui::IsItemVisible())
-                    {
-                        wyhash32_seed(node.GetQueueIndex());
-                        float r = wyhash32_float(0.03f, 0.35f);
-                        float g = wyhash32_float(0.03f, 0.35f);
-                        float b = wyhash32_float(0.03f, 0.35f);
-
-
-                        auto alpha = static_cast<int>(255 * ImGui::GetStyle().Alpha);
-
-                        auto drawList = ed::GetNodeBackgroundDrawList(node.GetName().id());
-
-                        const auto halfBorderWidth = ed::GetStyle().NodeBorderWidth * 0.5f;
-
-                        auto headerColor = IM_COL32(0, 0, 0, alpha) | (ImColor{ r, g, b, 1.0f } &IM_COL32(255, 255, 255, 0));
-                        if ((headerMax.x > headerMin.x) && (headerMax.y > headerMin.y))
-                        {
-                            drawList->AddRectFilled(headerMin - ImVec2(8 - halfBorderWidth, 8 - halfBorderWidth),
-                                headerMax + ImVec2(8 - halfBorderWidth, 4), headerColor, ed::GetStyle().NodeRounding, ImDrawFlags_RoundCornersTop);
-
-
-                            auto headerSeparatorMin = ImVec2(headerMin.x, headerMax.y);
-                            auto headerSeparatorMax = ImVec2(headerMax.x, headerMin.y);
-
-                        }
-                    }
-
-
-                }
-
-                for (auto& node : graphBuilder->GetNodes())
-                {
-                    if (mShowResourcesLinks)
-                    {
-                        for (auto& write : node.GetWriteResources())
-                        {
-                            if (mReads.contains(write))
-                            {
-                                for (auto& read : mReads.at(write))
+                                else
                                 {
-                                    auto linkId = std::hash_combine(write, node.GetName(), read);
-                                    ed::Link(linkId, std::hash_combine(node.GetName(), write), std::hash_combine(read, write));
+                                    ImGui::Dummy({ sizes.WriteWidth + spacing + iconSize.x , 0});
                                 }
                             }
                         }
-                    }
+                        ed::EndNode();
 
-                    if (mShowNodesDebugLinks)
-                    {
-                        for (auto* otherNode : node.GetRelations().DebugNodesToSyncWith)
+                        if (ImGui::IsItemVisible())
                         {
-                            auto linkId = std::hash_combine(0, node.GetName(), otherNode->GetName(), 1);
-                            auto syncInId = std::hash_combine(node.GetName(), 0);
-                            auto syncOutId = std::hash_combine(otherNode->GetName(), 1);
-                            ed::Link(linkId, syncOutId, syncInId, ImVec4{ 0.5, 0.5, 0.5 ,1 }, 0.5);
+                            wyhash32_seed(node.GetQueueIndex());
+                            float r = wyhash32_float(0.03f, 0.35f);
+                            float g = wyhash32_float(0.03f, 0.35f);
+                            float b = wyhash32_float(0.03f, 0.35f);
+
+
+                            auto alpha = static_cast<int>(255 * ImGui::GetStyle().Alpha);
+
+                            auto drawList = ed::GetNodeBackgroundDrawList(node.GetName().id());
+
+                            const auto halfBorderWidth = ed::GetStyle().NodeBorderWidth * 0.5f;
+
+                            auto headerColor = IM_COL32(0, 0, 0, alpha) | (ImColor{ r, g, b, 1.0f } &IM_COL32(255, 255, 255, 0));
+                            if ((headerMax.x > headerMin.x) && (headerMax.y > headerMin.y))
+                            {
+                                drawList->AddRectFilled(headerMin - ImVec2(8 - halfBorderWidth, 8 - halfBorderWidth),
+                                    headerMax + ImVec2(8 - halfBorderWidth, 4), headerColor, ed::GetStyle().NodeRounding, ImDrawFlags_RoundCornersTop);
+
+
+                                auto headerSeparatorMin = ImVec2(headerMin.x, headerMax.y);
+                                auto headerSeparatorMax = ImVec2(headerMax.x, headerMin.y);
+
+                            }
                         }
                     }
 
-                    if (mShowNodesLinks)
+                    for (auto& node : graphBuilder->GetNodes())
                     {
-                        for (auto* otherNode : node.GetRelations().NodesToSyncWith)
+                        if (mShowResourcesLinks)
                         {
-                            auto linkId = std::hash_combine(0, node.GetName(), otherNode->GetName(), 1);
-                            auto syncInId = std::hash_combine(node.GetName(), 0);
-                            auto syncOutId = std::hash_combine(otherNode->GetName(), 1);
-                            ed::Link(linkId, syncOutId, syncInId, ImVec4{ 0.9, 0.4, 0.4 ,1 }, 0.5);
+                            for (auto& write : node.GetWriteResources())
+                            {
+                                if (mReads.contains(write))
+                                {
+                                    for (auto& read : mReads.at(write))
+                                    {
+                                        auto linkId = std::hash_combine(write, node.GetName(), read);
+                                        ed::Link(linkId, std::hash_combine(node.GetName(), write), std::hash_combine(read, write));
+                                    }
+                                }
+                            }
+                        }
+
+                        if (mShowNodesDebugLinks)
+                        {
+                            for (auto* otherNode : node.GetRelations().DebugNodesToSyncWith)
+                            {
+                                auto linkId = std::hash_combine(0, node.GetName(), otherNode->GetName(), 1);
+                                auto syncInId = std::hash_combine(node.GetName(), 0);
+                                auto syncOutId = std::hash_combine(otherNode->GetName(), 1);
+                                ed::Link(linkId, syncOutId, syncInId, ImVec4{ 0.5, 0.5, 0.5 ,1 }, 0.5);
+                            }
+                        }
+
+                        if (mShowNodesLinks)
+                        {
+                            for (auto* otherNode : node.GetRelations().NodesToSyncWith)
+                            {
+                                auto linkId = std::hash_combine(0, node.GetName(), otherNode->GetName(), 1);
+                                auto syncInId = std::hash_combine(node.GetName(), 0);
+                                auto syncOutId = std::hash_combine(otherNode->GetName(), 1);
+                                ed::Link(linkId, syncOutId, syncInId, ImVec4{ 0.9, 0.4, 0.4 ,1 }, 0.5);
+                            }
                         }
                     }
+
                 }
-
+                ed::End();
             }
-            ed::End();
+            ImGui::EndChild();
         }
         ImGui::End();
 
-        ed::SetCurrentEditor(nullptr);
+       // ed::SetCurrentEditor(nullptr);
     }
 }

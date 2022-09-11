@@ -15,6 +15,8 @@ project "Engine"
         "%{ENGINE_PATH}/**.h",
         "%{ENGINE_PATH}/**.cpp",
         "%{ENGINE_PATH}/**.hlsl",
+        "%{ENGINE_PATH}/**.ini",
+        "%{ENGINE_PATH}/**.json",
     }
 
     includedirs
@@ -62,6 +64,8 @@ project "Engine"
     postbuildcommands { '{COPY} "%{StaticLibrary.dxil}"                  "%{cfg.buildtarget.directory}"'}
     postbuildcommands { '{COPY} "%{StaticLibrary.WinPixEventRuntime}"    "%{cfg.buildtarget.directory}"' }
 
+    postbuildcommands { '{COPYDIR} "%{SHADERS_PATH}"                     "%{cfg.buildtarget.directory}/Shaders"' }
+
     filter "configurations:Debug"
         defines "DEBUG"
         runtime "Debug"
@@ -72,5 +76,5 @@ project "Engine"
         runtime "Release"
         optimize "on"
 
-    filter "files:**.hlsl" 
+    filter "files:**.hlsl or **.ini or **.json" 
         buildaction "None"
