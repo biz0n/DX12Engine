@@ -16,7 +16,7 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui/imgui_internal.h>
 #include <imgui/imgui.h>
-#include <imgui-node-editor/imgui_node_editor.h>
+
 
 #include <vector>
 #include <unordered_map>
@@ -24,7 +24,6 @@
 #include <format>
 
 namespace ed = ax::NodeEditor;
-static ed::EditorContext* g_Context = nullptr;
 
 //static const Engine::Graph::GraphBuilder* g_GraphBuilder = nullptr;
 //static std::vector<Engine::Graph::Resource>* g_Resources = nullptr;
@@ -33,7 +32,7 @@ namespace Engine::UI::Systems
 {
     RenderGraphSystem::RenderGraphSystem(SharedPtr<Engine::Render::Renderer> renderer) : System(), mRenderer{ renderer }
     {
-        g_Context = ed::CreateEditor();
+        mEditorContext = ed::CreateEditor();
 
         /*
         g_GraphBuilder = new Graph::GraphBuilder();
@@ -109,7 +108,7 @@ namespace Engine::UI::Systems
 
     RenderGraphSystem::~RenderGraphSystem()
     {
-        ed::DestroyEditor(g_Context);
+        ed::DestroyEditor(mEditorContext);
     }
 
     RenderGraphSystem::NodeSizes RenderGraphSystem::CalculateNodeSizes(const Engine::Graph::Node* node)
@@ -168,7 +167,7 @@ namespace Engine::UI::Systems
         }
 
 
-        ed::SetCurrentEditor(g_Context);
+        ed::SetCurrentEditor(mEditorContext);
 
         ImVec2 cursor_pos = ImGui::GetIO().MousePos;
 
@@ -411,6 +410,6 @@ namespace Engine::UI::Systems
         }
         ImGui::End();
 
-       // ed::SetCurrentEditor(nullptr);
+        ed::SetCurrentEditor(nullptr);
     }
 }
