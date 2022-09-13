@@ -63,6 +63,7 @@ project "ImGuizmo"
         runtime "Release"
         optimize "on"
 
+
 project "ImGuiNodeEditor"
     kind "StaticLib"
     language "C++"

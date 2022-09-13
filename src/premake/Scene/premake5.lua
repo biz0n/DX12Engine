@@ -13,8 +13,8 @@ project "Scene"
     }
 
     files {
-        '%{SCENE_PATH}/*.h',
-        '%{SCENE_PATH}/*.cpp'
+        '%{SCENE_PATH}/**.h',
+        '%{SCENE_PATH}/**.cpp'
     }
 
     filter "configurations:Debug"

@@ -14,15 +14,13 @@ project "Engine"
     {
         "%{ENGINE_PATH}/**.h",
         "%{ENGINE_PATH}/**.cpp",
-        "%{ENGINE_PATH}/**.hlsl",
-        "%{ENGINE_PATH}/**.ini",
-        "%{ENGINE_PATH}/**.json",
+        "%{ENGINE_PATH}/**.hlsl"
     }
 
     includedirs
     {
         "%{ENGINE_PATH}",
-        "%{SCENE_PATH}",
+        --"%{SCENE_PATH}",
         "%{IncludeDir.AssImp}",
         "%{IncludeDir.AssImpEx}",
         "%{IncludeDir.DirectXHeaders}",
@@ -45,7 +43,7 @@ project "Engine"
 
     links
     {
-        "Scene",
+        --"Scene",
         "DirectXTex", 
         "DirectXMesh",
         "AssImp",
@@ -60,11 +58,11 @@ project "Engine"
         "%{Library.DirectXShaderCompiler}",
     }
 
-    postbuildcommands { '{COPY} "%{StaticLibrary.dxcompiler}"            "%{cfg.buildtarget.directory}"' }
-    postbuildcommands { '{COPY} "%{StaticLibrary.dxil}"                  "%{cfg.buildtarget.directory}"'}
-    postbuildcommands { '{COPY} "%{StaticLibrary.WinPixEventRuntime}"    "%{cfg.buildtarget.directory}"' }
+    postbuildcommands { '{COPYFILE} "%{StaticLibrary.dxcompiler}"            "%{cfg.buildtarget.directory}"' }
+    postbuildcommands { '{COPYFILE} "%{StaticLibrary.dxil}"                  "%{cfg.buildtarget.directory}"'}
+    postbuildcommands { '{COPYFILE} "%{StaticLibrary.WinPixEventRuntime}"    "%{cfg.buildtarget.directory}"' }
 
-    postbuildcommands { '{COPYDIR} "%{SHADERS_PATH}"                     "%{cfg.buildtarget.directory}/Shaders"' }
+    postbuildcommands { '{COPYDIR} "%{SHADERS_PATH}"                         "%{cfg.buildtarget.directory}/Shaders"' }
 
     filter "configurations:Debug"
         defines "DEBUG"
@@ -76,5 +74,5 @@ project "Engine"
         runtime "Release"
         optimize "on"
 
-    filter "files:**.hlsl or **.ini or **.json" 
+    filter "files:**.hlsl" 
         buildaction "None"

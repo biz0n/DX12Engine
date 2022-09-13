@@ -28,9 +28,15 @@ project "SceneConverter"
         "AssImp",
     }
 
+    links
+    {
+        "d3d11.lib",
+        "dxgi.lib", 
+    }
+
     files {
-        '%{SCENE_CONVERTER_PATH}/*.h',
-        '%{SCENE_CONVERTER_PATH}/*.cpp'
+        '%{SCENE_CONVERTER_PATH}/**.h',
+        '%{SCENE_CONVERTER_PATH}/**.cpp'
     }
 
     filter "configurations:Debug"

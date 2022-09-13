@@ -1,0 +1,184 @@
+#include "Scene.h"
+
+#include <queue>
+#include <tuple>
+#include <cstdio>
+
+namespace SceneConverter::Model
+{
+    Scene::Scene()
+    {
+        mStringsStorage.push_back('\0');
+        mStringsMap[""] = { 0, 1 };
+
+        Engine::Scene::Sampler defaultSampler = {};
+        defaultSampler.ModeU = Engine::Scene::Sampler::AddressMode::Mirror;
+        defaultSampler.ModeV = Engine::Scene::Sampler::AddressMode::Mirror;
+        defaultSampler.ModeW = Engine::Scene::Sampler::AddressMode::Mirror;
+        defaultSampler.MaxAnisotropy = 16;
+
+        mSamplers.push_back(defaultSampler);
+        mSamplersMap[defaultSampler] = 0;
+    }
+
+    void Scene::AddRootNode(const Node& node)
+    {
+        mRootNodes.push_back(node);
+    }
+
+    uint32_t Scene::AddMesh(const Engine::Scene::Mesh& mesh)
+    {
+        mMeshes.push_back(mesh);
+        return mMeshes.size() - 1;
+    }
+
+    uint32_t Scene::AddMaterial(const Engine::Scene::Material& material)
+    {
+        mMaterials.push_back(material);
+        return mMaterials.size() - 1;
+    }
+
+    uint32_t Scene::AddLight(const Engine::Scene::PunctualLight& light)
+    {
+        mLights.push_back(light);
+        return mLights.size() - 1;
+    }
+
+    uint32_t Scene::AddCamera(const Engine::Scene::Camera& camera)
+    {
+        mCameras.push_back(camera);
+        return mCameras.size() - 1;
+    }
+
+    uint32_t Scene::AddSampler(const Engine::Scene::Sampler& sampler)
+    {
+        auto iter = mSamplersMap.find(sampler);
+        if (iter != mSamplersMap.end())
+        {
+            return iter->second;
+        }
+        else
+        {
+            size_t index = mSamplers.size();
+            mSamplersMap[sampler] = index;
+            mSamplers.push_back(sampler);
+            return index;
+        }
+    }
+
+    Engine::Scene::ArrayIndex Scene::AddNodeMeshIndices(const std::vector<uint32_t>& indices)
+    {
+        Engine::Scene::ArrayIndex index = {};
+        index.Index = mMeshIndicesStorage.size();
+        index.Size = indices.size();
+        mMeshIndicesStorage.insert(mMeshIndicesStorage.end(), indices.begin(), indices.end());
+
+        return index;
+    }
+
+    Engine::Scene::ArrayIndex Scene::AddIndices(const std::vector<uint32_t>& indices)
+    {
+        Engine::Scene::ArrayIndex index = {};
+        index.Index = mIndicesStorage.size();
+        index.Size = indices.size();
+        mIndicesStorage.insert(mIndicesStorage.end(), indices.begin(), indices.end());
+
+        return index;
+    }
+
+    Engine::Scene::ArrayIndex Scene::AddVertices(const std::vector<Engine::Scene::Vertex>& vertices)
+    {
+        Engine::Scene::ArrayIndex index = {};
+        index.Index = mVerticesStorage.size();
+        index.Size = vertices.size();
+        mVerticesStorage.insert(mVerticesStorage.end(), vertices.begin(), vertices.end());
+
+        return index;
+    }
+
+    Engine::Scene::ArrayIndex Scene::AddString(const std::string& str)
+    {
+        auto it = mStringsMap.find(str);
+        if (it != mStringsMap.end())
+        {
+            return it->second;
+        }
+        else
+        {
+            Engine::Scene::ArrayIndex index = {};
+            index.Index = mStringsStorage.size();
+            index.Size = str.size() + 1;
+
+            const auto* cstr = str.c_str();
+            for (size_t i = 0; i < str.size() + 1; ++i)
+            {
+                mStringsStorage.push_back(cstr[i]);
+            }
+            
+            mStringsMap[str] = index;
+            return index;
+        }
+    }
+
+    uint32_t Scene::AddImage(std::shared_ptr<ImageData> image)
+    {
+        mImageResources.push_back(image);
+
+        Engine::Scene::ImagePath imagePath = {};
+
+        
+
+        mImagePaths.push_back(imagePath);
+
+        return mImageResources.size() - 1;
+    }
+
+    void Scene::UnwrapNodeTree()
+    {
+        mNodes.clear();
+
+        std::queue<std::tuple<Node, size_t>> nodesQueue;
+        for (size_t i = 0; i < mRootNodes.size(); ++i)
+        {
+            nodesQueue.push({ mRootNodes[i], i });
+        }
+
+        while (!nodesQueue.empty())
+        {
+            const auto& [ node, parent ] = nodesQueue.front();
+
+            Engine::Scene::Node sceneNode = {};
+            sceneNode.Type = node.Type;
+            sceneNode.MeshIndices = node.MeshIndices;
+            sceneNode.LightIndex = node.LightIndex.value_or(0);
+            sceneNode.CameraIndex = node.CameraIndex.value_or(0);
+            sceneNode.LocalTransform = node.LocalTransform;
+            sceneNode.NameIndex = node.NameIndex;
+
+            sceneNode.Parent = parent;
+            mNodes.push_back(sceneNode);
+
+            size_t nextParent = mNodes.size() - 1;
+
+            for (const auto& childNode : node.Children)
+            {
+                nodesQueue.push({ childNode, nextParent });
+            }
+
+            nodesQueue.pop();
+        }
+    }
+
+    void Scene::FulfillImagePaths()
+    {
+        mImagePaths.clear();
+
+        for (auto image : mImageResources)
+        {
+            Engine::Scene::ImagePath imagePath = {};
+            imagePath.PathIndex = AddString(image->GetFileName());
+
+            mImagePaths.push_back(imagePath);
+        }
+    }
+}
