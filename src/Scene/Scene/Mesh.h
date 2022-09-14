@@ -1,17 +1,17 @@
 #pragma once
 
-#include <Scene/ArrayIndex.h>
+#include <Scene/DataRegion.h>
 #include <DirectXCollision.h>
 
 namespace Engine::Scene
 {
     struct Mesh
     {
-        ArrayIndex NameIndex;
+        DataRegion NameIndex;
         uint32_t MaterialIndex;
 
-        ArrayIndex Vertices;
-        ArrayIndex Indices;
+        DataRegion Vertices;
+        DataRegion Indices;
         
         DirectX::BoundingBox AABB;
     };

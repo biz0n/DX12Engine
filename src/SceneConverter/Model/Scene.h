@@ -5,7 +5,7 @@
 #include <Scene/Material.h>
 #include <Scene/PunctualLight.h>
 #include <Scene/Vertex.h>
-#include <Scene/ArrayIndex.h>
+#include <Scene/DataRegion.h>
 #include <Scene/Mesh.h>
 #include <Scene/Node.h>
 #include <Scene/ImagePath.h>
@@ -47,11 +47,11 @@ namespace SceneConverter::Model
             uint32_t AddCamera(const Engine::Scene::Camera& camera);
             uint32_t AddSampler(const Engine::Scene::Sampler& sampler);
 
-            Engine::Scene::ArrayIndex AddNodeMeshIndices(const std::vector<uint32_t>& indices);
-            Engine::Scene::ArrayIndex AddIndices(const std::vector<uint32_t>& indices);
-            Engine::Scene::ArrayIndex AddVertices(const std::vector<Engine::Scene::Vertex>& vertices);
+            Engine::Scene::DataRegion AddNodeMeshIndices(const std::vector<uint32_t>& indices);
+            Engine::Scene::DataRegion AddIndices(const std::vector<uint32_t>& indices);
+            Engine::Scene::DataRegion AddVertices(const std::vector<Engine::Scene::Vertex>& vertices);
             
-            Engine::Scene::ArrayIndex AddString(const std::string& str);
+            Engine::Scene::DataRegion AddString(const std::string& str);
 
             uint32_t AddImage(std::shared_ptr<ImageData> image);
 
@@ -76,7 +76,7 @@ namespace SceneConverter::Model
             std::vector<uint32_t> mIndicesStorage;
             std::vector<char> mStringsStorage;
 
-            std::unordered_map<std::string, Engine::Scene::ArrayIndex> mStringsMap;
+            std::unordered_map<std::string, Engine::Scene::DataRegion> mStringsMap;
             std::map<Engine::Scene::Sampler, uint32_t> mSamplersMap;
     };
 }

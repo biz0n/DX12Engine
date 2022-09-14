@@ -9,6 +9,7 @@ namespace SceneConverter::Model
 {
     enum class TextureUsage
     {
+        Unset = 0,
         BaseColor = 1 << 0,
         Normal = 1 << 1,
         MetallicRoughness = 1 << 2,
@@ -28,8 +29,11 @@ namespace SceneConverter::Model
 
         void SetUseAs(TextureUsage usage) { mUsage |= usage; }
         bool IsUseAs(TextureUsage usage) const { return (mUsage & usage) == usage; }
+        void SetMaterialId(uint32_t id) { mMaterialIds.push_back(id); }
+        const std::vector<uint32_t> GetMaterialIds() const { return mMaterialIds; }
 
         bool IsEmpty() const { return !mIsNotEmpty; }
+        bool IsUnused() const { return mUsage == TextureUsage::Unset; }
 
         void SetFileName(const std::string& name) { mFileName = name; }
         const std::string& GetFileName() { return mFileName; }
@@ -45,6 +49,7 @@ namespace SceneConverter::Model
         std::string mFileName;
         bool mIsNotEmpty;
         TextureUsage mUsage;
+        std::vector<uint32_t> mMaterialIds;
     };
 
 } // namespace Engine::Scene

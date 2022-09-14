@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Scene/ArrayIndex.h>
+#include <Scene/DataRegion.h>
 #include <Scene/Node.h>
 #include <DirectXMath.h>
 
@@ -14,10 +14,10 @@ namespace SceneConverter::Model
     {
         Engine::Scene::Node::NodeType Type;
         std::vector<Node> Children;
-        Engine::Scene::ArrayIndex MeshIndices;
+        Engine::Scene::DataRegion MeshIndices;
         std::optional<uint32_t> LightIndex;
         std::optional<uint32_t> CameraIndex;
-        DirectX::XMMATRIX LocalTransform;
-        Engine::Scene::ArrayIndex NameIndex;
+        DirectX::XMFLOAT4X4 LocalTransform;
+        Engine::Scene::DataRegion NameIndex;
     };
 }

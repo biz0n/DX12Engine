@@ -82,7 +82,7 @@ namespace SceneConverter::Importer
         for (unsigned int i = 0; i < aScene->mNumMaterials; ++i)
         {
             aiMaterial *aMaterial = aScene->mMaterials[i];
-            auto material = ParseMaterial(aMaterial, context);
+            auto material = ParseMaterial(aMaterial, i, context);
             context.Scene.AddMaterial(material);
         }
 
@@ -99,11 +99,11 @@ namespace SceneConverter::Importer
             context.LightsIndexMap[aLight->mName.C_Str()] = context.Scene.AddLight(ParseLight(aLight));
         }
 
-		for (unsigned int i = 0; i < aScene->mNumCameras; ++i)
-		{
-			aiCamera* aCamera = aScene->mCameras[i];
-			context.CamerasIndexMap[aCamera->mName.C_Str()] = context.Scene.AddCamera(ParseCamera(aCamera));
-		}
+        for (unsigned int i = 0; i < aScene->mNumCameras; ++i)
+        {
+            aiCamera* aCamera = aScene->mCameras[i];
+            context.CamerasIndexMap[aCamera->mName.C_Str()] = context.Scene.AddCamera(ParseCamera(aCamera));
+        }
 
         const auto rootNode = ParseNode(aScene->mRootNode, aScene, context);
         context.Scene.AddRootNode(rootNode);
@@ -118,7 +118,7 @@ namespace SceneConverter::Importer
 
             Model::Node cameraNode;
             cameraNode.CameraIndex = context.Scene.AddCamera(camera);
-            cameraNode.LocalTransform = DirectX::XMMatrixIdentity();
+            DirectX::XMStoreFloat4x4(&cameraNode.LocalTransform, DirectX::XMMatrixIdentity());
             context.Scene.AddCamera(camera);
             context.Scene.AddRootNode(cameraNode);
         }
@@ -126,7 +126,7 @@ namespace SceneConverter::Importer
         std::function<void(const PunctualLight&, const DirectX::XMMATRIX&)> addLight = [&context](const PunctualLight& light, const DirectX::XMMATRIX& transform)
         {
             Model::Node lightNode;
-            lightNode.LocalTransform = transform;
+            DirectX::XMStoreFloat4x4(&lightNode.LocalTransform, transform);
             lightNode.LightIndex = context.Scene.AddLight(light);
             context.Scene.AddRootNode(lightNode);
         };
@@ -164,27 +164,27 @@ namespace SceneConverter::Importer
     Model::Node SceneImporter::ParseNode(const aiNode *aNode, const aiScene* aScene, LoadingContext &context)
     {
         aiVector3D scaling;
-		aiQuaternion rotation;
-		aiVector3D position;
-		aNode->mTransformation.Decompose(scaling, rotation, position);
+        aiQuaternion rotation;
+        aiVector3D position;
+        aNode->mTransformation.Decompose(scaling, rotation, position);
 
-		auto t = DirectX::XMMatrixTranslation(position.x, position.y, position.z);
-		auto s = DirectX::XMMatrixScaling(scaling.x, scaling.y, scaling.z);
-		auto r = DirectX::XMMatrixRotationQuaternion(DirectX::XMVectorSet(rotation.x, rotation.y, rotation.z, rotation.w));
+        auto t = DirectX::XMMatrixTranslation(position.x, position.y, position.z);
+        auto s = DirectX::XMMatrixScaling(scaling.x, scaling.y, scaling.z);
+        auto r = DirectX::XMMatrixRotationQuaternion(DirectX::XMVectorSet(rotation.x, rotation.y, rotation.z, rotation.w));
 
-        DirectX::XMMATRIX srt = s * r * t;
+        DirectX::XMMATRIX srt = s * r * t; 
 
         std::string name = aNode->mName.C_Str();
         Model::Node node = {};
 
 
         std::string nodeName;
-		if (IsMeshNode(aNode, context))
-		{
+        if (IsMeshNode(aNode, context))
+        {
             nodeName = "Mesh_" + name;
             
             node.Type = Node::NodeType::Mesh;
-            node.LocalTransform = srt;
+            DirectX::XMStoreFloat4x4(&node.LocalTransform, srt);
             std::vector<uint32_t> meshIndices;
             for (unsigned int i = 0; i < aNode->mNumMeshes; ++i)
             {
@@ -192,7 +192,7 @@ namespace SceneConverter::Importer
                 meshIndices.push_back(meshIndex);
                 node.MeshIndices = context.Scene.AddNodeMeshIndices(meshIndices);
             }
-		}
+        }
         else if (IsLightNode(aNode, context))
         {
             nodeName = "Light_" + name;
@@ -200,21 +200,21 @@ namespace SceneConverter::Importer
             node.Type = Node::NodeType::Light;
             node.LightIndex = context.LightsIndexMap[name];
             const auto* light = aScene->mLights[*node.LightIndex];
-            node.LocalTransform = LightMatrixFix(light, srt);
+            DirectX::XMStoreFloat4x4(&node.LocalTransform, LightMatrixFix(light, srt));
         }
         else if (IsCameraNode(aNode, context))
         {
             nodeName = "Camera_" + name;
 
             node.Type = Node::NodeType::Camera;
-            node.LocalTransform = srt;
+            DirectX::XMStoreFloat4x4(&node.LocalTransform, srt);
             node.CameraIndex = context.CamerasIndexMap[name];
         }
         else
         {
             nodeName = name;
             node.Type = Node::NodeType::Node;
-            node.LocalTransform = srt;
+            DirectX::XMStoreFloat4x4(&node.LocalTransform, srt);
 
             for (size_t i = 0; i < aNode->mNumChildren; i++)
             {
@@ -343,7 +343,7 @@ namespace SceneConverter::Importer
         return image;
     }
 
-    size_t SceneImporter::GetImage(const aiString &path, LoadingContext &context, Model::TextureUsage usage)
+    size_t SceneImporter::GetImage(const aiString &path, LoadingContext &context, unsigned int matIdx, Model::TextureUsage usage)
     {
         size_t index = 0;
 
@@ -375,31 +375,32 @@ namespace SceneConverter::Importer
         if (index > 0)
         {
             context.Scene.GetImageResources()[index]->SetUseAs(usage);
+            context.Scene.GetImageResources()[index]->SetMaterialId(matIdx);
         }
 
         return index;
     }
 
-	bool SceneImporter::IsLightNode(const aiNode* aNode, const LoadingContext& context)
-	{
-		auto iter = context.LightsIndexMap.find(aNode->mName.C_Str());
+    bool SceneImporter::IsLightNode(const aiNode* aNode, const LoadingContext& context)
+    {
+        auto iter = context.LightsIndexMap.find(aNode->mName.C_Str());
         return iter != context.LightsIndexMap.end();
-	}
+    }
 
-	bool SceneImporter::IsMeshNode(const aiNode* aNode, const LoadingContext& context)
-	{
+    bool SceneImporter::IsMeshNode(const aiNode* aNode, const LoadingContext& context)
+    {
         return aNode->mNumMeshes > 0;
-	}
+    }
 
     bool SceneImporter::IsCameraNode(const aiNode* aNode, const LoadingContext& context)
-	{
-		auto iter = context.CamerasIndexMap.find(aNode->mName.C_Str());
+    {
+        auto iter = context.CamerasIndexMap.find(aNode->mName.C_Str());
         return iter != context.CamerasIndexMap.end();
-	}
+    }
 
     Camera SceneImporter::ParseCamera(const aiCamera* aCamera)
     {
-        Camera camera;
+        Camera camera = {};
 
         camera.FarPlane = aCamera->mClipPlaneFar;
         camera.NearPlane = aCamera->mClipPlaneNear;
@@ -421,7 +422,7 @@ namespace SceneConverter::Importer
 
     PunctualLight SceneImporter::ParseLight(const aiLight* aLight)
     {
-        PunctualLight light;
+        PunctualLight light = {};
 
         switch (aLight->mType)
         {
@@ -524,10 +525,10 @@ namespace SceneConverter::Importer
         return mesh;
     }
 
-    Material SceneImporter::ParseMaterial(const aiMaterial* aMaterial, LoadingContext& context)
+    Material SceneImporter::ParseMaterial(const aiMaterial* aMaterial, unsigned int index, LoadingContext& context)
     {
-        Material material;
-        MaterialProperties properties;
+        Material material = {};
+        MaterialProperties properties = {};
 
         aiString name;
         aMaterial->Get(AI_MATKEY_NAME, name);
@@ -596,14 +597,14 @@ namespace SceneConverter::Importer
         if (aMaterial->GetTexture(AI_MATKEY_BASE_COLOR_TEXTURE, &albedoTexturePath) == aiReturn_SUCCESS)
         {
             material.BaseColorTextureSamplerIndex = ParseSampler(aMaterial, AI_MATKEY_BASE_COLOR_TEXTURE, context);
-            material.BaseColorTextureIndex = GetImage(albedoTexturePath, context, Model::TextureUsage::BaseColor);
+            material.BaseColorTextureIndex = GetImage(albedoTexturePath, context, index, Model::TextureUsage::BaseColor);
         }
 
         aiString normalTexturePath;
         if (aMaterial->GetTexture(aiTextureType_NORMALS, 0, &normalTexturePath) == aiReturn_SUCCESS)
         {
             material.NormalTextureSamplerIndex = ParseSampler(aMaterial, aiTextureType_NORMALS, 0, context);
-            material.NormalTextureIndex = GetImage(normalTexturePath, context, Model::TextureUsage::Normal);
+            material.NormalTextureIndex = GetImage(normalTexturePath, context, index, Model::TextureUsage::Normal);
 
             float scale;
             if (aMaterial->Get(AI_MATKEY_GLTF_TEXTURE_SCALE(aiTextureType_NORMALS, 0), scale) == aiReturn_SUCCESS)
@@ -616,21 +617,21 @@ namespace SceneConverter::Importer
         if (aMaterial->GetTexture(aiTextureType_METALNESS, 0, &metallicRoughnessTexturePath) == aiReturn_SUCCESS)
         {
             material.MetallicRoughnessTextureSamplerIndex = ParseSampler(aMaterial, aiTextureType_METALNESS, 0, context);
-            material.MetallicRoughnessTextureIndex = GetImage(metallicRoughnessTexturePath, context, Model::TextureUsage::MetallicRoughness);
+            material.MetallicRoughnessTextureIndex = GetImage(metallicRoughnessTexturePath, context, index, Model::TextureUsage::MetallicRoughness);
         }
 
         aiString ambientOcclusionTexturePath;
         if (aMaterial->GetTexture(aiTextureType_LIGHTMAP, 0, &ambientOcclusionTexturePath) == aiReturn_SUCCESS)
         {
             material.AmbientOcclusionTextureSamplerIndex = ParseSampler(aMaterial, aiTextureType_LIGHTMAP, 0, context);
-            material.AmbientOcclusionTextureIndex = GetImage(ambientOcclusionTexturePath, context, Model::TextureUsage::AmbientOcclusion);
+            material.AmbientOcclusionTextureIndex = GetImage(ambientOcclusionTexturePath, context, index, Model::TextureUsage::AmbientOcclusion);
         }
 
         aiString emissiveTexturePath;
         if (aMaterial->GetTexture(aiTextureType_EMISSIVE, 0, &emissiveTexturePath) == aiReturn_SUCCESS)
         {
             material.EmissiveTextureSamplerIndex = ParseSampler(aMaterial, aiTextureType_EMISSIVE, 0, context);
-            material.EmissiveTextureIndex = GetImage(emissiveTexturePath, context, Model::TextureUsage::Emissive);
+            material.EmissiveTextureIndex = GetImage(emissiveTexturePath, context, index, Model::TextureUsage::Emissive);
 
             float strength;
             if (aMaterial->Get(AI_MATKEY_GLTF_TEXTURE_STRENGTH(aiTextureType_EMISSIVE, 0), strength) == aiReturn_SUCCESS)

@@ -1,28 +1,22 @@
 #pragma once
 
-#include <cstdint>
+#include <Scene/DataRegion.h>
 
 namespace Engine::Scene::Reader
 {
-    struct HeaderField
+    struct BinaryHeader
     {
-        uint32_t Offset;
-        uint32_t Size;
+        DataRegion Nodes;
+        DataRegion Meshes;
+        DataRegion Materials;
+        DataRegion Lights;
+        DataRegion Cameras;
+        DataRegion Samplers;
+
+        DataRegion NodeMeshIndicesStorage;
+        DataRegion VerticesStorage;
+        DataRegion IndicesStorage;
+        DataRegion ImagePaths;
+        DataRegion StringsStorage;
     };
-
-	struct BinaryHeader
-	{
-        HeaderField NodesInfo;
-        HeaderField MeshesInfo;
-        HeaderField MaterialsInfo;
-        HeaderField LightsInfo;
-        HeaderField CamerasInfo;
-        HeaderField SamplersInfo;
-
-        HeaderField MeshIndicesStorageInfo;
-        HeaderField VerticesStorageInfo;
-        HeaderField IndicesStorageInfo;
-        HeaderField ImagePathsInfo;
-        HeaderField StringsStorageInfo;
-	};
 }

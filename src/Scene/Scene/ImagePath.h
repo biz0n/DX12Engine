@@ -1,11 +1,11 @@
 #pragma once
 
-#include <Scene/ArrayIndex.h>
+#include <Scene/DataRegion.h>
 
 namespace Engine::Scene
 {
     struct ImagePath
     {
-        ArrayIndex PathIndex;
+        DataRegion PathIndex;
     };
 }

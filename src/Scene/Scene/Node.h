@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Scene/ArrayIndex.h>
+#include <Scene/DataRegion.h>
 #include <DirectXMath.h>
 
 namespace Engine::Scene
@@ -18,13 +18,13 @@ namespace Engine::Scene
         NodeType Type;
 
         uint32_t Parent;
-        ArrayIndex NameIndex;
+        DataRegion NameIndex;
         
-        DirectX::XMMATRIX LocalTransform;
+        DirectX::XMFLOAT4X4 LocalTransform;
         
         union
         {
-            Engine::Scene::ArrayIndex MeshIndices;
+            Engine::Scene::DataRegion MeshIndices;
             uint32_t LightIndex;
             uint32_t CameraIndex;
         };

@@ -66,37 +66,37 @@ namespace SceneConverter::Model
         }
     }
 
-    Engine::Scene::ArrayIndex Scene::AddNodeMeshIndices(const std::vector<uint32_t>& indices)
+    Engine::Scene::DataRegion Scene::AddNodeMeshIndices(const std::vector<uint32_t>& indices)
     {
-        Engine::Scene::ArrayIndex index = {};
-        index.Index = mMeshIndicesStorage.size();
+        Engine::Scene::DataRegion index = {};
+        index.Offset = mMeshIndicesStorage.size();
         index.Size = indices.size();
         mMeshIndicesStorage.insert(mMeshIndicesStorage.end(), indices.begin(), indices.end());
 
         return index;
     }
 
-    Engine::Scene::ArrayIndex Scene::AddIndices(const std::vector<uint32_t>& indices)
+    Engine::Scene::DataRegion Scene::AddIndices(const std::vector<uint32_t>& indices)
     {
-        Engine::Scene::ArrayIndex index = {};
-        index.Index = mIndicesStorage.size();
+        Engine::Scene::DataRegion index = {};
+        index.Offset = mIndicesStorage.size();
         index.Size = indices.size();
         mIndicesStorage.insert(mIndicesStorage.end(), indices.begin(), indices.end());
 
         return index;
     }
 
-    Engine::Scene::ArrayIndex Scene::AddVertices(const std::vector<Engine::Scene::Vertex>& vertices)
+    Engine::Scene::DataRegion Scene::AddVertices(const std::vector<Engine::Scene::Vertex>& vertices)
     {
-        Engine::Scene::ArrayIndex index = {};
-        index.Index = mVerticesStorage.size();
+        Engine::Scene::DataRegion index = {};
+        index.Offset = mVerticesStorage.size();
         index.Size = vertices.size();
         mVerticesStorage.insert(mVerticesStorage.end(), vertices.begin(), vertices.end());
 
         return index;
     }
 
-    Engine::Scene::ArrayIndex Scene::AddString(const std::string& str)
+    Engine::Scene::DataRegion Scene::AddString(const std::string& str)
     {
         auto it = mStringsMap.find(str);
         if (it != mStringsMap.end())
@@ -105,8 +105,8 @@ namespace SceneConverter::Model
         }
         else
         {
-            Engine::Scene::ArrayIndex index = {};
-            index.Index = mStringsStorage.size();
+            Engine::Scene::DataRegion index = {};
+            index.Offset = mStringsStorage.size();
             index.Size = str.size() + 1;
 
             const auto* cstr = str.c_str();
@@ -125,8 +125,6 @@ namespace SceneConverter::Model
         mImageResources.push_back(image);
 
         Engine::Scene::ImagePath imagePath = {};
-
-        
 
         mImagePaths.push_back(imagePath);
 
