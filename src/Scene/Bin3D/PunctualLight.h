@@ -2,7 +2,7 @@
 
 #include <DirectXMath.h>
 
-namespace Engine::Scene
+namespace Bin3D
 {
     enum class LightType : uint8_t
     {

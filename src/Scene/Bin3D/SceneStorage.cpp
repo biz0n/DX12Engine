@@ -1,8 +1,8 @@
 #include "SceneStorage.h"
 
-#include <Scene/Reader/BinaryHeader.h>
+#include <Bin3D/Reader/BinaryHeader.h>
 
-namespace Engine::Scene
+namespace Bin3D
 {
     SceneStorage::SceneStorage(std::vector<char>&& dataVector) : mDataVector{ std::move(dataVector) }
     {
@@ -30,7 +30,7 @@ namespace Engine::Scene
         return mNodeMeshIndicesStorage.subspan(range.Offset, range.Size);
     }
 
-    std::span<const Engine::Scene::Vertex> SceneStorage::GetVertices(const DataRegion& range) const
+    std::span<const Bin3D::Vertex> SceneStorage::GetVertices(const DataRegion& range) const
     {
         return mVerticesStorage.subspan(range.Offset, range.Size);
     }

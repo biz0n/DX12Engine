@@ -53,10 +53,10 @@ namespace SceneConverter::Importer
         size_t GetImage(const aiString& path, LoadingContext& context, unsigned int matIdx, Model::TextureUsage usage);
 
         std::shared_ptr<Model::ImageData> ParseImage(const aiTexture* aTexture, const LoadingContext& context);
-        Engine::Scene::Camera ParseCamera(const aiCamera* aCamera);
-        Engine::Scene::PunctualLight ParseLight(const aiLight* aLight);
-        Engine::Scene::Mesh ParseMesh(const aiMesh* aMesh, LoadingContext& context);
-        Engine::Scene::Material ParseMaterial(const aiMaterial* aMaterial, unsigned int index, LoadingContext& context);
+        Bin3D::Camera ParseCamera(const aiCamera* aCamera);
+        Bin3D::PunctualLight ParseLight(const aiLight* aLight);
+        Bin3D::Mesh ParseMesh(const aiMesh* aMesh, LoadingContext& context);
+        Bin3D::Material ParseMaterial(const aiMaterial* aMaterial, unsigned int index, LoadingContext& context);
         size_t ParseSampler(const aiMaterial* aMaterial, aiTextureType textureType, unsigned int idx, LoadingContext& context);
         DirectX::XMMATRIX LightMatrixFix(const aiLight* aLight, DirectX::XMMATRIX srt);
     }; 

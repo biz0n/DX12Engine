@@ -11,10 +11,10 @@ namespace SceneConverter::Model
         mStringsStorage.push_back('\0');
         mStringsMap[""] = { 0, 1 };
 
-        Engine::Scene::Sampler defaultSampler = {};
-        defaultSampler.ModeU = Engine::Scene::Sampler::AddressMode::Mirror;
-        defaultSampler.ModeV = Engine::Scene::Sampler::AddressMode::Mirror;
-        defaultSampler.ModeW = Engine::Scene::Sampler::AddressMode::Mirror;
+        Bin3D::Sampler defaultSampler = {};
+        defaultSampler.ModeU = Bin3D::Sampler::AddressMode::Mirror;
+        defaultSampler.ModeV = Bin3D::Sampler::AddressMode::Mirror;
+        defaultSampler.ModeW = Bin3D::Sampler::AddressMode::Mirror;
         defaultSampler.MaxAnisotropy = 16;
 
         mSamplers.push_back(defaultSampler);
@@ -26,31 +26,31 @@ namespace SceneConverter::Model
         mRootNodes.push_back(node);
     }
 
-    uint32_t Scene::AddMesh(const Engine::Scene::Mesh& mesh)
+    uint32_t Scene::AddMesh(const Bin3D::Mesh& mesh)
     {
         mMeshes.push_back(mesh);
         return mMeshes.size() - 1;
     }
 
-    uint32_t Scene::AddMaterial(const Engine::Scene::Material& material)
+    uint32_t Scene::AddMaterial(const Bin3D::Material& material)
     {
         mMaterials.push_back(material);
         return mMaterials.size() - 1;
     }
 
-    uint32_t Scene::AddLight(const Engine::Scene::PunctualLight& light)
+    uint32_t Scene::AddLight(const Bin3D::PunctualLight& light)
     {
         mLights.push_back(light);
         return mLights.size() - 1;
     }
 
-    uint32_t Scene::AddCamera(const Engine::Scene::Camera& camera)
+    uint32_t Scene::AddCamera(const Bin3D::Camera& camera)
     {
         mCameras.push_back(camera);
         return mCameras.size() - 1;
     }
 
-    uint32_t Scene::AddSampler(const Engine::Scene::Sampler& sampler)
+    uint32_t Scene::AddSampler(const Bin3D::Sampler& sampler)
     {
         auto iter = mSamplersMap.find(sampler);
         if (iter != mSamplersMap.end())
@@ -66,9 +66,9 @@ namespace SceneConverter::Model
         }
     }
 
-    Engine::Scene::DataRegion Scene::AddNodeMeshIndices(const std::vector<uint32_t>& indices)
+    Bin3D::DataRegion Scene::AddNodeMeshIndices(const std::vector<uint32_t>& indices)
     {
-        Engine::Scene::DataRegion index = {};
+        Bin3D::DataRegion index = {};
         index.Offset = mMeshIndicesStorage.size();
         index.Size = indices.size();
         mMeshIndicesStorage.insert(mMeshIndicesStorage.end(), indices.begin(), indices.end());
@@ -76,9 +76,9 @@ namespace SceneConverter::Model
         return index;
     }
 
-    Engine::Scene::DataRegion Scene::AddIndices(const std::vector<uint32_t>& indices)
+    Bin3D::DataRegion Scene::AddIndices(const std::vector<uint32_t>& indices)
     {
-        Engine::Scene::DataRegion index = {};
+        Bin3D::DataRegion index = {};
         index.Offset = mIndicesStorage.size();
         index.Size = indices.size();
         mIndicesStorage.insert(mIndicesStorage.end(), indices.begin(), indices.end());
@@ -86,9 +86,9 @@ namespace SceneConverter::Model
         return index;
     }
 
-    Engine::Scene::DataRegion Scene::AddVertices(const std::vector<Engine::Scene::Vertex>& vertices)
+    Bin3D::DataRegion Scene::AddVertices(const std::vector<Bin3D::Vertex>& vertices)
     {
-        Engine::Scene::DataRegion index = {};
+        Bin3D::DataRegion index = {};
         index.Offset = mVerticesStorage.size();
         index.Size = vertices.size();
         mVerticesStorage.insert(mVerticesStorage.end(), vertices.begin(), vertices.end());
@@ -96,7 +96,7 @@ namespace SceneConverter::Model
         return index;
     }
 
-    Engine::Scene::DataRegion Scene::AddString(const std::string& str)
+    Bin3D::DataRegion Scene::AddString(const std::string& str)
     {
         auto it = mStringsMap.find(str);
         if (it != mStringsMap.end())
@@ -105,7 +105,7 @@ namespace SceneConverter::Model
         }
         else
         {
-            Engine::Scene::DataRegion index = {};
+            Bin3D::DataRegion index = {};
             index.Offset = mStringsStorage.size();
             index.Size = str.size() + 1;
 
@@ -124,7 +124,7 @@ namespace SceneConverter::Model
     {
         mImageResources.push_back(image);
 
-        Engine::Scene::ImagePath imagePath = {};
+        Bin3D::ImagePath imagePath = {};
 
         mImagePaths.push_back(imagePath);
 
@@ -145,7 +145,7 @@ namespace SceneConverter::Model
         {
             const auto& [ node, parent ] = nodesQueue.front();
 
-            Engine::Scene::Node sceneNode = {};
+            Bin3D::Node sceneNode = {};
             sceneNode.Type = node.Type;
             sceneNode.MeshIndices = node.MeshIndices;
             sceneNode.LightIndex = node.LightIndex.value_or(0);
@@ -173,7 +173,7 @@ namespace SceneConverter::Model
 
         for (auto image : mImageResources)
         {
-            Engine::Scene::ImagePath imagePath = {};
+            Bin3D::ImagePath imagePath = {};
             imagePath.PathIndex = AddString(image->GetFileName());
 
             mImagePaths.push_back(imagePath);

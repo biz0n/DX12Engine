@@ -20,7 +20,7 @@
 
 #include <DirectXCollision.h>
 
-using namespace Engine::Scene;
+using namespace Bin3D;
 
 namespace SceneConverter::Importer
 {

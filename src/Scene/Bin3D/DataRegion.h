@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace Engine::Scene
+namespace Bin3D
 {
     struct DataRegion
     {

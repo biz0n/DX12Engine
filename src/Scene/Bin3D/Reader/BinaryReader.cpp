@@ -1,12 +1,12 @@
 #include "BinaryReader.h"
 
-#include <Scene/Reader/BinaryHeader.h>
+#include <Bin3D/Reader/BinaryHeader.h>
 
 #include <iostream>
 #include <fstream>
 #include <vector>
 
-namespace Engine::Scene::Reader
+namespace Bin3D::Reader
 {
     SceneStorage BinaryReader::ReadScene(const std::filesystem::path& path)
     {

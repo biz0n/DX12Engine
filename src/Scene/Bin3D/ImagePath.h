@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Scene/DataRegion.h>
+#include <Bin3D/DataRegion.h>
 
-namespace Engine::Scene
+namespace Bin3D
 {
     struct ImagePath
     {

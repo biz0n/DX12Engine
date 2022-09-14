@@ -1,10 +1,10 @@
 #pragma once
 
-#include <Scene/SceneStorage.h>
+#include <Bin3D/SceneStorage.h>
 
 #include <filesystem>
 
-namespace Engine::Scene::Reader
+namespace Bin3D::Reader
 {
     class BinaryReader
     {

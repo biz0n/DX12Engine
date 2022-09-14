@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Scene/DataRegion.h>
-#include <Scene/Node.h>
+#include <Bin3D/DataRegion.h>
+#include <Bin3D/Node.h>
 #include <DirectXMath.h>
 
 #include <vector>
@@ -12,12 +12,12 @@ namespace SceneConverter::Model
     struct Node;
     struct Node
     {
-        Engine::Scene::Node::NodeType Type;
+        Bin3D::Node::NodeType Type;
         std::vector<Node> Children;
-        Engine::Scene::DataRegion MeshIndices;
+        Bin3D::DataRegion MeshIndices;
         std::optional<uint32_t> LightIndex;
         std::optional<uint32_t> CameraIndex;
         DirectX::XMFLOAT4X4 LocalTransform;
-        Engine::Scene::DataRegion NameIndex;
+        Bin3D::DataRegion NameIndex;
     };
 }

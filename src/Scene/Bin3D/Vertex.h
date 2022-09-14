@@ -2,7 +2,7 @@
 
 #include <DirectXMath.h>
 
-namespace Engine::Scene
+namespace Bin3D
 {
     struct Vertex
     {

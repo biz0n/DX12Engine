@@ -2,7 +2,7 @@
 
 #include <compare>
 
-namespace Engine::Scene
+namespace Bin3D
 {
     struct Sampler
     {

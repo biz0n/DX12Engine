@@ -2,7 +2,7 @@
 
 #include <Model/Scene.h>
 
-#include <Scene/Reader/BinaryHeader.h>
+#include <Bin3D/Reader/BinaryHeader.h>
 
 #include <filesystem>
 #include <vector>
@@ -18,9 +18,9 @@ namespace SceneConverter::Writer
     private:
 
         template <typename T>
-        Engine::Scene::DataRegion Write(std::ofstream& stream, const std::vector<T>& data)
+        Bin3D::DataRegion Write(std::ofstream& stream, const std::vector<T>& data)
         {
-            Engine::Scene::DataRegion field = {};
+            Bin3D::DataRegion field = {};
             field.Offset = stream.tellp();
             field.Size = data.size();
 

@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace Engine::Scene
+namespace Bin3D
 {
     enum class CameraType : uint8_t
     {

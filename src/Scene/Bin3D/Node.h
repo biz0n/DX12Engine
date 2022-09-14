@@ -1,9 +1,9 @@
 #pragma once
 
-#include <Scene/DataRegion.h>
+#include <Bin3D/DataRegion.h>
 #include <DirectXMath.h>
 
-namespace Engine::Scene
+namespace Bin3D
 {
     struct Node
     {
@@ -24,7 +24,7 @@ namespace Engine::Scene
         
         union
         {
-            Engine::Scene::DataRegion MeshIndices;
+            Bin3D::DataRegion MeshIndices;
             uint32_t LightIndex;
             uint32_t CameraIndex;
         };

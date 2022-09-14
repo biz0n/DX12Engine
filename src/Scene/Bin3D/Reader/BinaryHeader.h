@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Scene/DataRegion.h>
+#include <Bin3D/DataRegion.h>
 
-namespace Engine::Scene::Reader
+namespace Bin3D::Reader
 {
     struct BinaryHeader
     {

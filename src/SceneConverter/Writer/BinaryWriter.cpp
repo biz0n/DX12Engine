@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-using namespace Engine::Scene::Reader;
+using namespace Bin3D::Reader;
 
 namespace SceneConverter::Writer
 {
