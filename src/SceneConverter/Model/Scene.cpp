@@ -147,9 +147,22 @@ namespace SceneConverter::Model
 
             Bin3D::Node sceneNode = {};
             sceneNode.Type = node.Type;
-            sceneNode.MeshIndices = node.MeshIndices;
-            sceneNode.LightIndex = node.LightIndex.value_or(0);
-            sceneNode.CameraIndex = node.CameraIndex.value_or(0);
+            switch (sceneNode.Type)
+            {
+            case Bin3D::Node::NodeType::Camera:
+                sceneNode.DataIndex = { node.CameraIndex.value_or(0), 0 };
+                break;
+            case Bin3D::Node::NodeType::Light:
+                sceneNode.DataIndex = { node.LightIndex.value_or(0), 0 };
+                break;
+            case Bin3D::Node::NodeType::Mesh:
+                sceneNode.DataIndex = node.MeshIndices;
+                break;
+            default:
+                sceneNode.DataIndex = { 0, 0 };
+                break;
+            }
+            
             sceneNode.LocalTransform = node.LocalTransform;
             sceneNode.NameIndex = node.NameIndex;
 

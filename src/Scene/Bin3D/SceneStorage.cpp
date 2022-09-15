@@ -4,7 +4,7 @@
 
 namespace Bin3D
 {
-    SceneStorage::SceneStorage(std::vector<char>&& dataVector) : mDataVector{ std::move(dataVector) }
+    SceneStorage::SceneStorage(const std::filesystem::path& path, std::vector<char>&& dataVector) : mPath{path}, mDataVector { std::move(dataVector) }
     {
         const auto* data = mDataVector.data();
 

@@ -13,13 +13,16 @@
 #include <vector>
 #include <span>
 #include <string_view>
+#include <filesystem>
 
 namespace Bin3D
 {
     class SceneStorage
     {
     public:
-        SceneStorage(std::vector<char>&& dataVector);
+        SceneStorage(const std::filesystem::path& path, std::vector<char>&& dataVector);
+
+        const std::filesystem::path& GetPath() const { return mPath; }
 
         const std::span<const Bin3D::Node>& GetNodes() const { return mNodes; }
         const std::span<const Bin3D::Mesh>& GetMeshes() const { return mMeshes; }
@@ -27,6 +30,8 @@ namespace Bin3D
         const std::span<const Bin3D::PunctualLight>& GetLights() const { return mLights; }
         const std::span<const Bin3D::Camera>& GetCameras() const { return mCameras; }
         const std::span<const Bin3D::Sampler>& GetSamplers() const { return mSamplers; }
+
+        const std::span<const Bin3D::ImagePath>& GetImagePaths() const { return mImagePaths; }
 
         std::span<const uint32_t> GetMeshIndices(const DataRegion& range) const;
         std::span<const Bin3D::Vertex> GetVertices(const DataRegion& range) const;
@@ -42,6 +47,7 @@ namespace Bin3D
             return std::span{ reinterpret_cast<const T*>(data + region.Offset), region.Size };
         }
 
+        std::filesystem::path mPath;
         std::vector<char> mDataVector;
 
         std::span<const Bin3D::Node> mNodes;

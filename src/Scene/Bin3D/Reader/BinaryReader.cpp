@@ -8,7 +8,7 @@
 
 namespace Bin3D::Reader
 {
-    SceneStorage BinaryReader::ReadScene(const std::filesystem::path& path)
+    std::shared_ptr<SceneStorage> BinaryReader::ReadScene(const std::filesystem::path& path)
     {
         std::ifstream fs(path.c_str(), std::ios_base::in | std::ios_base::binary);
 
@@ -25,7 +25,7 @@ namespace Bin3D::Reader
 
         fs.close();
 
-        SceneStorage scene{ std::move(vec) };
+        auto scene = std::make_shared<SceneStorage>( path.parent_path(), std::move(vec) );
 
         return scene;
     }

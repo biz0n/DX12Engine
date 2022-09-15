@@ -37,13 +37,10 @@ namespace Engine::Render::Passes
 
     void DepthPass::PrepareResources(Render::ResourcePlanner* planner)
     {
-        D3D12_CLEAR_VALUE optimizedClearValue = {};
-        optimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
-        optimizedClearValue.DepthStencil = {1.0f, 0};
 
         Memory::TextureCreationInfo dsTexture = {
             .description = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, EngineConfig::ShadowWidth, EngineConfig::ShadowHeight, 1, 1),
-            .clearValue = optimizedClearValue
+            .clearValue = D3D12_CLEAR_VALUE{.DepthStencil = {1.0, 0}}
         };
         planner->NewDepthStencil(ResourceNames::ShadowDepth, dsTexture);
     }

@@ -9,7 +9,7 @@ namespace Bin3D::Reader
     class BinaryReader
     {
     public:
-        SceneStorage ReadScene(const std::filesystem::path& path);
+        std::shared_ptr<SceneStorage> ReadScene(const std::filesystem::path& path);
     };
 }
 

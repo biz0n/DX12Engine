@@ -20,11 +20,8 @@ project "Engine"
     includedirs
     {
         "%{ENGINE_PATH}",
-        --"%{SCENE_PATH}",
-        "%{IncludeDir.AssImp}",
-        "%{IncludeDir.AssImpEx}",
+        "%{SCENE_PATH}",
         "%{IncludeDir.DirectXHeaders}",
-        "%{IncludeDir.DirectXMesh}",
         "%{IncludeDir.DirectXShaderCompiler}",
         "%{IncludeDir.DirectXTex}",
         "%{IncludeDir.EnTT}",
@@ -43,10 +40,8 @@ project "Engine"
 
     links
     {
-        --"Scene",
-        "DirectXTex", 
-        "DirectXMesh",
-        "AssImp",
+        "Scene",
+        "DirectXTex",
         "ImGui",
         "ImGuizmo",
         "ImGuiNodeEditor",

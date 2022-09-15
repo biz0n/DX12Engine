@@ -16,14 +16,8 @@ namespace Bin3D
         float NearPlane;
         float FarPlane;
 
-        union
-        {
-            float FoV;
-            struct
-            {
-                float OrthographicXMag;
-                float OrthographicYMag;
-            };
-        };
+        float FoV;
+        float OrthographicXMag;
+        float OrthographicYMag;
     };
 }

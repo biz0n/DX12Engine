@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Scene/SceneForwards.h>
+#include <Bin3D/SceneStorage.h>
 
 #include <map>
 #include <string>
@@ -19,7 +19,7 @@ namespace Engine::Scene
         std::map<std::string, std::string> scenes;
         std::string scenePath;
 
-        std::future<Loader::SceneDto> sceneFuture;
+        std::future<SharedPtr<Bin3D::SceneStorage>> sceneFuture;
 
         void DrawSelector()
         {

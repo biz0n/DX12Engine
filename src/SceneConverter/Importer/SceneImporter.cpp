@@ -72,6 +72,7 @@ namespace SceneConverter::Importer
         context.RootPath = filePath.parent_path().string();
         context.Scene = {};
 
+        context.Scene.AddImage(std::make_shared<Model::ImageData>()); // add empty image for 0 index
         for (unsigned int i = 0; i < aScene->mNumTextures; ++i)
         {
             aiTexture *aTexture = aScene->mTextures[i];

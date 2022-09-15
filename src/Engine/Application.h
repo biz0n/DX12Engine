@@ -4,7 +4,7 @@
 #include <IO/KeyEvent.h>
 #include <Timer.h>
 
-#include <Scene/SceneForwards.h>
+#include <Bin3D/Forwards.h>
 #include <Render/RenderForwards.h>
 #include <UI/Systems/UISystem.h>
 #include <UI/Systems/RenderGraphSystem.h>
@@ -32,7 +32,7 @@ namespace Engine
         void OnResize(int32 width, int32 height);
 
     private:
-        void InitScene(const Scene::Loader::SceneDto &scene);
+        void InitScene(SharedPtr<Bin3D::SceneStorage> scene);
 
     private:
         SharedPtr<Render::RenderContext> mRenderContext;

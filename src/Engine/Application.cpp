@@ -20,7 +20,7 @@
 #include <HAL/SwapChain.h>
 #include <HAL/CommandQueue.h>
 
-#include <Scene/Loader/SceneDto.h>
+#include <Bin3D/SceneStorage.h>
 #include <Scene/SceneObject.h>
 #include <Scene/SceneLoadingInfo.h>
 #include <Scene/Loader/SceneLoader.h>
@@ -67,6 +67,7 @@ namespace Engine
 
         mSceneLoadingInfo = MakeShared<Scene::SceneLoadingInfo>();
         mSceneLoadingInfo->scenes = {
+            { "Sponza.Bin3D", R"(C:\Users\Maxim\Documents\dev\3d\3DModels\sponza\sponza.bin3d)"},
             { "Sponza", R"(Resources\Scenes\gltf2\sponza\sponza.gltf)" },
             { "Corset", R"(Resources\Scenes\glTF-Sample-Models-master\2.0\Corset\glTF\Corset.gltf)" },
             { "Axis Test", R"(Resources\Scenes\gltf2\axis.gltf)" },
@@ -83,11 +84,11 @@ namespace Engine
 
         mRenderer = MakeShared<Render::Renderer>(mRenderContext);
 
-        mSceneLoadingInfo->scenePath = mSceneLoadingInfo->scenes["Sponza"];
+        mSceneLoadingInfo->scenePath = mSceneLoadingInfo->scenes["Sponza.Bin3D"];
         mSceneLoadingInfo->loadScene = true;
     }
 
-    void Application::InitScene(const Scene::Loader::SceneDto &sceneDto)
+    void Application::InitScene(SharedPtr<Bin3D::SceneStorage> sceneDto)
     {
         UniquePtr<Scene::SceneObject> scene = MakeUnique<Scene::SceneObject>();
 

@@ -22,11 +22,6 @@ namespace Bin3D
         
         DirectX::XMFLOAT4X4 LocalTransform;
         
-        union
-        {
-            Bin3D::DataRegion MeshIndices;
-            uint32_t LightIndex;
-            uint32_t CameraIndex;
-        };
+        Bin3D::DataRegion DataIndex;
     };
 }

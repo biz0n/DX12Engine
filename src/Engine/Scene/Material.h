@@ -1,70 +1,18 @@
 #pragma once
 
 #include <Types.h>
+#include <Bin3D/Material.h>
 #include <Scene/SceneForwards.h>
 #include <Memory/Texture.h>
 #include <DirectXMath.h>
 
 namespace Engine::Scene
 {
-    enum AlphaMode
-    {
-        Opaque,
-        Mask,
-        Blend,
-    };
-
-    struct TextureInfo
-    {
-        Index texCoord = 0;
-    };
-
-    struct NormalTextureInfo : TextureInfo
-    {
-        float32 scale = 1;
-    };
-
-    struct EmmissiveTextureInfo : TextureInfo
-    {
-        float32 strength = 1;
-    };
-
-    struct BaseColor
-    {
-        TextureInfo info;
-        DirectX::XMFLOAT4 baseColor = {1, 1, 1, 1};
-    };
-
-    struct MetallicRaughness
-    {
-        TextureInfo info;
-        float32 metallicFactor = 1;
-        float32 roughnessFactor = 1;
-    };
-
-    struct Emissive
-    {
-        EmmissiveTextureInfo info;
-        DirectX::XMFLOAT3 factor = {0, 0, 0};
-    };
-
-    struct MaterialProperties
-    {
-        BaseColor baseColor;
-        MetallicRaughness metallicRaughness;
-        NormalTextureInfo normalTextureInfo;
-        Emissive emissive;
-        AlphaMode alphaMode = AlphaMode::Opaque;
-        float32 alphaCutoff = 0.5f;
-        bool doubleSided = false;
-        bool unlit = false;
-    };
-
     struct Material
     {
     public:
-        void SetProperties(const MaterialProperties &properties) { mMaterialProperties = properties; }
-        const MaterialProperties &GetProperties() const { return mMaterialProperties; }
+        void SetProperties(const Bin3D::MaterialProperties &properties) { mMaterialProperties = properties; }
+        const Bin3D::MaterialProperties &GetProperties() const { return mMaterialProperties; }
 
         void SetBaseColorTexture(const SharedPtr<Memory::Texture> &texture) { mBaseColorTexture = texture; }
         void SetNormalTexture(const SharedPtr<Memory::Texture> &texture) { mNormalTexture = texture; }
@@ -85,7 +33,7 @@ namespace Engine::Scene
         bool HasEmissiveTexture() const { return mEmissiveTexture != nullptr; }
 
     private:
-        MaterialProperties mMaterialProperties;
+        Bin3D::MaterialProperties mMaterialProperties;
         SharedPtr<Memory::Texture> mBaseColorTexture;
         SharedPtr<Memory::Texture> mNormalTexture;
         SharedPtr<Memory::Texture> mMetallicRoughnessTexture;
