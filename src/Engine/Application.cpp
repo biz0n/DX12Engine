@@ -112,25 +112,7 @@ namespace Engine
         scene->AddSystem(MakeUnique<Scene::Systems::CameraSystem>(mRenderContext));
         scene->AddSystem(MakeUnique<Scene::Systems::LightCameraSystem>(mRenderContext));
 
-       // scene->AddSystem(MakeUnique<Render::Systems::DepthPassSystem>(renderer));
-        
-      //  scene->AddSystem(MakeUnique<Render::Systems::ToneMappingPassSystem>(renderer));
-      //  scene->AddSystem(MakeUnique<Render::Systems::CubePassSystem>(renderer));
-        
-      //  scene->AddSystem(MakeUnique<Render::Systems::BackBufferPassSystem>(renderer));
-      //  scene->AddSystem(MakeUnique<Render::Systems::ForwardPassSystem>(renderer));
-
         scene->AddSystem(MakeUnique<Scene::Systems::MovingSystem>(mKeyboard));
-
-      //  scene->AddSystem(MakeUnique<Render::Systems::UploadSceneSystem>(sceneStorage, mRenderContext));
-
-       // scene->AddSystem(MakeUnique<Render::Systems::RenderSystem>(mRenderer));
-
-       // scene->AddSystem(MakeUnique<UI::Systems::UISystem>(mRenderContext, sceneStorage));
-        //scene->AddSystem(MakeUnique<UI::Systems::RenderGraphSystem>(renderer));
-
-       // scene->AddSystem(MakeUnique<Render::Systems::RenderCleanupSystem>(renderer));
-
 
         mUiSystem = MakeUnique<UI::Systems::UISystem>(mRenderContext, sceneStorage);
         mRenderGraphSystem = MakeUnique<UI::Systems::RenderGraphSystem>(mRenderer);

@@ -14,7 +14,6 @@ namespace Engine::Scene::Systems
             MovingSystem(SharedPtr<Keyboard> keyboard);
             ~MovingSystem() override;
         public:
-            void Init(SceneObject *scene) override;
             void Process(SceneObject *scene, const Timer& timer) override;
         private:
             SharedPtr<Keyboard> mKeyboard;

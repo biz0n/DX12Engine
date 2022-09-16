@@ -6,6 +6,7 @@
 #include <Scene/Components/MovingComponent.h>
 #include <Scene/Components/LocalTransformComponent.h>
 #include <Scene/Components/WorldTransformComponent.h>
+#include <Scene/Components/RelationshipComponent.h>
 
 #include <entt/entt.hpp>
 
@@ -17,29 +18,26 @@ namespace Engine::Scene::Systems
 
    MovingSystem::~MovingSystem() = default;
 
-   void MovingSystem::Init(SceneObject *scene)
-   {
-      auto& registry = scene->GetRegistry();
-      const auto &view = registry.view<Components::MovingComponent, Components::LocalTransformComponent>();
-      for (auto &&[entity, movingComponent, transformComponent] : view.each())
-      {
-         float32 pitch, yaw, roll;
-         Math::ExtractPitchYawRollFromXMMatrix(&pitch, &yaw, &roll, &transformComponent.transform);
-         movingComponent.mPitch = pitch;
-         movingComponent.mYaw = yaw;
-      }
-   }
-
    void MovingSystem::Process(SceneObject *scene, const Timer &timer)
    {
       auto& registry = scene->GetRegistry();
-      const auto &view = registry.view<Components::MovingComponent, Components::LocalTransformComponent>();
+      const auto &view = registry.view<
+          Components::MovingComponent,
+          Components::WorldTransformComponent,
+          Components::RelationshipComponent>();
 
       const float32 speed = 5 * timer.DeltaTime();
       const float32 rotationSpeed = 1.0f * timer.DeltaTime();
 
-      for (auto &&[entity, movingComponent, transformComponent] : view.each())
+      for (auto &&[entity, movingComponent, worldTransform, relationship] : view.each())
       {
+          {
+              float32 pitch, yaw, roll;
+              Math::ExtractPitchYawRollFromXMMatrix(&pitch, &yaw, &roll, &worldTransform.transform);
+              movingComponent.mPitch = pitch;
+              movingComponent.mYaw = yaw; 
+          }
+
          float32 xTranslate = 0;
          float32 zTranslate = 0;
          if (mKeyboard->IsKeyPressed(KeyCode::Key::Up))
@@ -81,7 +79,7 @@ namespace Engine::Scene::Systems
          dx::XMVECTOR s;
          dx::XMVECTOR r;
          dx::XMVECTOR t;
-         dx::XMMatrixDecompose(&s, &r, &t, transformComponent.transform);
+         dx::XMMatrixDecompose(&s, &r, &t, worldTransform.transform);
 
          using namespace dx;
 
@@ -97,9 +95,17 @@ namespace Engine::Scene::Systems
                 rotationMatrix);
 
          auto translate = dx::XMMatrixTranslationFromVector(t + positionOffset);
-         transformComponent.transform = rotationMatrix * translate;
+         auto localTransform = rotationMatrix * translate;
 
-         registry.replace<Components::LocalTransformComponent>(entity, transformComponent);
+         if (relationship.parent != entt::null)
+         {
+             const auto& parentWorldTransform = registry.get<Components::WorldTransformComponent>(relationship.parent);
+             dx::XMVECTOR D;
+             auto inverseParentWorldTransform = dx::XMMatrixInverse(&D, parentWorldTransform.transform);
+             localTransform = localTransform * inverseParentWorldTransform;
+         }
+
+         registry.replace<Components::LocalTransformComponent>(entity, localTransform);
       }
    }
 } // namespace Engine::Scene::Systems
