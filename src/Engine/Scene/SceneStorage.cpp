@@ -1,7 +1,7 @@
 #include "SceneStorage.h"
 
 
-#include <Scene/Mesh.h>
+#include <Scene/MeshResources.h>
 #include <Scene/Material.h>
 #include <Memory/Texture.h>
 #
@@ -10,7 +10,7 @@
 
 namespace Engine::Scene
 {
-    SceneStorage::SceneStorage(std::vector<SharedPtr<Memory::Texture>>&& textures, std::vector<Material>&& materials, std::vector<Mesh>&& meshes, SceneData&& sceneData) :
+    SceneStorage::SceneStorage(std::vector<SharedPtr<Memory::Texture>>&& textures, std::vector<Material>&& materials, std::vector<MeshResources>&& meshes, SceneData&& sceneData) :
         mTextures{ textures }, mMaterials{ materials }, mMeshes{ meshes }, mSceneData{ sceneData }
     {
 

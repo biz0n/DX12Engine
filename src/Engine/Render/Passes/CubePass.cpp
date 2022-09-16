@@ -19,10 +19,7 @@
 #include <Render/RenderPassMediators/ResourcePlanner.h>
 #include <Render/RenderRequest.h>
 
-#include <Scene/Vertex.h>
 #include <Scene/SceneObject.h>
-#include <Scene/CubeMap.h>
-#include <Scene/Camera.h>
 
 #include <Memory/TextureCreationInfo.h>
 #include <Memory/Texture.h>

@@ -11,7 +11,7 @@ int main(int argc, char* argv[])
     auto path = R"(C:\Users\Maxim\Documents\dev\3d\src\Engine\Resources\Scenes\gltf2\sponza\sponza.gltf)";
 
     std::filesystem::path output = R"(C:\Users\Maxim\Documents\dev\3d\3DModels\sponza)";
-   // auto path = R"(C:\Users\Maxim\Downloads\Main\Main\NewSponza_Main_Blender_glTF - Copy.gltf)";
+    //auto path = R"(C:\Users\Maxim\Downloads\Main\Main\NewSponza_Main_Blender_glTF - Copy.gltf)";
 
     SceneConverter::Importer::SceneImporter importer;
 

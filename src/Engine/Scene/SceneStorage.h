@@ -2,7 +2,7 @@
 
 #include <Types.h>
 
-#include <Scene/Mesh.h>
+#include <Scene/MeshResources.h>
 #include <Scene/Material.h>
 #include <Memory/Texture.h>
 
@@ -23,18 +23,18 @@ namespace Engine::Scene
     class SceneStorage
     {
     public:
-        SceneStorage(std::vector<SharedPtr<Memory::Texture>>&& textures, std::vector<Material>&& materials, std::vector<Mesh>&& meshes, SceneData&& sceneData);
+        SceneStorage(std::vector<SharedPtr<Memory::Texture>>&& textures, std::vector<Material>&& materials, std::vector<MeshResources>&& meshes, SceneData&& sceneData);
         ~SceneStorage() = default;
 
     public:
-        const std::vector<Scene::Mesh>& GetMeshes() const { return mMeshes; }
+        const std::vector<Scene::MeshResources>& GetMeshes() const { return mMeshes; }
         const std::vector<Material>& GetMaterials() const { return mMaterials; }
         const SceneData& GetSceneData() const { return mSceneData; }
 
     private:
         std::vector<SharedPtr<Memory::Texture>> mTextures;
         std::vector<Material> mMaterials;
-        std::vector<Mesh> mMeshes;
+        std::vector<MeshResources> mMeshes;
         SceneData mSceneData;
     }; 
 

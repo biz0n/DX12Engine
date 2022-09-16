@@ -6,15 +6,12 @@
 #include <vector>
 #include <DirectXTex.h>
 
-#define GENERATE_MIPS true
-
 namespace Engine::Scene
 {
     class Image
     {
     public:
-        static SharedPtr<Image> LoadImageFromFile(String path, bool generateMips = GENERATE_MIPS);
-        static SharedPtr<Image> LoadImageFromData(const std::vector<Byte> &data, String extension, String name, bool generateMips = GENERATE_MIPS);
+        static SharedPtr<Image> LoadImageFromFile(String path);
         static SharedPtr<Image> CreateFromColor(DirectX::XMFLOAT4 color, String name);
 
         Image() = default;

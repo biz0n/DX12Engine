@@ -11,8 +11,6 @@
 #include <Scene/Components/AABBComponent.h>
 #include <Scene/SceneStorage.h>
 
-#include <Scene/PunctualLight.h>
-#include <Scene/Camera.h>
 #include <Scene/Image.h>
 
 #include <Memory/Texture.h>
@@ -52,7 +50,7 @@ namespace Engine::Scene
             if (name != "")
             {
                 std::filesystem::path imagePath = context.scene->GetPath() / name;
-                auto image = Image::LoadImageFromFile(imagePath.string(), false);
+                auto image = Image::LoadImageFromFile(imagePath.string());
                 context.textures.push_back(GetTexture(image));
             }
             else
@@ -70,7 +68,7 @@ namespace Engine::Scene
         context.meshes.reserve(scene->GetMeshes().size());
         for (const auto& mesh : scene->GetMeshes())
         {
-            context.meshes.push_back(GetMesh(context, mesh));
+            context.meshes.push_back(GetMeshResources(context, mesh));
         }
 
         BuildNodeHierarchy(context);
@@ -161,27 +159,13 @@ namespace Engine::Scene
 
     }
 
-    void SceneToGPULoader::CreateLightNode(Context& context, const Bin3D::PunctualLight& lightDto, entt::entity entity)
+    void SceneToGPULoader::CreateLightNode(Context& context, const Bin3D::PunctualLight& light, entt::entity entity)
     {
-        PunctualLight light;
-
-        light.SetEnabled(true);
-
-        light.SetLightType((LightType)lightDto.LightType);
-        light.SetColor(lightDto.Color);
-        light.SetIntensity(lightDto.Intensity);
-        light.SetConstantAttenuation(lightDto.ConstantAttenuation);
-        light.SetLinearAttenuation(lightDto.LinearAttenuation);
-        light.SetQuadraticAttenuation(lightDto.QuadraticAttenuation);
-        light.SetInnerConeAngle(lightDto.InnerConeAngle);
-        light.SetOuterConeAngle(lightDto.OuterConeAngle);
-
         Components::LightComponent lightComponent;
         lightComponent.light = light;
-        context.lights.push_back(light);
 
         context.registry->emplace<Components::LightComponent>(entity, lightComponent);
-        context.registry->emplace<Components::CameraComponent>(entity, Camera());
+        context.registry->emplace<Components::CameraComponent>(entity, Components::CameraComponent{});
     }
 
     void SceneToGPULoader::CreateMeshNode(Context& context, const Bin3D::Node& node, entt::entity entity, Engine::Scene::Components::RelationshipComponent* relationship)
@@ -233,15 +217,8 @@ namespace Engine::Scene
         }
     }
 
-    void SceneToGPULoader::CreateCameraNode(Context& context, const Bin3D::Camera& cameraDto, entt::entity entity)
+    void SceneToGPULoader::CreateCameraNode(Context& context, const Bin3D::Camera& camera, entt::entity entity)
     {
-        Camera camera;
-
-        camera.SetNearPlane(cameraDto.NearPlane);
-        camera.SetFarPlane(cameraDto.FarPlane);
-        camera.SetFoV(cameraDto.FoV);
-        camera.SetType((CameraType)cameraDto.Type);
-
         Components::CameraComponent cameraComponent;
         cameraComponent.camera = camera;
 
@@ -365,34 +342,29 @@ namespace Engine::Scene
         return material;
     }
 
-    Mesh SceneToGPULoader::GetMesh(Context& context, const Bin3D::Mesh& meshDto)
+    MeshResources SceneToGPULoader::GetMeshResources(Context& context, const Bin3D::Mesh& meshDto)
     {
         auto indices = context.scene->GetIndices(meshDto.Indices);
         auto vertices = context.scene->GetVertices(meshDto.Vertices);
 
         using TIndexType = typename std::decay<decltype(*indices.begin())>::type;
         using TVertexType = typename std::decay<decltype(*vertices.begin())>::type;
-        const Size indicesCount = indices.size();
-        const Size verticesCount = vertices.size();
 
         std::string meshName = context.scene->GetString(meshDto.NameIndex).data();
 
-        Mesh mesh;
-        mesh.indexBuffer = mResourceFactory->CreateIndexBuffer(indicesCount, sizeof(TIndexType), D3D12_RESOURCE_STATE_COMMON);
+        MeshResources mesh;
+        mesh.indexBuffer = mResourceFactory->CreateIndexBuffer(indices.size(), sizeof(TIndexType), D3D12_RESOURCE_STATE_COMMON);
         mesh.indexBuffer->SetName("Indices: " + meshName);
 
-        mesh.vertexBuffer = mResourceFactory->CreateVertexBuffer(verticesCount, sizeof(TVertexType), D3D12_RESOURCE_STATE_COMMON);
+        mesh.vertexBuffer = mResourceFactory->CreateVertexBuffer(vertices.size(), sizeof(TVertexType), D3D12_RESOURCE_STATE_COMMON);
         mesh.vertexBuffer->SetName("Vertices: " + meshName);
-
-        mesh.verticesCount = verticesCount;
-        mesh.indicesCount = indicesCount;
-
+        
         Memory::Buffer::ScheduleUploading(
             mResourceFactory, 
             mResourceCopyManager, 
             mesh.indexBuffer.get(), 
             indices.data(), 
-            indicesCount * sizeof(TIndexType), 
+            indices.size_bytes(),
             D3D12_RESOURCE_STATE_INDEX_BUFFER);
 
         Memory::Buffer::ScheduleUploading(
@@ -400,7 +372,7 @@ namespace Engine::Scene
             mResourceCopyManager, 
             mesh.vertexBuffer.get(), 
             vertices.data(), 
-            verticesCount * sizeof(TVertexType), 
+            vertices.size_bytes(),
             D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
         return mesh;

@@ -32,9 +32,8 @@ namespace Engine::Scene::Systems
 
         for (auto &&[entity, cameraComponent, transformComponent] : view.each())
         {
-            auto& camera = cameraComponent.camera;
             auto& world = transformComponent.transform;
-            auto projectionMatrix = camera.GetProjectionMatrix(width, height);
+            auto projectionMatrix = cameraComponent.GetProjectionMatrix(width, height);
 
             dx::XMVECTOR sc;
             dx::XMVECTOR rt;

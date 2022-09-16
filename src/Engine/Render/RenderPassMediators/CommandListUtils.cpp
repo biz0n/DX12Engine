@@ -12,11 +12,8 @@
 #include <Render/RenderContext.h>
 #include <Render/RenderPassMediators/PassCommandRecorder.h>
 
-#include <Scene/Loader/SceneLoader.h>
 #include <Scene/Image.h>
 #include <Scene/Material.h>
-#include <Scene/PunctualLight.h>
-#include <Scene/Camera.h>
 
 #include <DirectXTex.h>
 #include <DirectXMath.h>

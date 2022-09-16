@@ -21,9 +21,10 @@
 #include <HAL/CommandQueue.h>
 
 #include <Bin3D/SceneStorage.h>
+#include <Bin3D/Reader/BinaryReader.h>
+
 #include <Scene/SceneObject.h>
 #include <Scene/SceneLoadingInfo.h>
-#include <Scene/Loader/SceneLoader.h>
 #include <Scene/SceneToGPULoader.h>
 #include <Scene/SceneStorage.h>
 
@@ -147,11 +148,9 @@ namespace Engine
                     CoInitialize(nullptr);
 
 
-                    Scene::Loader::SceneLoader loader;
+                    Bin3D::Reader::BinaryReader reader;
 
-
-                    auto sceneDto = loader.LoadScene(mSceneLoadingInfo->scenePath);
-
+                    auto sceneDto = reader.ReadScene(mSceneLoadingInfo->scenePath);
 
                     return sceneDto;
                 });

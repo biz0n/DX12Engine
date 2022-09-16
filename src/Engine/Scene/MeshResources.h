@@ -8,9 +8,9 @@
 
 namespace Engine::Scene
 {
-    class CubeMap
+    struct MeshResources
     {
-    public:
-        SharedPtr<Memory::Texture> texture;
+        SharedPtr<Memory::IndexBuffer> indexBuffer;
+        SharedPtr<Memory::VertexBuffer> vertexBuffer;
     };
 }

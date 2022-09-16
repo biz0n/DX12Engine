@@ -4,11 +4,12 @@
 
 #include <Memory/MemoryForwards.h>
 #include <Bin3D/SceneStorage.h>
+#include <Bin3D/PunctualLight.h>
 #include <Scene/Components/ComponentsForwards.h>
 #include <Scene/Material.h>
-#include <Scene/Mesh.h>
+#include <Scene/MeshResources.h>
 #include <Scene/SceneStorage.h>
-#include <Scene/PunctualLight.h>
+
 #include <entt/entt.hpp>
 #include <tuple>
 #include <DirectXCollision.h>
@@ -37,7 +38,7 @@ namespace Engine::Scene
 
         SharedPtr<Memory::Texture> GetTexture(SharedPtr<Image> image);
         Material GetMaterial(Context& context, const Bin3D::Material& materialDto, const SceneData& sceneData);
-        Mesh GetMesh(Context& context, const Bin3D::Mesh& meshDto);
+        MeshResources GetMeshResources(Context& context, const Bin3D::Mesh& meshDto);
         SharedPtr<Memory::Texture> CreateTexture(DirectX::XMFLOAT4 color, String name);
         Engine::Scene::SceneData CreateSceneData(const SceneDataDto& sceneData);
     private:
@@ -46,8 +47,7 @@ namespace Engine::Scene
             entt::registry* registry;
             std::vector<SharedPtr<Memory::Texture>> textures;
             std::vector<Material> materials;
-            std::vector<Mesh> meshes;
-            std::vector<PunctualLight> lights;
+            std::vector<MeshResources> meshes;
             SharedPtr<Bin3D::SceneStorage> scene;
             bool isMainCameraAssigned;
         };

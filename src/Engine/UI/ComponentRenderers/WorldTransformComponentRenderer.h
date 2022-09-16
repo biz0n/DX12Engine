@@ -7,7 +7,6 @@
 #include <Scene/Components/WorldTransformComponent.h>
 #include <Scene/Components/LocalTransformComponent.h>
 #include <Scene/Components/RelationshipComponent.h>
-#include <Scene/Camera.h>
 #include <Scene/Components/CameraComponent.h>
 #include <MathUtils.h>
 

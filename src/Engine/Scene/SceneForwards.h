@@ -12,7 +12,7 @@ namespace Engine::Scene
     class CubeMap;
     class SceneObject;
     class Material;
-    class Mesh;
+    class MeshResources;
     class PunctualLight;
     class Texture;
     class Image;

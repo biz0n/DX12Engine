@@ -4,9 +4,8 @@
 
 #include <EngineConfig.h>
 
-#include <Scene/Mesh.h>
+#include <Scene/MeshResources.h>
 #include <Scene/Material.h>
-#include <Scene/Vertex.h>
 #include <Scene/SceneStorage.h>
 
 #include <Render/RootSignatureBuilder.h>
@@ -120,6 +119,6 @@ namespace Engine::Render::Passes
 
         commandRecorder->SetRoot32BitConstant(0, 0, meshIndex);
 
-        commandRecorder->Draw(mesh.indicesCount, 0);
+        commandRecorder->Draw(mesh.indexBuffer->GetElementsCount(), 0);
     }
 } // namespace Engine::Render::Passes

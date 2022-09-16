@@ -3,7 +3,6 @@
 #include <UI/ComponentRenderers/ComponentRenderer.h>
 
 #include <Scene/Components/CameraComponent.h>
-#include <Scene/Camera.h>
 
 #include <entt/entt.hpp>
 #include <imgui/imgui.h>
@@ -24,10 +23,10 @@ namespace Engine::UI::ComponentRenderers
             {
                 auto camera = component.camera;
 
-                const auto farPlane = camera.GetFarPlane();
-                const auto nearPlane = camera.GetNearPlane();
-                const auto fov = camera.GetFoV();
-                const auto type = camera.GetType();
+                const auto farPlane = camera.FarPlane;
+                const auto nearPlane = camera.NearPlane;
+                const auto fov = camera.FoV;
+                const auto type = camera.Type;
 
                 auto newFoV = dx::XMConvertToDegrees(fov);
                 
@@ -42,25 +41,25 @@ namespace Engine::UI::ComponentRenderers
                 if (ImGui::Combo("Type", &itemCurrent, keys))
                 {
                     changed = true;
-                    camera.SetType(static_cast<Scene::CameraType>(itemCurrent));
+                    camera.Type = static_cast<Bin3D::CameraType>(itemCurrent);
                 }
 
-                if (camera.GetType() == Scene::CameraType::Perspective && ImGui::SliderFloat("FoV", &newFoV, 1.0f, 180.0f))
+                if (camera.Type == Bin3D::CameraType::Perspective && ImGui::SliderFloat("FoV", &newFoV, 1.0f, 180.0f))
                 {
-                    camera.SetFoV(dx::XMConvertToRadians(newFoV));
+                    camera.FoV = dx::XMConvertToRadians(newFoV);
                     changed = true;
                 }
 
                 if (ImGui::SliderFloat("Near", &newNearPlane, 0.001f, 1000.0f))
                 {
-                    camera.SetNearPlane(newNearPlane);
-                    camera.SetFarPlane(std::max(newNearPlane + 1, newFarPlane));
+                    camera.NearPlane = newNearPlane;
+                    camera.FarPlane = std::max(newNearPlane + 1, newFarPlane);
                     changed = true;
                 }
 
                 if (ImGui::SliderFloat("Far", &newFarPlane, newNearPlane + 1, 1000.0f))
                 {
-                    camera.SetFarPlane(newFarPlane);
+                    camera.FarPlane = newFarPlane;
                     changed = true;
                 }
 

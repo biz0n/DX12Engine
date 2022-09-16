@@ -3,7 +3,6 @@
 #include <UI/ComponentRenderers/ComponentRenderer.h>
 
 #include <Scene/Components/LightComponent.h>
-#include <Scene/PunctualLight.h>
 
 #include <entt/entt.hpp>
 #include <imgui/imgui.h>
@@ -24,11 +23,11 @@ namespace Engine::UI::ComponentRenderers
             {
                 auto light = component.light;
 
-                const auto color = light.GetColor();
-                const float intensity = light.GetIntensity();
-                const float constantAttenuation = light.GetConstantAttenuation();
-                const float linearAttenuation = light.GetLinearAttenuation();
-                const float quadraticAttenuation = light.GetQuadraticAttenuation();
+                const auto& color = light.Color;
+                const float intensity = light.Intensity;
+                const float constantAttenuation = light.ConstantAttenuation;
+                const float linearAttenuation = light.LinearAttenuation;
+                const float quadraticAttenuation = light.QuadraticAttenuation;
 
                 float normalizedColor[3] = {color.x, color.y, color.z};
                 float newIntensity = intensity;
@@ -37,38 +36,38 @@ namespace Engine::UI::ComponentRenderers
                 float newLinearAttenuation = linearAttenuation;
                 float newQuadraticAttenuation = quadraticAttenuation;
 
-                const std::string types[3] = {"Directiona", "Point", "Spot"};
-                ImGui::LabelText("Type", types[(uint32)light.GetLightType()].c_str());
+                const std::string types[3] = {"Directional", "Point", "Spot"};
+                ImGui::LabelText("Type", types[(uint32)light.LightType].c_str());
 
                 bool changed = false;
                 if (ImGui::SliderFloat("Intensity", &newIntensity, 0.1f, 100.0f))
                 {
-                    light.SetIntensity(newIntensity);
+                    light.Intensity = newIntensity;
                     changed = true;
                 }
 
                 if (ImGui::ColorEdit3("Color", normalizedColor))
                 {
                     dx::XMFLOAT3 newColor = { (normalizedColor[0]), (normalizedColor[1]), (normalizedColor[2])};
-                    light.SetColor(newColor);
+                    light.Color = newColor;
                     changed = true;
                 }
 
                 if (ImGui::SliderFloat("ConstantAttenuation", &newConstantAttenuation, 0.0f, 10.0f))
                 {
-                    light.SetConstantAttenuation(newConstantAttenuation);
+                    light.ConstantAttenuation = newConstantAttenuation;
                     changed = true;
                 }
 
                 if (ImGui::SliderFloat("LinearAttenuation", &newLinearAttenuation, 0.0f, 10.0f))
                 {
-                    light.SetLinearAttenuation(newLinearAttenuation);
+                    light.LinearAttenuation = newLinearAttenuation;
                     changed = true;
                 }
 
                 if (ImGui::SliderFloat("QuadraticAttenuation", &newQuadraticAttenuation, 0.0f, 10.0f))
                 {
-                    light.SetQuadraticAttenuation(newQuadraticAttenuation);
+                    light.QuadraticAttenuation = newQuadraticAttenuation;
                     changed = true;
                 }
 

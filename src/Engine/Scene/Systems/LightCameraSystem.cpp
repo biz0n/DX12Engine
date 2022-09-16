@@ -5,8 +5,9 @@
 #include <Render/RenderContext.h>
 #include <HAL/SwapChain.h>
 
+#include <Bin3D/Camera.h>
+#include <Bin3D/PunctualLight.h>
 #include <Scene/SceneObject.h>
-#include <Scene/PunctualLight.h>
 #include <Scene/Components/CameraComponent.h>
 #include <Scene/Components/LightComponent.h>
 #include <Scene/Components/WorldTransformComponent.h>
@@ -56,35 +57,46 @@ namespace Engine::Scene::Systems
 
             dx::XMMATRIX viewMatrix;
             dx::XMMATRIX projectionMatrix;
-            CameraType cameraType;
 
             dx::XMVECTOR direction = dx::XMVector4Transform(forward, world);
 
-            switch(light.GetLightType())
+            auto lMax = std::max(light.Color.x, std::max(light.Color.y, light.Color.z)) * light.Intensity;
+            auto maxDistance = (
+                -light.LinearAttenuation + std::sqrtf(
+                        light.LinearAttenuation * light.LinearAttenuation - 4 * light.QuadraticAttenuation * (light.ConstantAttenuation - (256.0 / 5.0) * lMax)
+                    )
+                )
+                / (2 * (light.QuadraticAttenuation + 0.0001f));
+
+            maxDistance = std::max(maxDistance, 0.1f);
+
+            switch(light.LightType)
             {
-                case LightType::SpotLight:
+                case Bin3D::LightType::SpotLight:
                 {
                     viewMatrix = dx::XMMatrixLookToLH(tr, direction, up);
-                    camera.SetType(CameraType::Perspective);
-                    projectionMatrix = camera.GetProjectionMatrix(EngineConfig::ShadowWidth, EngineConfig::ShadowHeight);
-                    camera.SetFoV(light.GetOuterConeAngle());
-                    cameraType = CameraType::Perspective;
+                    camera.Type = Bin3D::CameraType::Perspective;
+                    camera.NearPlane = 0.0001f;
+                    camera.FarPlane = maxDistance;
+                    camera.FoV = light.OuterConeAngle;
+                    projectionMatrix = cameraComponent.GetProjectionMatrix(EngineConfig::ShadowWidth, EngineConfig::ShadowHeight);
                 }
                 break;
-                case LightType::PointLight: // not supported for now, but light will show only forward camera
+                case Bin3D::LightType::PointLight: // not supported for now, but light will show only forward camera
                     viewMatrix = dx::XMMatrixLookToLH(tr, forward, up);
-                    camera.SetType(CameraType::Perspective);
-                    projectionMatrix = camera.GetProjectionMatrix(EngineConfig::ShadowWidth, EngineConfig::ShadowHeight);
-                    camera.SetFoV(dx::XMConvertToRadians(90));
-                    cameraType = CameraType::Perspective;
+                    camera.Type = Bin3D::CameraType::Perspective;
+                    camera.NearPlane = 0.0001f;
+                    camera.FarPlane = maxDistance;
+                    camera.FoV = dx::XMConvertToRadians(90);
+                    projectionMatrix = cameraComponent.GetProjectionMatrix(EngineConfig::ShadowWidth, EngineConfig::ShadowHeight);
                 break;
-                case LightType::DirectionalLight:
+                case Bin3D::LightType::DirectionalLight:
                 {
                     viewMatrix = dx::XMMatrixLookToLH(tr, direction, up);
                     dx::XMVECTOR D;
                     const auto inverseView = dx::XMMatrixInverse(&D, viewMatrix);
                     dx::XMMatrixDecompose(&unused, &rt, &unused, inverseView);
-                    camera.SetType(CameraType::Orthographic);
+                    camera.Type = Bin3D::CameraType::Orthographic;
 
                     const auto &boundingBoxes = registry.view<Scene::Components::AABBComponent>(entt::exclude<Scene::Components::IsDisabledComponent>);
 
@@ -126,12 +138,14 @@ namespace Engine::Scene::Systems
                     const float32 nearPlane = dx::XMVectorGetZ(dx::XMVector3Length(tr - boxCenter)) - boxHalfDepth;
                     const float32 farPlane = nearPlane + boxHalfDepth + boxHalfDepth;
 
-                    camera.SetNearPlane(nearPlane);
-                    camera.SetFarPlane(farPlane);
+                    camera.NearPlane = nearPlane;
+                    camera.FarPlane = farPlane;
+                    camera.OrthographicXMag = 1;
+                    camera.OrthographicYMag = 1;
 
                     viewMatrix = dx::XMMatrixLookToLH(tr, direction, up);
                     const auto maxDimension = 2 * std::max(boxWidth, boxHeight);
-                    projectionMatrix = camera.GetProjectionMatrix(maxDimension, maxDimension);
+                    projectionMatrix = cameraComponent.GetProjectionMatrix(maxDimension, maxDimension);
                 }
                 break;
             }

@@ -8,7 +8,7 @@
 #include <UI/ComponentRenderers/ComponentRenderer.h>
 
 #include <Scene/Components/MeshComponent.h>
-#include <Scene/Mesh.h>
+#include <Scene/MeshResources.h>
 #include <Scene/Material.h>
 #include <Scene/SceneStorage.h>
 

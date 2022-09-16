@@ -1,11 +1,11 @@
 #pragma once
 
-#include <Scene/PunctualLight.h>
+#include <Bin3D/PunctualLight.h>
 
 namespace Engine::Scene::Components
 {
     struct LightComponent
     {
-        PunctualLight light;
+        Bin3D::PunctualLight light;
     };
 }

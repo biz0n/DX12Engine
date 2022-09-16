@@ -7,9 +7,8 @@
 #include <Scene/Components/CameraComponent.h>
 #include <Scene/Components/WorldTransformComponent.h>
 #include <Scene/Components/LightComponent.h>
-#include <Scene/PunctualLight.h>
-#include <Scene/Camera.h>
-#include <Scene/Mesh.h>
+
+#include <Scene/MeshResources.h>
 #include <Scene/Material.h>
 #include <Memory/VertexBuffer.h>
 #include <Memory/IndexBuffer.h>
@@ -63,7 +62,7 @@ namespace Engine::Render
         {
             if (!camera.frustum.Intersects(aabbComponent.boundingBox))
             {
-                continue;
+               // continue;
             }
 
             Shader::MeshUniform meshUniform = {};
@@ -155,19 +154,14 @@ namespace Engine::Render
 
         for (const auto&& [entity, lightComponent, transformComponent] : lightsView.each())
         {
-            if (!lightComponent.light.IsEnabled())
-            {
-                continue;
-            }
-
             Shader::LightUniform uniform = {};
 
             const auto& lightNode = lightComponent.light;
             const auto& world = transformComponent.transform;
 
-            uniform.LightType = lightNode.GetLightType();
-            auto color = lightNode.GetColor();
-            uniform.Color = { color.x * lightNode.GetIntensity(), color.y * lightNode.GetIntensity(), color.z * lightNode.GetIntensity() };
+            uniform.LightType = (int)lightNode.LightType;
+            auto color = lightNode.Color;
+            uniform.Color = { color.x * lightNode.Intensity, color.y * lightNode.Intensity, color.z * lightNode.Intensity };
 
             DirectX::XMStoreFloat3(&uniform.PositionWS,
                 DirectX::XMVector4Transform(
@@ -179,11 +173,11 @@ namespace Engine::Render
                     DirectX::XMVectorSet(0.f, 0.f, 1.f, 0.0f),
                     world));
 
-            uniform.ConstantAttenuation = lightNode.GetConstantAttenuation();
-            uniform.LinearAttenuation = lightNode.GetLinearAttenuation();
-            uniform.QuadraticAttenuation = lightNode.GetQuadraticAttenuation();
-            uniform.InnerConeAngle = lightNode.GetInnerConeAngle();
-            uniform.OuterConeAngle = lightNode.GetOuterConeAngle();
+            uniform.ConstantAttenuation = lightNode.ConstantAttenuation;
+            uniform.LinearAttenuation = lightNode.LinearAttenuation;
+            uniform.QuadraticAttenuation = lightNode.QuadraticAttenuation;
+            uniform.InnerConeAngle = lightNode.InnerConeAngle;
+            uniform.OuterConeAngle = lightNode.OuterConeAngle;
 
             lights.push_back(uniform);
         }
@@ -201,7 +195,7 @@ namespace Engine::Render
 
         for (auto&& [entity, cameraComponent, lightComponent] : cameras.each())
         {
-            if (lightComponent.light.GetLightType() == Scene::LightType::DirectionalLight)
+            if (lightComponent.light.LightType == Bin3D::LightType::DirectionalLight)
             {
                 RenderCamera renderCamera{};
                 renderCamera.projection = cameraComponent.projection;
