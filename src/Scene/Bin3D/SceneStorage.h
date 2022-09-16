@@ -33,7 +33,6 @@ namespace Bin3D
 
         const std::span<const Bin3D::ImagePath>& GetImagePaths() const { return mImagePaths; }
 
-        std::span<const uint32_t> GetMeshIndices(const DataRegion& range) const;
         std::span<const Bin3D::Vertex> GetVertices(const DataRegion& range) const;
         std::span<const uint32_t> GetIndices(const DataRegion& range) const;
 
@@ -57,7 +56,6 @@ namespace Bin3D
         std::span<const Bin3D::Camera> mCameras;
         std::span<const Bin3D::Sampler> mSamplers;
         
-        std::span<const uint32_t> mNodeMeshIndicesStorage;
         std::span<const Bin3D::Vertex> mVerticesStorage;
         std::span<const uint32_t> mIndicesStorage;
         std::span<const Bin3D::ImagePath> mImagePaths;

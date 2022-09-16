@@ -66,16 +66,6 @@ namespace SceneConverter::Model
         }
     }
 
-    Bin3D::DataRegion Scene::AddNodeMeshIndices(const std::vector<uint32_t>& indices)
-    {
-        Bin3D::DataRegion index = {};
-        index.Offset = mMeshIndicesStorage.size();
-        index.Size = indices.size();
-        mMeshIndicesStorage.insert(mMeshIndicesStorage.end(), indices.begin(), indices.end());
-
-        return index;
-    }
-
     Bin3D::DataRegion Scene::AddIndices(const std::vector<uint32_t>& indices)
     {
         Bin3D::DataRegion index = {};
@@ -150,16 +140,16 @@ namespace SceneConverter::Model
             switch (sceneNode.Type)
             {
             case Bin3D::Node::NodeType::Camera:
-                sceneNode.DataIndex = { node.CameraIndex.value_or(0), 0 };
+                sceneNode.DataIndex = node.CameraIndex.value_or(0);
                 break;
             case Bin3D::Node::NodeType::Light:
-                sceneNode.DataIndex = { node.LightIndex.value_or(0), 0 };
+                sceneNode.DataIndex = node.LightIndex.value_or(0);
                 break;
             case Bin3D::Node::NodeType::Mesh:
-                sceneNode.DataIndex = node.MeshIndices;
+                sceneNode.DataIndex = node.MeshIndex.value_or(0);
                 break;
             default:
-                sceneNode.DataIndex = { 0, 0 };
+                sceneNode.DataIndex = 0;
                 break;
             }
             

@@ -32,9 +32,9 @@ namespace Engine::Scene
         SharedPtr<SceneStorage> LoadSceneToGPU(entt::registry& registry, SharedPtr<Bin3D::SceneStorage> scene, const SceneDataDto& sceneData);
     private:
         static void BuildNodeHierarchy(Context& context);
-        static void CreateLightNode(Context& context, const Bin3D::PunctualLight& lightDto, entt::entity entity);
-        static void CreateMeshNode(Context& context, const Bin3D::Node& node, entt::entity entity, Engine::Scene::Components::RelationshipComponent* relationship);
-        static void CreateCameraNode(Context& context, const Bin3D::Camera& cameraDto, entt::entity entity);
+        static void CreateLightNode(Context& context, const Bin3D::PunctualLight& light, entt::entity entity);
+        static void CreateMeshNode(Context& context, const Bin3D::Mesh& mesh, uint32_t meshIndex, entt::entity entity);
+        static void CreateCameraNode(Context& context, const Bin3D::Camera& camera, entt::entity entity);
 
         SharedPtr<Memory::Texture> GetTexture(SharedPtr<Image> image);
         Material GetMaterial(Context& context, const Bin3D::Material& materialDto, const SceneData& sceneData);

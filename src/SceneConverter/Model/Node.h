@@ -14,7 +14,7 @@ namespace SceneConverter::Model
     {
         Bin3D::Node::NodeType Type;
         std::vector<Node> Children;
-        Bin3D::DataRegion MeshIndices;
+        std::optional<uint32_t> MeshIndex;
         std::optional<uint32_t> LightIndex;
         std::optional<uint32_t> CameraIndex;
         DirectX::XMFLOAT4X4 LocalTransform;

@@ -7,7 +7,6 @@ namespace Bin3D
 {
     struct Mesh
     {
-        DataRegion NameIndex;
         uint32_t MaterialIndex;
 
         DataRegion Vertices;

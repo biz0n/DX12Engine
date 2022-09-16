@@ -13,7 +13,6 @@ namespace Bin3D::Reader
         DataRegion Cameras;
         DataRegion Samplers;
 
-        DataRegion NodeMeshIndicesStorage;
         DataRegion VerticesStorage;
         DataRegion IndicesStorage;
         DataRegion ImagePaths;

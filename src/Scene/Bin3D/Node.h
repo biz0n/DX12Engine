@@ -22,6 +22,6 @@ namespace Bin3D
         
         DirectX::XMFLOAT4X4 LocalTransform;
         
-        Bin3D::DataRegion DataIndex;
+        uint32_t DataIndex;
     };
 }

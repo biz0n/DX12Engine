@@ -138,16 +138,20 @@ namespace Engine::Scene
 
             if (node.Type == Bin3D::Node::NodeType::Mesh)
             {
-                CreateMeshNode(context, node, entity, &relationships[i]);
+                const auto& mesh = scene->GetMeshes()[node.DataIndex];
+                CreateMeshNode(context, mesh, node.DataIndex, entity);
+
+                context.meshes[node.DataIndex].indexBuffer->SetName("Indices: " + nodeName);
+                context.meshes[node.DataIndex].vertexBuffer->SetName("Vertices: " + nodeName);
             }
             else if (node.Type == Bin3D::Node::NodeType::Light)
             {
-                auto& light = scene->GetLights()[node.DataIndex.Offset];
+                const auto& light = scene->GetLights()[node.DataIndex];
                 CreateLightNode(context, light, entity);
             }
             else if (node.Type == Bin3D::Node::NodeType::Camera)
             {
-                auto& camera = scene->GetCameras()[node.DataIndex.Offset];
+                const auto& camera = scene->GetCameras()[node.DataIndex];
                 CreateCameraNode(context, camera, entity);
             }
         }
@@ -168,53 +172,18 @@ namespace Engine::Scene
         context.registry->emplace<Components::CameraComponent>(entity, Components::CameraComponent{});
     }
 
-    void SceneToGPULoader::CreateMeshNode(Context& context, const Bin3D::Node& node, entt::entity entity, Engine::Scene::Components::RelationshipComponent* relationship)
+    void SceneToGPULoader::CreateMeshNode(Context& context, const Bin3D::Mesh& mesh, uint32_t meshIndex, entt::entity entity)
     {
-        auto nodeMeshIndices = context.scene->GetMeshIndices(node.DataIndex);
+        Components::MeshComponent meshComponent;
+        meshComponent.MeshIndex = meshIndex;
+        meshComponent.MaterialIndex = mesh.MaterialIndex;
 
-        auto numMeshes = nodeMeshIndices.size();
-        entt::entity nextEntity = context.registry->create();
-        relationship->first = nextEntity;
-        relationship->childsCount = numMeshes;
+        context.registry->emplace<Components::MeshComponent>(entity, meshComponent);
 
-        for (uint32 i = 0; i < numMeshes; ++i)
-        {
-            auto meshIndex = nodeMeshIndices[i];
-            const auto& meshDto = context.scene->GetMeshes()[meshIndex];
-                
-            auto meshEntity = nextEntity;
-            if (i < (numMeshes - 1))
-            {
-                nextEntity = context.registry->create();
-            }
-            else
-            {
-                nextEntity = entt::null;
-            }
-
-            context.registry->emplace<Components::LocalTransformComponent>(meshEntity, DirectX::XMMatrixIdentity());
-
-            context.registry->emplace<Components::NameComponent>(meshEntity, std::string(context.scene->GetString(meshDto.NameIndex)));
-
-            Components::RelationshipComponent meshRelationship;
-            meshRelationship.next = nextEntity;
-            meshRelationship.parent = entity;
-            meshRelationship.depth = relationship->depth + 1;
-            context.registry->emplace<Components::RelationshipComponent>(meshEntity, meshRelationship);
-
-            Components::MeshComponent meshComponent;
-            meshComponent.MeshIndex = meshIndex;
-            meshComponent.MaterialIndex = meshDto.MaterialIndex;
-            meshComponent.VerticesCount = meshDto.Vertices.Size;
-            meshComponent.IndicesCount = meshDto.Indices.Size;
-
-            context.registry->emplace<Components::MeshComponent>(meshEntity, meshComponent);
-
-            Components::AABBComponent aabbComponent = {};
-            aabbComponent.originalBoundingBox = meshDto.AABB;
-            aabbComponent.boundingBox = meshDto.AABB;
-            context.registry->emplace<Components::AABBComponent>(meshEntity, aabbComponent);
-        }
+        Components::AABBComponent aabbComponent = {};
+        aabbComponent.originalBoundingBox = mesh.AABB;
+        aabbComponent.boundingBox = mesh.AABB;
+        context.registry->emplace<Components::AABBComponent>(entity, aabbComponent);
     }
 
     void SceneToGPULoader::CreateCameraNode(Context& context, const Bin3D::Camera& camera, entt::entity entity)
@@ -350,14 +319,10 @@ namespace Engine::Scene
         using TIndexType = typename std::decay<decltype(*indices.begin())>::type;
         using TVertexType = typename std::decay<decltype(*vertices.begin())>::type;
 
-        std::string meshName = context.scene->GetString(meshDto.NameIndex).data();
-
         MeshResources mesh;
         mesh.indexBuffer = mResourceFactory->CreateIndexBuffer(indices.size(), sizeof(TIndexType), D3D12_RESOURCE_STATE_COMMON);
-        mesh.indexBuffer->SetName("Indices: " + meshName);
 
         mesh.vertexBuffer = mResourceFactory->CreateVertexBuffer(vertices.size(), sizeof(TVertexType), D3D12_RESOURCE_STATE_COMMON);
-        mesh.vertexBuffer->SetName("Vertices: " + meshName);
         
         Memory::Buffer::ScheduleUploading(
             mResourceFactory, 

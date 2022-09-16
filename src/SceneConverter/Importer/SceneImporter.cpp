@@ -184,14 +184,19 @@ namespace SceneConverter::Importer
         {
             nodeName = "Mesh_" + name;
             
-            node.Type = Node::NodeType::Mesh;
+            node.Type = Node::NodeType::Node;
             DirectX::XMStoreFloat4x4(&node.LocalTransform, srt);
-            std::vector<uint32_t> meshIndices;
+            
             for (unsigned int i = 0; i < aNode->mNumMeshes; ++i)
             {
                 unsigned int meshIndex = aNode->mMeshes[i];
-                meshIndices.push_back(meshIndex);
-                node.MeshIndices = context.Scene.AddNodeMeshIndices(meshIndices);
+
+                Model::Node meshNode = {};
+                meshNode.Type = Node::NodeType::Mesh;
+                meshNode.MeshIndex = meshIndex;
+                DirectX::XMStoreFloat4x4(&meshNode.LocalTransform, DirectX::XMMatrixIdentity());
+                meshNode.NameIndex = context.Scene.AddString(aScene->mMeshes[meshIndex]->mName.C_Str());
+                node.Children.push_back(meshNode);
             }
         }
         else if (IsLightNode(aNode, context))
@@ -460,9 +465,6 @@ namespace SceneConverter::Importer
     {
         Mesh mesh = {};
         
-        std::string meshName = aMesh->mName.C_Str();
-        mesh.NameIndex = context.Scene.AddString(meshName);
-
         std::vector<Vertex> vertices;
         vertices.reserve(aMesh->mNumVertices);
 
