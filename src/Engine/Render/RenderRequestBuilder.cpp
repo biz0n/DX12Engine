@@ -8,8 +8,9 @@
 #include <Scene/Components/WorldTransformComponent.h>
 #include <Scene/Components/LightComponent.h>
 
+#include <Bin3D/Material.h>
+
 #include <Scene/MeshResources.h>
-#include <Scene/Material.h>
 #include <Memory/VertexBuffer.h>
 #include <Memory/IndexBuffer.h>
 
@@ -98,7 +99,7 @@ namespace Engine::Render
         {
             Shader::MaterialUniform uniform = {};
 
-            const auto& properties = material.GetProperties();
+            const auto& properties = material.MaterialProperties;
             uniform.BaseColor = properties.baseColor.baseColor;
             uniform.EmissiveFactor = { properties.emissive.factor.x, properties.emissive.factor.y, properties.emissive.factor.z, 1.0f };
             uniform.MetallicFactor = properties.metallicRaughness.metallicFactor;
@@ -107,35 +108,35 @@ namespace Engine::Render
             uniform.Ambient = { 0.9f, 0.9f, 0.9f, 0.0f };
             uniform.Cutoff = properties.alphaCutoff;
 
-            uniform.HasBaseColorTexture = material.HasBaseColorTexture();
-            uniform.HasNormalTexture = material.HasNormalTexture();
-            uniform.HasMetallicRoughnessTexture = material.HasMetallicRoughnessTexture();
-            uniform.HasOcclusionTexture = material.HasAmbientOcclusionTexture();
-            uniform.HasEmissiveTexture = material.HasEmissiveTexture();
+            uniform.HasBaseColorTexture = sceneStorage->HasTexture(material.BaseColorTextureIndex);
+            uniform.HasNormalTexture = sceneStorage->HasTexture(material.NormalTextureIndex);
+            uniform.HasMetallicRoughnessTexture = sceneStorage->HasTexture(material.MetallicRoughnessTextureIndex);
+            uniform.HasOcclusionTexture = sceneStorage->HasTexture(material.AmbientOcclusionTextureIndex);
+            uniform.HasEmissiveTexture = sceneStorage->HasTexture(material.EmissiveTextureIndex);
 
-            if (material.HasBaseColorTexture())
+            if (uniform.HasBaseColorTexture)
             {
-                uniform.BaseColorIndex = material.GetBaseColorTexture()->GetSRDescriptor().GetFullIndex();
+                uniform.BaseColorIndex = sceneStorage->GetTexture(material.BaseColorTextureIndex)->GetSRDescriptor().GetFullIndex();
             }
 
-            if (material.HasMetallicRoughnessTexture())
+            if (uniform.HasMetallicRoughnessTexture)
             {
-                uniform.MetallicRoughnessIndex = material.GetMetallicRoughnessTexture()->GetSRDescriptor().GetFullIndex();
+                uniform.MetallicRoughnessIndex = sceneStorage->GetTexture(material.MetallicRoughnessTextureIndex)->GetSRDescriptor().GetFullIndex();
             }
 
-            if (material.HasNormalTexture())
+            if (uniform.HasNormalTexture)
             {
-                uniform.NormalIndex = material.GetNormalTexture()->GetSRDescriptor().GetFullIndex();
+                uniform.NormalIndex = sceneStorage->GetTexture(material.NormalTextureIndex)->GetSRDescriptor().GetFullIndex();
             }
 
-            if (material.HasEmissiveTexture())
+            if (uniform.HasEmissiveTexture)
             {
-                uniform.EmissiveIndex = material.GetEmissiveTexture()->GetSRDescriptor().GetFullIndex();
+                uniform.EmissiveIndex = sceneStorage->GetTexture(material.EmissiveTextureIndex)->GetSRDescriptor().GetFullIndex();
             }
 
-            if (material.HasAmbientOcclusionTexture())
+            if (uniform.HasOcclusionTexture)
             {
-                uniform.OcclusionIndex = material.GetAmbientOcclusionTexture()->GetSRDescriptor().GetFullIndex();
+                uniform.OcclusionIndex = sceneStorage->GetTexture(material.AmbientOcclusionTextureIndex)->GetSRDescriptor().GetFullIndex();
             }
 
             materials.push_back(uniform);

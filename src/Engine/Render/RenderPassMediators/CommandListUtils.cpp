@@ -4,16 +4,9 @@
 #include <d3dx12.h>
 
 #include <Memory/ResourceStateTracker.h>
-#include <Memory/IndexBuffer.h>
-#include <Memory/VertexBuffer.h>
-#include <Memory/UploadBuffer.h>
-#include <Memory/Texture.h>
 
 #include <Render/RenderContext.h>
 #include <Render/RenderPassMediators/PassCommandRecorder.h>
-
-#include <Scene/Image.h>
-#include <Scene/Material.h>
 
 #include <DirectXTex.h>
 #include <DirectXMath.h>

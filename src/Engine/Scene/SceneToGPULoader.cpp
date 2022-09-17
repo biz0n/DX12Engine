@@ -11,7 +11,7 @@
 #include <Scene/Components/AABBComponent.h>
 #include <Scene/SceneStorage.h>
 
-#include <Scene/Image.h>
+#include <Scene/ImageLoader.h>
 
 #include <Memory/Texture.h>
 #include <Memory/Buffer.h>
@@ -41,8 +41,6 @@ namespace Engine::Scene
         context.scene = scene;
         context.isMainCameraAssigned = false;
 
-        SceneData sceneData = CreateSceneData(sceneDataDto);
-
         context.textures.reserve(scene->GetImagePaths().size());
         for (const auto& imageName : scene->GetImagePaths())
         {
@@ -50,19 +48,23 @@ namespace Engine::Scene
             if (name != "")
             {
                 std::filesystem::path imagePath = context.scene->GetPath() / name;
-                auto image = Image::LoadImageFromFile(imagePath.string());
-                context.textures.push_back(GetTexture(image));
+                std::string imagePathStr = imagePath.string();
+                auto image = ImageLoader::LoadImageFromFile(imagePathStr);
+                CreateTexture(context, image, imagePathStr);
+               
             }
             else
             {
-                context.textures.push_back(nullptr);
+                CreateTexture(context, nullptr, "");
             }
         }
+
+        SceneData sceneData = CreateSceneData(context, sceneDataDto);
 
         context.materials.reserve(scene->GetMaterials().size());
         for (const auto& material : scene->GetMaterials())
         {
-            context.materials.push_back(GetMaterial(context, material, sceneData));
+            context.materials.push_back(material);
         }
 
         context.meshes.reserve(scene->GetMeshes().size());
@@ -200,18 +202,24 @@ namespace Engine::Scene
         }
     }
 
-    SharedPtr<Memory::Texture> SceneToGPULoader::GetTexture(SharedPtr<Image> image)
+    uint32_t SceneToGPULoader::CreateTexture(Context& context, SharedPtr<const DirectX::ScratchImage> image, const String& name)
     {
+        if (image == nullptr)
+        {
+            context.textures.push_back(nullptr);
+            return context.textures.size() - 1;
+        }
+
         auto state = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-        auto texture = mResourceFactory->CreateTexture(image->GetDescription(false), state);
-        texture->SetName(image->GetName());
+        auto texture = mResourceFactory->CreateTexture(ImageLoader::GetDescription(image, false), state);
+        texture->SetName(name);
 
         ComPtr<ID3D12Device> device;
         texture->D3DResource()->GetDevice(IID_PPV_ARGS(&device));
 
-        const auto &metadata = image->GetImage()->GetMetadata();
-        const DirectX::Image *images = image->GetImage()->GetImages();
-        const Size imageCount = image->GetImage()->GetImageCount();
+        const auto &metadata = image->GetMetadata();
+        const DirectX::Image *images = image->GetImages();
+        const Size imageCount = image->GetImageCount();
 
         std::vector<D3D12_SUBRESOURCE_DATA> subresources;
         ThrowIfFailed(PrepareUpload(
@@ -265,50 +273,9 @@ namespace Engine::Scene
 
         mResourceCopyManager->ScheduleWriting(copyData);
 
-        return texture;
-    }
+        context.textures.push_back(texture);
 
-    SharedPtr<Memory::Texture> SceneToGPULoader::CreateTexture(DirectX::XMFLOAT4 color, String name)
-    {
-        return GetTexture(Image::CreateFromColor(color, name));
-    }
-
-    Material SceneToGPULoader::GetMaterial(Context& context, const Bin3D::Material& materialDto, const SceneData& sceneData)
-    {
-        Material material = {};
-        material.SetProperties(materialDto.MaterialProperties);
-
-        if (materialDto.BaseColorTextureIndex)
-        {
-            auto texture = context.textures[materialDto.BaseColorTextureIndex];
-            material.SetBaseColorTexture(texture);
-        }
-
-        if (materialDto.NormalTextureIndex)
-        {
-            auto texture = context.textures[materialDto.NormalTextureIndex];
-            material.SetNormalTexture(texture);
-        }
-
-        if (materialDto.MetallicRoughnessTextureIndex)
-        {
-            auto texture = context.textures[materialDto.MetallicRoughnessTextureIndex];
-            material.SetMetallicRoughnessTexture(texture);
-        }
-
-        if (materialDto.AmbientOcclusionTextureIndex)
-        {
-            auto texture = context.textures[materialDto.AmbientOcclusionTextureIndex];
-            material.SetAmbientOcclusionTexture(texture);
-        }
-
-        if (materialDto.EmissiveTextureIndex)
-        {
-            auto texture = context.textures[materialDto.EmissiveTextureIndex];
-            material.SetEmissiveTexture(texture);
-        }
-
-        return material;
+        return context.textures.size() - 1;
     }
 
     MeshResources SceneToGPULoader::GetMeshResources(Context& context, const Bin3D::Mesh& meshDto)
@@ -343,19 +310,19 @@ namespace Engine::Scene
         return mesh;
     }
 
-    Engine::Scene::SceneData SceneToGPULoader::CreateSceneData(const SceneDataDto& sceneDataDto)
+    Engine::Scene::SceneData SceneToGPULoader::CreateSceneData(Context& context, const SceneDataDto& sceneDataDto)
     {
         SceneData sceneData = {};
 
-        sceneData.whiteTexture = CreateTexture({ 1.f, 1.f, 1.f, 1.f }, "White");
-        sceneData.blackTexture = CreateTexture({ 0.f, 0.f, 0.f, 1.f }, "Black");
-        sceneData.fuchsiaTexture = CreateTexture({ 1.f, 0.f, 1.f, 1.f }, "Fuchsia");
+        sceneData.whiteTextureIndex = CreateTexture(context, ImageLoader::CreateFromColor({ 1.f, 1.f, 1.f, 1.f }), "White");
+        sceneData.blackTextureIndex = CreateTexture(context, ImageLoader::CreateFromColor({ 0.f, 0.f, 0.f, 1.f }), "Black");
+        sceneData.fuchsiaTextureIndex = CreateTexture(context, ImageLoader::CreateFromColor({ 1.f, 0.f, 1.f, 1.f }), "Fuchsia");
+
 
         if (std::filesystem::exists(sceneDataDto.skyBoxPath))
         {
-            auto image = Scene::Image::LoadImageFromFile(sceneDataDto.skyBoxPath);
-            sceneData.skyBoxTexture = GetTexture(image);
-            sceneData.skyBoxTexture->SetName(image->GetName());
+            auto image = ImageLoader::LoadImageFromFile(sceneDataDto.skyBoxPath);
+            sceneData.skyBoxTextureIndex = CreateTexture(context, image, sceneDataDto.skyBoxPath);
         }
 
         return sceneData;

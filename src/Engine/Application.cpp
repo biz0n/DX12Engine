@@ -42,8 +42,6 @@
 #include <UI/Systems/RenderGraphSystem.h>
 #include <Render/RenderRequestBuilder.h>
 
-#include <Scene/Image.h>
-
 #include <Exceptions.h>
 
 #include <future>

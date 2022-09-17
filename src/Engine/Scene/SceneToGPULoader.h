@@ -5,14 +5,15 @@
 #include <Memory/MemoryForwards.h>
 #include <Bin3D/SceneStorage.h>
 #include <Bin3D/PunctualLight.h>
+#include <Bin3D/Material.h>
 #include <Scene/Components/ComponentsForwards.h>
-#include <Scene/Material.h>
 #include <Scene/MeshResources.h>
 #include <Scene/SceneStorage.h>
 
 #include <entt/entt.hpp>
 #include <tuple>
 #include <DirectXCollision.h>
+#include <DirectXTex.h>
 #include <filesystem>
 
 namespace Engine::Scene
@@ -36,17 +37,15 @@ namespace Engine::Scene
         static void CreateMeshNode(Context& context, const Bin3D::Mesh& mesh, uint32_t meshIndex, entt::entity entity);
         static void CreateCameraNode(Context& context, const Bin3D::Camera& camera, entt::entity entity);
 
-        SharedPtr<Memory::Texture> GetTexture(SharedPtr<Image> image);
-        Material GetMaterial(Context& context, const Bin3D::Material& materialDto, const SceneData& sceneData);
+        uint32_t CreateTexture(Context& context, SharedPtr<const DirectX::ScratchImage> image, const String& name);
         MeshResources GetMeshResources(Context& context, const Bin3D::Mesh& meshDto);
-        SharedPtr<Memory::Texture> CreateTexture(DirectX::XMFLOAT4 color, String name);
-        Engine::Scene::SceneData CreateSceneData(const SceneDataDto& sceneData);
+        Engine::Scene::SceneData CreateSceneData(Context& context, const SceneDataDto& sceneData);
     private:
         struct Context
         {
             entt::registry* registry;
             std::vector<SharedPtr<Memory::Texture>> textures;
-            std::vector<Material> materials;
+            std::vector<Bin3D::Material> materials;
             std::vector<MeshResources> meshes;
             SharedPtr<Bin3D::SceneStorage> scene;
             bool isMainCameraAssigned;

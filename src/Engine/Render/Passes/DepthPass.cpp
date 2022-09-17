@@ -5,7 +5,6 @@
 #include <EngineConfig.h>
 
 #include <Scene/MeshResources.h>
-#include <Scene/Material.h>
 #include <Scene/SceneStorage.h>
 
 #include <Render/RootSignatureBuilder.h>

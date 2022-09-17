@@ -8,9 +8,9 @@
 
 #include <HAL/SwapChain.h>
 
+#include <Bin3D/Material.h>
 #include <Scene/SceneObject.h>
 #include <Scene/MeshResources.h>
-#include <Scene/Material.h>
 #include <Scene/SceneStorage.h>
 
 #include <Render/RootSignatureBuilder.h>
@@ -123,7 +123,7 @@ namespace Engine::Render::Passes
 
         const auto& material = renderRequest.GetSceneStorage()->GetMaterials()[meshUniform.MaterialIndex];
 
-        if (material.GetProperties().doubleSided)
+        if (material.MaterialProperties.doubleSided)
         {
             commandRecorder->SetPipelineState(PSONames::ForwardCullNone);
         }

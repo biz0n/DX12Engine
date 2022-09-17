@@ -7,9 +7,9 @@
 
 #include <UI/ComponentRenderers/ComponentRenderer.h>
 
+#include <Bin3D/Material.h>
 #include <Scene/Components/MeshComponent.h>
 #include <Scene/MeshResources.h>
-#include <Scene/Material.h>
 #include <Scene/SceneStorage.h>
 
 #include <entt/entt.hpp>
@@ -35,45 +35,45 @@ namespace Engine::UI::ComponentRenderers
             {
                 const auto& material = mSceneStorage->GetMaterials()[meshComponent.MaterialIndex];
 
-                if (material.HasBaseColorTexture())
+                if (mSceneStorage->HasTexture(material.BaseColorTextureIndex))
                 {
-                    auto texture = material.GetBaseColorTexture();
+                    auto texture = mSceneStorage->GetTexture(material.BaseColorTextureIndex);
 
                     auto srv = texture->GetSRDescriptor().GetGPUDescriptor();
 
                     ImGui::Image(IMGUI_TEXTURE_ID(srv), {256, 256});
                 }
 
-                if (material.HasNormalTexture())
+                if (mSceneStorage->HasTexture(material.NormalTextureIndex))
                 {
-                    auto texture = material.GetNormalTexture();
+                    auto texture = mSceneStorage->GetTexture(material.NormalTextureIndex);
 
                     auto srv = texture->GetSRDescriptor().GetGPUDescriptor();
 
                     ImGui::Image(IMGUI_TEXTURE_ID(srv), {256, 256});
                 }
 
-                if (material.HasMetallicRoughnessTexture())
+                if (mSceneStorage->HasTexture(material.MetallicRoughnessTextureIndex))
                 {
-                    auto texture = material.GetMetallicRoughnessTexture();
+                    auto texture = mSceneStorage->GetTexture(material.MetallicRoughnessTextureIndex);
 
                     auto srv = texture->GetSRDescriptor().GetGPUDescriptor();
 
                     ImGui::Image(IMGUI_TEXTURE_ID(srv), {256, 256});
                 }
 
-                if (material.HasEmissiveTexture())
+                if (mSceneStorage->HasTexture(material.EmissiveTextureIndex))
                 {
-                    auto texture = material.GetEmissiveTexture();
+                    auto texture = mSceneStorage->GetTexture(material.EmissiveTextureIndex);
 
                     auto srv = texture->GetSRDescriptor().GetGPUDescriptor();
 
                     ImGui::Image(IMGUI_TEXTURE_ID(srv), {256, 256});
                 }
 
-                if (material.HasAmbientOcclusionTexture())
+                if (mSceneStorage->HasTexture(material.AmbientOcclusionTextureIndex))
                 {
-                    auto texture = material.GetAmbientOcclusionTexture();
+                    auto texture = mSceneStorage->GetTexture(material.AmbientOcclusionTextureIndex);
 
                     auto srv = texture->GetSRDescriptor().GetGPUDescriptor();
 

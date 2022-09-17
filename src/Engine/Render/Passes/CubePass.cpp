@@ -84,8 +84,9 @@ namespace Engine::Render::Passes
 
     void CubePass::Render(const RenderRequest& renderRequest, Render::PassRenderContext& passContext, const Timer& timer)
     {
-        auto skyBoxTexture = renderRequest.GetSceneStorage()->GetSceneData().skyBoxTexture;
-        if (skyBoxTexture == nullptr)
+        auto skyBoxTextureIndex = renderRequest.GetSceneStorage()->GetSceneData().skyBoxTextureIndex;
+        
+        if (!renderRequest.GetSceneStorage()->HasTexture(skyBoxTextureIndex))
         {
             return;
         }
@@ -99,7 +100,7 @@ namespace Engine::Render::Passes
 
         commandRecorder->SetPipelineState(PSONames::Cube);
 
-        auto cubeDescriptorIndex = skyBoxTexture->GetCubeSRDescriptor().GetFullIndex();
+        auto cubeDescriptorIndex = renderRequest.GetSceneStorage()->GetTexture(skyBoxTextureIndex)->GetCubeSRDescriptor().GetFullIndex();
 
         commandRecorder->SetRoot32BitConstant(0, 0, cubeDescriptorIndex);
 
