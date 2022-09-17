@@ -85,23 +85,25 @@ float4 unpackUnorm4x8(uint p)
 VertexShaderOutput mainVS(uint indexId : SV_VertexID)
 {
     MeshUniform ObjectCB = Meshes[MeshIndex];
-    StructuredBuffer<Vertex1P1N1UV1T> vertices = ResourceDescriptorHeap[ObjectCB.VertexBufferIndex];
+    StructuredBuffer<Vertex1P> verticesCoordinates = ResourceDescriptorHeap[ObjectCB.VertexBufferIndex];
+    StructuredBuffer<Vertex1N1UV1T> verticesProperties = ResourceDescriptorHeap[ObjectCB.VertexPropertiesBufferIndex];
     StructuredBuffer<uint> indices = ResourceDescriptorHeap[ObjectCB.IndexBufferIndex];
 
     uint vertexId = indices[indexId];
 
-    Vertex1P1N1UV1T IN = vertices[vertexId];
+    Vertex1P IN = verticesCoordinates[vertexId];
+    Vertex1N1UV1T properties = verticesProperties[vertexId];
 
 
     VertexShaderOutput OUT;
  
     float4 posW = mul(float4(IN.PositionL, 1.0f), ObjectCB.World);
-    float3 normalW = mul(IN.NormalL, (float3x3)ObjectCB.InverseTranspose);
+    float3 normalW = mul(properties.NormalL, (float3x3) ObjectCB.InverseTranspose);
 
-    float3 T = normalize(mul(IN.Tangent.xyz, (float3x3)ObjectCB.World));
-    float3 N = normalize(mul(IN.NormalL, (float3x3)ObjectCB.World));
+    float3 T = normalize(mul(properties.Tangent.xyz, (float3x3) ObjectCB.World));
+    float3 N = normalize(mul(properties.NormalL, (float3x3) ObjectCB.World));
     T = normalize(T - dot(T, N) * N);
-    float3 B = cross(N, T) * IN.Tangent.w;
+    float3 B = cross(N, T) * properties.Tangent.w;
 
     float3x3 TBN = float3x3(T, B, N);
 
@@ -110,7 +112,7 @@ VertexShaderOutput mainVS(uint indexId : SV_VertexID)
     OUT.ShadowPosH = mul(posW, FrameCB.ShadowTransform);
     OUT.PositionH = mul(posW, FrameCB.ViewProj);
     OUT.TBN = TBN;
-    OUT.TextureCoord = IN.TextureCoord;
+    OUT.TextureCoord = properties.TextureCoord;
     OUT.indexId = indexId;
  
     return OUT;

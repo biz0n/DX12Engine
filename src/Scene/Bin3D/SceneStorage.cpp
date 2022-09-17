@@ -18,15 +18,21 @@ namespace Bin3D
         mCameras = GetSpan<Camera>(data, header.Cameras);
         mSamplers = GetSpan<Sampler>(data, header.Samplers);
         
-        mVerticesStorage = GetSpan<Vertex>(data, header.VerticesStorage);
+        mVerticesCoordinatesStorage = GetSpan<VertexCoordinates>(data, header.VerticesCoordinatesStorage);
+        mVerticesPropertiesStorage = GetSpan<VertexProperties>(data, header.VerticesPropertiesStorage);
         mIndicesStorage = GetSpan<uint32_t>(data, header.IndicesStorage);
         mImagePaths = GetSpan<ImagePath>(data, header.ImagePaths);
         mStringsStorage = GetSpan<char>(data, header.StringsStorage);
     }
 
-    std::span<const Bin3D::Vertex> SceneStorage::GetVertices(const DataRegion& range) const
+    std::span<const Bin3D::VertexCoordinates> SceneStorage::GetVerticesCoordinates(const DataRegion& range) const
     {
-        return mVerticesStorage.subspan(range.Offset, range.Size);
+        return mVerticesCoordinatesStorage.subspan(range.Offset, range.Size);
+    }
+
+    std::span<const Bin3D::VertexProperties> SceneStorage::GetVerticesProperties(const DataRegion& range) const
+    {
+        return mVerticesPropertiesStorage.subspan(range.Offset, range.Size);
     }
 
     std::span<const uint32_t> SceneStorage::GetIndices(const DataRegion& range) const

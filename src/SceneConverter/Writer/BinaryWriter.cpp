@@ -27,7 +27,8 @@ namespace SceneConverter::Writer
         header.Lights = Write(fs, scene.GetLights());
         header.Cameras = Write(fs, scene.GetCameras());
         header.Samplers = Write(fs, scene.GetSamplers());
-        header.VerticesStorage = Write(fs, scene.GetVerticesStorage());
+        header.VerticesCoordinatesStorage = Write(fs, scene.GetVerticesCoordinatesStorage());
+        header.VerticesPropertiesStorage = Write(fs, scene.GetVerticesPropertiesStorage());
         header.IndicesStorage = Write(fs, scene.GetIndicesStorage());
         header.ImagePaths = Write(fs, scene.GetImagePaths());
         header.StringsStorage = Write(fs, scene.GetStringsStorage());

@@ -31,7 +31,8 @@ namespace SceneConverter::Model
             const std::vector<Bin3D::Camera>& GetCameras() const { return mCameras; }
             const std::vector<Bin3D::Sampler>& GetSamplers() const { return mSamplers; }
 
-            const std::vector<Bin3D::Vertex>& GetVerticesStorage() const { return mVerticesStorage; }
+            const std::vector<Bin3D::VertexCoordinates>& GetVerticesCoordinatesStorage() const { return mVerticesCoordinatesStorage; }
+            const std::vector<Bin3D::VertexProperties>& GetVerticesPropertiesStorage() const { return mVerticesPropertiesStorage; }
             const std::vector<uint32_t>& GetIndicesStorage() const { return mIndicesStorage; }
             const std::vector<Bin3D::ImagePath>& GetImagePaths() const { return mImagePaths; }
             const std::vector<char>& GetStringsStorage() const { return mStringsStorage; }
@@ -47,7 +48,7 @@ namespace SceneConverter::Model
             uint32_t AddSampler(const Bin3D::Sampler& sampler);
 
             Bin3D::DataRegion AddIndices(const std::vector<uint32_t>& indices);
-            Bin3D::DataRegion AddVertices(const std::vector<Bin3D::Vertex>& vertices);
+            Bin3D::DataRegion AddVertices(const std::vector<Bin3D::VertexCoordinates>& coordinates, const std::vector<Bin3D::VertexProperties>& properties);
             
             Bin3D::DataRegion AddString(const std::string& str);
 
@@ -69,7 +70,8 @@ namespace SceneConverter::Model
 
             std::vector<Node> mRootNodes;
             
-            std::vector<Bin3D::Vertex> mVerticesStorage;
+            std::vector<Bin3D::VertexCoordinates> mVerticesCoordinatesStorage;
+            std::vector<Bin3D::VertexProperties> mVerticesPropertiesStorage;
             std::vector<uint32_t> mIndicesStorage;
             std::vector<char> mStringsStorage;
 

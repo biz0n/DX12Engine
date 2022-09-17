@@ -465,21 +465,24 @@ namespace SceneConverter::Importer
     {
         Mesh mesh = {};
         
-        std::vector<Vertex> vertices;
-        vertices.reserve(aMesh->mNumVertices);
+        std::vector<VertexCoordinates> verticesCoordinates;
+        std::vector<VertexProperties> verticesProperties;
+        verticesCoordinates.reserve(aMesh->mNumVertices);
+        verticesProperties.reserve(aMesh->mNumVertices);
 
         for (unsigned int i = 0; i < aMesh->mNumVertices; ++i)
         {
-            Vertex vertex = {};
-            vertex.Vertex = *reinterpret_cast<DirectX::XMFLOAT3 *>(&aMesh->mVertices[i]);
-            vertex.Normal = *reinterpret_cast<DirectX::XMFLOAT3 *>(&aMesh->mNormals[i]);
+            VertexCoordinates vertexCoordinates = {};
+            VertexProperties vertexProperties = {};
+            vertexCoordinates.Position = *reinterpret_cast<DirectX::XMFLOAT3 *>(&aMesh->mVertices[i]);
+            vertexProperties.Normal = *reinterpret_cast<DirectX::XMFLOAT3 *>(&aMesh->mNormals[i]);
             if (aMesh->mTextureCoords[0] != nullptr)
             {
-                vertex.TextureCoord = *reinterpret_cast<DirectX::XMFLOAT2 *>(&aMesh->mTextureCoords[0][i]);
+                vertexProperties.TextureCoord = *reinterpret_cast<DirectX::XMFLOAT2 *>(&aMesh->mTextureCoords[0][i]);
             }
             else
             {
-                vertex.TextureCoord = {0.0f, 0.0f};
+                vertexProperties.TextureCoord = {0.0f, 0.0f};
             }
             if (aMesh->mTangents != nullptr && aMesh->mBitangents != nullptr)
             {
@@ -487,18 +490,19 @@ namespace SceneConverter::Importer
                 auto biTangent = *reinterpret_cast<DirectX::XMFLOAT3 *>(&aMesh->mBitangents[i]);
                 float symmetry = +1.0f;
                 if (DirectX::XMVectorGetX(DirectX::XMVector3Dot(
-                        DirectX::XMVector3Cross(DirectX::XMLoadFloat3(&vertex.Normal), DirectX::XMLoadFloat3(&tangent)),
+                        DirectX::XMVector3Cross(DirectX::XMLoadFloat3(&vertexProperties.Normal), DirectX::XMLoadFloat3(&tangent)),
                         DirectX::XMLoadFloat3(&biTangent))) < 0.0f)
                 {
                     symmetry = -1.0f;
                 }
 
-                vertex.Tangent = {tangent.x, tangent.y, tangent.z, symmetry};
+                vertexProperties.Tangent = {tangent.x, tangent.y, tangent.z, symmetry};
             }
-            vertices.emplace_back(vertex);
+            verticesCoordinates.emplace_back(vertexCoordinates);
+            verticesProperties.emplace_back(vertexProperties);
         }
 
-        mesh.Vertices = context.Scene.AddVertices(vertices);
+        mesh.Vertices = context.Scene.AddVertices(verticesCoordinates, verticesProperties);
 
         std::vector<uint32_t> indices;
         indices.reserve(aMesh->mNumFaces * 3);

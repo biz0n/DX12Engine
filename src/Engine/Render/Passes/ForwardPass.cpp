@@ -134,7 +134,7 @@ namespace Engine::Render::Passes
 
         commandRecorder->SetRoot32BitConstant(0, 0, meshIndex);
 
-        commandRecorder->Draw(mesh.indexBuffer->GetElementsCount(), 0);
+        commandRecorder->Draw(mesh.GetIndicesCount(), 0);
     }
 
     void ForwardPass::Render(const RenderRequest& renderRequest, Render::PassRenderContext& passContext, const Timer& timer)

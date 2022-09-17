@@ -4,9 +4,13 @@
 
 namespace Bin3D
 {
-    struct Vertex
+    struct VertexCoordinates
     {
-        DirectX::XMFLOAT3 Vertex;
+        DirectX::XMFLOAT3 Position;
+    };
+
+    struct VertexProperties
+    {
         DirectX::XMFLOAT3 Normal;
         DirectX::XMFLOAT2 TextureCoord;
         DirectX::XMFLOAT4 Tangent;

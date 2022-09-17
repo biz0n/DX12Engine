@@ -76,12 +76,14 @@ namespace SceneConverter::Model
         return index;
     }
 
-    Bin3D::DataRegion Scene::AddVertices(const std::vector<Bin3D::Vertex>& vertices)
+    Bin3D::DataRegion Scene::AddVertices(const std::vector<Bin3D::VertexCoordinates>& coordinates, const std::vector<Bin3D::VertexProperties>& properties)
     {
         Bin3D::DataRegion index = {};
-        index.Offset = mVerticesStorage.size();
-        index.Size = vertices.size();
-        mVerticesStorage.insert(mVerticesStorage.end(), vertices.begin(), vertices.end());
+        index.Offset = mVerticesCoordinatesStorage.size();
+        index.Size = coordinates.size();
+
+        mVerticesCoordinatesStorage.insert(mVerticesCoordinatesStorage.end(), coordinates.begin(), coordinates.end());
+        mVerticesPropertiesStorage.insert(mVerticesPropertiesStorage.end(), properties.begin(), properties.end());
 
         return index;
     }

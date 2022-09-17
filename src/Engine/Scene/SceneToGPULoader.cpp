@@ -144,7 +144,8 @@ namespace Engine::Scene
                 CreateMeshNode(context, mesh, node.DataIndex, entity);
 
                 context.meshes[node.DataIndex].indexBuffer->SetName("Indices: " + nodeName);
-                context.meshes[node.DataIndex].vertexBuffer->SetName("Vertices: " + nodeName);
+                context.meshes[node.DataIndex].vertexCoordinatesBuffer->SetName("Vertices coords: " + nodeName);
+                context.meshes[node.DataIndex].vertexPropertiesBuffer->SetName("Vertices properties: " + nodeName);
             }
             else if (node.Type == Bin3D::Node::NodeType::Light)
             {
@@ -281,15 +282,28 @@ namespace Engine::Scene
     MeshResources SceneToGPULoader::GetMeshResources(Context& context, const Bin3D::Mesh& meshDto)
     {
         auto indices = context.scene->GetIndices(meshDto.Indices);
-        auto vertices = context.scene->GetVertices(meshDto.Vertices);
+        auto verticesCoordinates = context.scene->GetVerticesCoordinates(meshDto.Vertices);
+        auto verticesProperties = context.scene->GetVerticesProperties(meshDto.Vertices);
 
         using TIndexType = typename std::decay<decltype(*indices.begin())>::type;
-        using TVertexType = typename std::decay<decltype(*vertices.begin())>::type;
+        using TVertexCoordinatesType = typename std::decay<decltype(*verticesCoordinates.begin())>::type;
+        using TVertexPropertiesType = typename std::decay<decltype(*verticesProperties.begin())>::type;
 
         MeshResources mesh;
-        mesh.indexBuffer = mResourceFactory->CreateIndexBuffer(indices.size(), sizeof(TIndexType), D3D12_RESOURCE_STATE_COMMON);
+        mesh.indexBuffer = mResourceFactory->CreateBuffer(
+            sizeof(TIndexType), 
+            CD3DX12_RESOURCE_DESC::Buffer(indices.size_bytes()), 
+            D3D12_RESOURCE_STATE_COMMON);
 
-        mesh.vertexBuffer = mResourceFactory->CreateVertexBuffer(vertices.size(), sizeof(TVertexType), D3D12_RESOURCE_STATE_COMMON);
+        mesh.vertexCoordinatesBuffer = mResourceFactory->CreateBuffer(
+            sizeof(TVertexCoordinatesType), 
+            CD3DX12_RESOURCE_DESC::Buffer(verticesCoordinates.size_bytes()),
+            D3D12_RESOURCE_STATE_COMMON);
+
+        mesh.vertexPropertiesBuffer = mResourceFactory->CreateBuffer(
+            sizeof(TVertexPropertiesType),
+            CD3DX12_RESOURCE_DESC::Buffer(verticesProperties.size_bytes()),
+            D3D12_RESOURCE_STATE_COMMON);
         
         Memory::Buffer::ScheduleUploading(
             mResourceFactory, 
@@ -297,15 +311,23 @@ namespace Engine::Scene
             mesh.indexBuffer.get(), 
             indices.data(), 
             indices.size_bytes(),
-            D3D12_RESOURCE_STATE_INDEX_BUFFER);
+            D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
         Memory::Buffer::ScheduleUploading(
             mResourceFactory, 
             mResourceCopyManager, 
-            mesh.vertexBuffer.get(), 
-            vertices.data(), 
-            vertices.size_bytes(),
-            D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+            mesh.vertexCoordinatesBuffer.get(),
+            verticesCoordinates.data(),
+            verticesCoordinates.size_bytes(),
+            D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+        Memory::Buffer::ScheduleUploading(
+            mResourceFactory,
+            mResourceCopyManager,
+            mesh.vertexPropertiesBuffer.get(),
+            verticesProperties.data(),
+            verticesProperties.size_bytes(),
+            D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
         return mesh;
     }

@@ -40,10 +40,12 @@ struct MeshUniform
     float4x4 InverseTranspose;
 
     int VertexBufferIndex;
+    int VertexPropertiesBufferIndex;
     int IndexBufferIndex;
     int MaterialIndex;
 
     int Id;
+    float3 __Padding;
 };
 
 struct MaterialUniform

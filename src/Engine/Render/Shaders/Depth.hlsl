@@ -23,16 +23,18 @@ struct VertexShaderOutput
 VertexShaderOutput mainVS(uint indexId : SV_VertexID)
 {
     MeshUniform ObjectCB = Meshes[MeshIndex];
-    StructuredBuffer<Vertex1P1N1UV1T> vertices = ResourceDescriptorHeap[ObjectCB.VertexBufferIndex];
+    StructuredBuffer<Vertex1P> verticesCoordinates = ResourceDescriptorHeap[ObjectCB.VertexBufferIndex];
+    StructuredBuffer<Vertex1N1UV1T> verticesProperties = ResourceDescriptorHeap[ObjectCB.VertexPropertiesBufferIndex];
     StructuredBuffer<uint> indices = ResourceDescriptorHeap[ObjectCB.IndexBufferIndex];
 
     uint vertexId = indices[indexId];
 
-    Vertex1P1N1UV1T IN = vertices[vertexId];
+    Vertex1P IN = verticesCoordinates[vertexId];
+    Vertex1N1UV1T properties = verticesProperties[vertexId];
 
     VertexShaderOutput OUT;
 
-    OUT.TextureCoord = IN.TextureCoord;
+    OUT.TextureCoord = properties.TextureCoord;
 
     float4 posW = mul(float4(IN.PositionL, 1.0f), ObjectCB.World);
     OUT.PositionH = mul(posW, FrameCB.ViewProj);

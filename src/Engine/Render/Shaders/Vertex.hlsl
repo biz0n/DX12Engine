@@ -1,9 +1,13 @@
 #ifndef _VERTEX_
 #define _VERTEX_
 
-struct Vertex1P1N1UV1T
+struct Vertex1P
 {
     float3 PositionL : POSITION;
+};
+
+struct Vertex1N1UV1T
+{
     float3 NormalL : NORMAL;
     float2 TextureCoord : TEXCOORD;
     float4 Tangent : TANGENT;
