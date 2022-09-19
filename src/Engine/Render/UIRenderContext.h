@@ -38,5 +38,7 @@ namespace Engine::Render
         void Draw(ComPtr<ID3D12GraphicsCommandList> commandList);
 
         void Resize(uint32 width, uint32 height);
+    private:
+        void ConfigureDockSpace();
     };
 } // namespace Engine::Render
