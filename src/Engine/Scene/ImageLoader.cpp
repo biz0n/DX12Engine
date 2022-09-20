@@ -4,7 +4,7 @@
 
 namespace Engine::Scene
 {
-    SharedPtr<const DirectX::ScratchImage> ImageLoader::LoadImageFromFile(String path)
+    SharedPtr<const DirectX::ScratchImage> ImageLoader::LoadImageFromFile(const std::string& path)
     {
         std::filesystem::path filename = path;
 

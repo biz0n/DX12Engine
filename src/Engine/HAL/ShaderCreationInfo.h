@@ -13,12 +13,12 @@ namespace Engine::HAL
 {
     struct ShaderCreationInfo
     {
-        String path;
-        String entryPoint;
-        String target;
-        std::vector<D3D_SHADER_MACRO> defines;
+        std::string path;
+        std::string entryPoint;
+        std::string target;
+        std::vector<std::string> defines;
 
-        ShaderCreationInfo(String path, String entryPoint, String target) : path(path), entryPoint(entryPoint), target(target)
+        ShaderCreationInfo(const std::string& path, const std::string& entryPoint, const std::string& target) : path(path), entryPoint(entryPoint), target(target)
         {
 
         }

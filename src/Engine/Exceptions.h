@@ -13,12 +13,12 @@ namespace Engine
     class DxException : public std::exception
     {
     private:
-        TString msg;
+        std::string msg;
     public:
         DxException() = default;
-        DxException(HRESULT hr, const TString &functionName, const TString &filename, int lineNumber);
+        DxException(HRESULT hr, const std::string&functionName, const std::string&filename, int lineNumber);
    
-        TString ToString() const;
+        std::string ToString() const;
 
         virtual const char* what() const throw ()
         {
@@ -26,8 +26,8 @@ namespace Engine
         }
 
         HRESULT ErrorCode = S_OK;
-        TString FunctionName;
-        TString Filename;
+        std::string FunctionName;
+        std::string Filename;
         int LineNumber = -1;
     };
 
@@ -43,7 +43,7 @@ namespace Engine
         abort();
     }
 
-    TString HrCodeToErrorString(HRESULT errorCode);
+    std::string HrCodeToErrorString(HRESULT errorCode);
 
 
 } // namespace Engine

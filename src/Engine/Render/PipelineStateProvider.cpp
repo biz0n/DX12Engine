@@ -1,7 +1,6 @@
 #include "PipelineStateProvider.h"
 
 #include <Exceptions.h>
-#include <StringUtils.h>
 
 #include <Render/PipelineStateStream.h>
 #include <Render/RootSignatureProvider.h>
@@ -9,6 +8,7 @@
 
 #include <HAL/ShaderCreationInfo.h>
 #include <HAL/RootSignature.h>
+#include <HAL/DirectXExtensions.h>
 
 #include <d3dx12.h>
 
@@ -62,7 +62,7 @@ namespace Engine::Render
             &stateStream};
 
         auto pipelineState = CreatePipelineState(pipelineStateStreamDesc);
-        pipelineState->SetName(StringToWString(name.string()).c_str());
+        HAL::SetResourceName(pipelineState, name.string());
 
         mPipelineStates.emplace(name, std::move(pipelineState));
         mRootSignatureMap.emplace(name, pipelineStateProxy.rootSignatureName);
@@ -84,7 +84,7 @@ namespace Engine::Render
             &stateStream};
 
         auto pipelineState = CreatePipelineState(pipelineStateStreamDesc);
-        pipelineState->SetName(StringToWString(name.string()).c_str());
+        HAL::SetResourceName(pipelineState, name.string());
 
         mPipelineStates.emplace(name, std::move(pipelineState));
         mRootSignatureMap.emplace(name, pipelineStateProxy.rootSignatureName);

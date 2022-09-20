@@ -18,7 +18,7 @@ namespace Engine
 
     }
 
-    uint32 NameRegistry::GetId(const String& name)
+    uint32 NameRegistry::GetId(const std::string& name)
     {
         auto iter = mNameToId.find(name);
         if (iter != mNameToId.end())
@@ -33,7 +33,7 @@ namespace Engine
         return id;
     }
 
-    const String& NameRegistry::GetName(uint32 id) const
+    const std::string& NameRegistry::GetName(uint32 id) const
     {
         return mNames.at(id);
     }

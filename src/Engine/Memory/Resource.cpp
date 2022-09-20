@@ -1,5 +1,5 @@
 #include "Resource.h"
-#include <StringUtils.h>
+#include <HAL/DirectXExtensions.h>
 
 namespace Engine::Memory
 {
@@ -16,7 +16,7 @@ namespace Engine::Memory
     {
         if (mResource)
         {
-            mResource->SetName(StringToWString(name).c_str());
+            Engine::HAL::SetResourceName(mResource, name);
         }
         mResourceName = name;
     }

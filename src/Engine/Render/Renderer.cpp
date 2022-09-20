@@ -1,9 +1,8 @@
 #include "Renderer.h"
 
-#include <StringUtils.h>
-
 #include <HAL/CommandQueue.h>
 #include <HAL/SwapChain.h>
+#include <HAL/DirectXExtensions.h>
 
 #include <Render/RenderPassMediators/CommandListUtils.h>
 #include <Render/RenderPassMediators/ResourcePlanner.h>
@@ -119,7 +118,8 @@ namespace Engine::Render
         {
             commandList = mRenderContext->CreateComputeCommandList();
         }
-        commandList->SetName(StringToWString(pass->GetName() + " CL").c_str());
+
+        HAL::SetResourceName(commandList, pass->GetName() + " CL");
         
         mRenderContext->GetEventTracker().StartGPUEvent(pass->GetName(), commandList);
 
@@ -145,7 +145,7 @@ namespace Engine::Render
         commandList->Close();
 
         auto prePassCommandList = mRenderContext->CreateGraphicsCommandList();
-        prePassCommandList->SetName(StringToWString(pass->GetName() + " PrePass CL").c_str());
+        HAL::SetResourceName(commandList, pass->GetName() + " PrePass CL");
         mRenderContext->GetEventTracker().StartGPUEvent("PrePass: " + pass->GetName(), prePassCommandList);
 
         auto barriers = passRenderContext.resourceStateTracker->FlushPendingBarriers(prePassCommandList);

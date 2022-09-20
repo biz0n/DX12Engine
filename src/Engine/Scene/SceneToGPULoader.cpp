@@ -203,7 +203,7 @@ namespace Engine::Scene
         }
     }
 
-    uint32_t SceneToGPULoader::CreateTexture(Context& context, SharedPtr<const DirectX::ScratchImage> image, const String& name)
+    uint32_t SceneToGPULoader::CreateTexture(Context& context, SharedPtr<const DirectX::ScratchImage> image, const std::string& name)
     {
         if (image == nullptr)
         {

@@ -12,7 +12,7 @@ namespace Engine
     {
     public:
         Name();
-        Name(const String &name);
+        Name(const std::string& name);
         Name(const char *name);
 
         Name(const Name &other);
@@ -25,7 +25,7 @@ namespace Engine
 
         bool isValid() const;
 
-        const String &string() const;
+        const std::string& string() const;
 
         const char* c_str() const;
 

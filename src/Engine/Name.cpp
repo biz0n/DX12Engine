@@ -8,7 +8,7 @@ namespace Engine
     {
     }
 
-    Name::Name(const String& name)
+    Name::Name(const std::string& name)
     {
         mId = NameRegistry::Instance().GetId(name);
     }
@@ -45,7 +45,7 @@ namespace Engine
         return mId != NameRegistry::INVALID_ID;
     }
 
-    const String& Name::string() const
+    const std::string& Name::string() const
     {
         return NameRegistry::Instance().GetName(mId);
     }

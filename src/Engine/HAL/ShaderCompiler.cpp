@@ -14,39 +14,11 @@ namespace Engine::HAL
         ThrowIfFailed(DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(mCompiler.GetAddressOf())));
     }
 
-    ComPtr<ID3DBlob> ShaderCompiler::Compile(
-        const std::wstring& filename,
-        const D3D_SHADER_MACRO* defines,
+    ComPtr<IDxcBlob> ShaderCompiler::Compile(
+        const std::string& filename,
         const std::string& entrypoint,
-        const std::string& target)
-    {
-        UINT compileFlags = D3DCOMPILE_ALL_RESOURCES_BOUND | D3DCOMPILE_ENABLE_UNBOUNDED_DESCRIPTOR_TABLES;
-#if defined(DEBUG) || defined(_DEBUG)
-        compileFlags = compileFlags | D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
-#endif
-
-        HRESULT hr = S_OK;
-
-        ComPtr<ID3DBlob> byteCode = nullptr;
-        ComPtr<ID3DBlob> errors;
-        hr = D3DCompileFromFile(filename.c_str(), defines, D3D_COMPILE_STANDARD_FILE_INCLUDE,
-            entrypoint.c_str(), target.c_str(), compileFlags, 0, &byteCode, &errors);
-
-        if (errors != nullptr)
-        {
-            OutputDebugStringA((char*)errors->GetBufferPointer());
-        }
-
-        ThrowIfFailed(hr);
-
-        return byteCode;
-    }
-
-    ComPtr<IDxcBlob> ShaderCompiler::Compile2(
-        const std::wstring& filename,
-        const D3D_SHADER_MACRO* defines,
-        const std::string& entrypoint,
-        const std::string& target)
+        const std::string& target,
+        const std::vector<std::string>& defines)
     {
         std::wstring wEntryPoint = StringToWString(entrypoint);
         std::wstring wProfile = StringToWString(target);
@@ -68,7 +40,7 @@ namespace Engine::HAL
             ThrowIfFailed(pUtils->CreateDefaultIncludeHandler(pDefaultIncludeHandler.GetAddressOf()));
         }
 
-        HRESULT br = mLibrary->CreateBlobFromFile(filename.c_str(), nullptr, pSource.GetAddressOf());
+        HRESULT br = mLibrary->CreateBlobFromFile(StringToWString(filename).c_str(), nullptr, pSource.GetAddressOf());
 
         std::vector<std::wstring> arguments;
 
@@ -102,10 +74,10 @@ namespace Engine::HAL
         arguments.push_back(DXC_ARG_WARNINGS_ARE_ERRORS); //-WX
         
 
-      //  for (const std::wstring& define : defines)
+        for (const std::string& define : defines)
         {
-      //      arguments.push_back(L"-D");
-      //      arguments.push_back(define.c_str());
+            arguments.push_back(L"-D");
+            arguments.push_back(std::move(StringToWString(define)));
         }
 
         std::vector<LPCWSTR> argumentPtrs;

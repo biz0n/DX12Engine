@@ -1,7 +1,6 @@
 #include "ShaderProvider.h"
 
 #include <HAL/ShaderCompiler.h>
-#include <StringUtils.h>
 
 #include <HAL/ShaderCreationInfo.h>
 
@@ -25,11 +24,11 @@ namespace Engine::Render
         }
         else
         {
-            auto shader = mShaderCompiler->Compile2(
-                StringToWString(creationInfo.path),
-                creationInfo.defines.data(),
+            auto shader = mShaderCompiler->Compile(
+                creationInfo.path,
                 creationInfo.entryPoint,
-                creationInfo.target);
+                creationInfo.target,
+                creationInfo.defines);
                 
             mShadersMap.emplace(hash, shader);
 

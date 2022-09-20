@@ -11,7 +11,7 @@ namespace Engine::Memory
     struct TextureCreationInfo
     {
         D3D12_RESOURCE_DESC description;
-        Optional<D3D12_CLEAR_VALUE> clearValue;
+        std::optional<D3D12_CLEAR_VALUE> clearValue;
 
         auto operator<=>(const TextureCreationInfo& other) const = default;
     };

@@ -12,7 +12,7 @@ namespace Engine::Graph
         mReadResources.push_back(resource);
     }
 
-    void Node::WriteResource(const Resource& resource, Optional<Name> originalName)
+    void Node::WriteResource(const Resource& resource, std::optional<Name> originalName)
     {
         mWriteResources.push_back(resource);
 

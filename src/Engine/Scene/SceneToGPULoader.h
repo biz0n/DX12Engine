@@ -23,7 +23,7 @@ namespace Engine::Scene
     public:
         struct SceneDataDto
         {
-            String skyBoxPath;
+            std::string skyBoxPath;
         };
     private:
         struct Context;
@@ -37,7 +37,7 @@ namespace Engine::Scene
         static void CreateMeshNode(Context& context, const Bin3D::Mesh& mesh, uint32_t meshIndex, entt::entity entity);
         static void CreateCameraNode(Context& context, const Bin3D::Camera& camera, entt::entity entity);
 
-        uint32_t CreateTexture(Context& context, SharedPtr<const DirectX::ScratchImage> image, const String& name);
+        uint32_t CreateTexture(Context& context, SharedPtr<const DirectX::ScratchImage> image, const std::string& name);
         MeshResources GetMeshResources(Context& context, const Bin3D::Mesh& meshDto);
         Engine::Scene::SceneData CreateSceneData(Context& context, const SceneDataDto& sceneData);
     private:

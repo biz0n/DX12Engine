@@ -2,7 +2,7 @@
 
 #include <Render/RootSignatureBuilder.h>
 #include <HAL/RootSignature.h>
-#include <StringUtils.h>
+#include <HAL/DirectXExtensions.h>
 
 namespace Engine::Render
 {
@@ -22,7 +22,7 @@ namespace Engine::Render
 
         AddDefaultRegisters(builder);
         auto rs = builder.Build(mDevice);
-        rs->GetD3D12RootSignature()->SetName(StringToWString(name.string()).c_str());
+        HAL::SetResourceName(rs->GetD3D12RootSignature(), name.string());
         mRootSignatureMap.emplace(name, std::move(rs));
     }
 

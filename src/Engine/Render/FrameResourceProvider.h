@@ -53,7 +53,7 @@ namespace Engine::Render
 
         Memory::Texture* GetTexture(const Name& name) const;
     private:
-        ResourceData& GetResourceData(const Name& name, Optional<Name> originalName = std::nullopt);
+        ResourceData& GetResourceData(const Name& name, std::optional<Name> originalName = std::nullopt);
         const Name GetOriginalName(const Name& name) const;
         const bool HasOriginalNameExists(const Name& name) const;
     private:

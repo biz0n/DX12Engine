@@ -31,7 +31,7 @@ namespace Engine::Graph
         
         public:
             void ReadResource(const Resource& resource);
-            void WriteResource(const Resource& resource, Optional<Name> originalName = std::nullopt);
+            void WriteResource(const Resource& resource, std::optional<Name> originalName = std::nullopt);
             const Name& GetName() const { return mName; }
             const std::vector<Resource>& GetReadResources() const { return mReadResources; }
             const std::vector<Resource>& GetWriteResources() const { return mWriteResources; }

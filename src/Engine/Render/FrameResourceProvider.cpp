@@ -142,7 +142,7 @@ namespace Engine::Render
         }
     }
 
-    FrameResourceProvider::ResourceData& FrameResourceProvider::GetResourceData(const Name& name, Optional<Name> originalName)
+    FrameResourceProvider::ResourceData& FrameResourceProvider::GetResourceData(const Name& name, std::optional<Name> originalName)
     {
         auto resourceName = name;
         auto resourceIndexIt = mResourcesMap.find(resourceName);

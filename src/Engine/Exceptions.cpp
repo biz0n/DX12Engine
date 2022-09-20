@@ -3,7 +3,7 @@
 
 namespace Engine
 {
-    DxException::DxException(HRESULT hr, const TString &functionName, const TString &filename, int lineNumber) : ErrorCode(hr),
+    DxException::DxException(HRESULT hr, const std::string&functionName, const std::string&filename, int lineNumber) : ErrorCode(hr),
                                                                                                                  FunctionName(functionName),
                                                                                                                  Filename(filename),
                                                                                                                  LineNumber(lineNumber)
@@ -11,22 +11,22 @@ namespace Engine
         msg = ToString();
     }
 
-    TString DxException::ToString() const
+    std::string DxException::ToString() const
     {
         // Get the string description of the error code.
         _com_error err(ErrorCode);
-        TString msg = err.ErrorMessage();
-        TCHAR buffer[4];
+        std::string msg = err.ErrorMessage();
+        CHAR buffer[5];
         _itot_s(LineNumber, buffer, 10);
-        TString lineNumberStr = buffer;
+        std::string lineNumberStr = buffer;
 
-        return FunctionName + TEXT("\nFile: ") + Filename + TEXT("\nLine: ") + lineNumberStr + TEXT("\nError: ") + msg;
+        return FunctionName + ("\nFile: ") + Filename + ("\nLine: ") + lineNumberStr + ("\nError: ") + msg;
     }
 
-    TString HrCodeToErrorString(HRESULT errorCode)   
+    std::string HrCodeToErrorString(HRESULT errorCode)
     {
         _com_error err(errorCode);
-        TString msg = err.ErrorMessage();
+        std::string msg = err.ErrorMessage();
         return msg;
     }
 

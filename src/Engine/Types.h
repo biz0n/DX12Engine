@@ -36,16 +36,10 @@ using float64 = double_t;
 using char8 = char;
 using uchar8 = unsigned char;
 
-using String = std::string;
-using TString = std::basic_string<TCHAR, std::char_traits<TCHAR>, std::allocator<TCHAR>>;
-
 using Size = std::size_t;
 using Index = std::size_t;
 
 using Byte = std::byte;
-
-template <typename T>
-using Optional = std::optional<T>;
 
 template <typename T>
 using ComPtr = Microsoft::WRL::ComPtr<T>;
@@ -67,8 +61,5 @@ inline UniquePtr<T> MakeUnique(Args &&... args)
 {
     return std::make_unique<T>(std::forward<Args>(args)...);
 }
-
-template <typename T>
-using WeakPtr = std::weak_ptr<T>;
 
 #define IMGUI_TEXTURE_ID(descriptor) ((ImTextureID)descriptor.ptr)

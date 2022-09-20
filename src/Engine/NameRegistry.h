@@ -15,11 +15,11 @@ namespace Engine
         ~NameRegistry();
 
     public:
-        uint32 GetId(const String &name);
-        const String &GetName(uint32 id) const;
+        uint32 GetId(const std::string&name);
+        const std::string& GetName(uint32 id) const;
 
     private:
-        std::vector<String> mNames;
-        std::unordered_map<String, uint32> mNameToId;
+        std::vector<std::string> mNames;
+        std::unordered_map<std::string, uint32> mNameToId;
     };
 } // namespace Engine
