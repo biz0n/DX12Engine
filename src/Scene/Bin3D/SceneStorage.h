@@ -9,6 +9,7 @@
 #include <Bin3D/Node.h>
 #include <Bin3D/ImagePath.h>
 #include <Bin3D/DataRegion.h>
+#include <Bin3D/Meshlet.h>
 
 #include <vector>
 #include <span>
@@ -37,6 +38,10 @@ namespace Bin3D
         std::span<const Bin3D::VertexProperties> GetVerticesProperties(const DataRegion& range) const;
         std::span<const uint32_t> GetIndices(const DataRegion& range) const;
 
+        std::span<const Bin3D::Meshlet> GetMeshlets(const DataRegion& range) const;
+        std::span<const Bin3D::MeshletTriangle> GetPrimitiveIndices(const DataRegion& range) const;
+        std::span<const uint8_t> GetUniqueVertexIndices(const DataRegion& range) const;
+
         std::string_view GetImageName(uint32_t index) const;
         std::string_view GetString(const DataRegion& range) const;
 
@@ -61,6 +66,9 @@ namespace Bin3D
         std::span<const Bin3D::VertexProperties> mVerticesPropertiesStorage;
         std::span<const uint32_t> mIndicesStorage;
         std::span<const Bin3D::ImagePath> mImagePaths;
+        std::span<const Bin3D::Meshlet> mMeshlets;
+        std::span<const Bin3D::MeshletTriangle> mPrimitiveIndices;
+        std::span<const uint8_t> mUniqueVertexIndices;
         std::span<const char> mStringsStorage;
     };
 

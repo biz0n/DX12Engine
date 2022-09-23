@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include <spdlog/spdlog.h>
+
 using namespace Bin3D::Reader;
 
 namespace SceneConverter::Writer
@@ -31,10 +33,15 @@ namespace SceneConverter::Writer
         header.VerticesPropertiesStorage = Write(fs, scene.GetVerticesPropertiesStorage());
         header.IndicesStorage = Write(fs, scene.GetIndicesStorage());
         header.ImagePaths = Write(fs, scene.GetImagePaths());
+        header.Meshlets = Write(fs, scene.GetMeshlets());
+        header.PrimitiveIndices = Write(fs, scene.GetPrimitiveIndices());
+        header.UniqueVertexIndices = Write(fs, scene.GetUniqueVertexIndices());
         header.StringsStorage = Write(fs, scene.GetStringsStorage());
 
         fs.seekp(0);
         fs.write(reinterpret_cast<const char*>(&header), sizeof(BinaryHeader));
+
+        spdlog::info("Write binary file: {}", filePath.string());
         
         fs.close();
     }

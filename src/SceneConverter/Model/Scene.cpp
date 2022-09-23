@@ -1,8 +1,14 @@
 #include "Scene.h"
 
+#include <spdlog/spdlog.h>
+
+#include <DirectXMesh.h>
+
+
 #include <queue>
 #include <tuple>
 #include <cstdio>
+#include <span>
 
 namespace SceneConverter::Model
 {
@@ -161,7 +167,7 @@ namespace SceneConverter::Model
             sceneNode.Parent = parent;
             mNodes.push_back(sceneNode);
 
-            size_t nextParent = mNodes.size() - 1;
+            const size_t nextParent = mNodes.size() - 1;
 
             for (const auto& childNode : node.Children)
             {
@@ -183,5 +189,78 @@ namespace SceneConverter::Model
 
             mImagePaths.push_back(imagePath);
         }
+    }
+    void Scene::ComputeMeshlets()
+    {
+        std::vector<DirectX::Meshlet> meshlets;
+        std::vector<uint8_t> uniqueVertexIB;
+        std::vector<DirectX::MeshletTriangle> primitiveIndices;
+
+        // https://developer.nvidia.com/blog/introduction-turing-mesh-shaders/
+        constexpr size_t mesheltMaxVerts = 64;
+        constexpr size_t meshletMaxPrimitives = 126;
+
+        for (auto& mesh : mMeshes)
+        {
+            meshlets.clear();
+            uniqueVertexIB.clear();
+            primitiveIndices.clear();
+
+            const uint32_t* indices = mIndicesStorage.data() + mesh.Indices.Offset;
+            const DirectX::XMFLOAT3* positions = reinterpret_cast<const DirectX::XMFLOAT3*>(mVerticesCoordinatesStorage.data() + mesh.Vertices.Offset);
+
+            auto nFaces = mesh.Indices.Size / 3;
+            auto result = DirectX::ComputeMeshlets(
+                indices, nFaces,
+                positions, mesh.Vertices.Size,
+                nullptr,
+                meshlets, uniqueVertexIB, primitiveIndices,
+                mesheltMaxVerts, meshletMaxPrimitives);
+
+            if (FAILED(result))
+            {
+                spdlog::error("ComputeMeshlets Failed: {}", result);
+            }
+
+            Bin3D::DataRegion meshletsRegion;
+            Bin3D::DataRegion primitiveIndicesRegion;
+            Bin3D::DataRegion uniqueVertexIndicesRegion;
+
+            meshletsRegion.Offset = mMeshlets.size();
+            meshletsRegion.Size = meshlets.size();
+
+            primitiveIndicesRegion.Offset = mPrimitiveIndices.size();
+            primitiveIndicesRegion.Size = primitiveIndices.size();
+
+            uniqueVertexIndicesRegion.Offset = mUniqueVertexIndexBuffer.size();
+            uniqueVertexIndicesRegion.Size = uniqueVertexIB.size();
+
+            mesh.Meshlets = meshletsRegion;
+            mesh.PrimitiveIndices = primitiveIndicesRegion;
+            mesh.UniqueVertexIndices = uniqueVertexIndicesRegion;
+
+            for (const auto& meshlet : meshlets)
+            {
+                mMeshlets.push_back(*reinterpret_cast<const Bin3D::Meshlet*>(&meshlet));
+            }
+
+            for (const auto& meshletTriangle : primitiveIndices)
+            {
+                mPrimitiveIndices.push_back(*reinterpret_cast<const Bin3D::MeshletTriangle*>(&meshletTriangle));
+            }
+
+            if (uniqueVertexIB.size() % 4 != 0)
+            {
+                spdlog::error("Wrong index buffer size: {}", uniqueVertexIB.size());
+            }
+
+            mUniqueVertexIndexBuffer.insert(mUniqueVertexIndexBuffer.end(), uniqueVertexIB.begin(), uniqueVertexIB.end());
+        }
+
+        auto uniqueVertexIB32 = std::span(reinterpret_cast<uint32_t*>(mUniqueVertexIndexBuffer.data()), mUniqueVertexIndexBuffer.size() / 4);
+        auto uniqueVertexIB16 = std::span(reinterpret_cast<uint16_t*>(mUniqueVertexIndexBuffer.data()), mUniqueVertexIndexBuffer.size() / 2);
+
+        mUniqueVertexIB32.insert(mUniqueVertexIB32.end(), uniqueVertexIB32.begin(), uniqueVertexIB32.end());
+        mUniqueVertexIB16.insert(mUniqueVertexIB16.end(), uniqueVertexIB16.begin(), uniqueVertexIB16.end());
     }
 }

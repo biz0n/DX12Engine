@@ -22,3 +22,9 @@
 [submodule "src/Libraries/imgui/imgui-node-editor"]
 	path = src/Libraries/imgui/imgui-node-editor
 	url = git@github.com:thedmd/imgui-node-editor.git
+[submodule "src/Libraries/libassert"]
+	path = src/Libraries/libassert
+	url = git@github.com:jeremy-rifkin/libassert.git
+[submodule "src/Libraries/spdlog"]
+	path = src/Libraries/spdlog
+	url = git@github.com:gabime/spdlog.git

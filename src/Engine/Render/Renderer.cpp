@@ -109,7 +109,7 @@ namespace Engine::Render
         auto currentBackbufferIndex = mRenderContext->GetCurrentBackBufferIndex();
 
         bool isGraphicPass = passContext->GetQueueType() == CommandQueueType::Graphics;
-        ComPtr<ID3D12GraphicsCommandList> commandList;
+        ComPtr<ID3D12GraphicsCommandList6> commandList;
         if (isGraphicPass)
         {
             commandList = mRenderContext->CreateGraphicsCommandList();

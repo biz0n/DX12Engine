@@ -75,6 +75,12 @@ namespace Engine::Render
             meshUniform.VertexPropertiesBufferIndex = mesh.vertexPropertiesBuffer->GetSRDescriptor().GetFullIndex();
             meshUniform.IndexBufferIndex = mesh.indexBuffer->GetSRDescriptor().GetFullIndex();
 
+            meshUniform.MeshletBufferIndex = mesh.meshletsBuffer->GetSRDescriptor().GetFullIndex();
+            meshUniform.PrimitiveIndexBufferIndex = mesh.primitiveIndicesBuffer->GetSRDescriptor().GetFullIndex();
+            meshUniform.UniqueVertexIndexBufferIndex = mesh.uniqueVertexIndexBuffer->GetSRDescriptor().GetFullIndex();
+            meshUniform.MeshletCount = mesh.GetMeshletsCount();
+            
+
             DirectX::XMMATRIX tWorld = DirectX::XMMatrixTranspose(transformComponent.transform);
             auto d = DirectX::XMMatrixDeterminant(tWorld);
             DirectX::XMMATRIX tWorldInverseTranspose = DirectX::XMMatrixInverse(&d, tWorld);

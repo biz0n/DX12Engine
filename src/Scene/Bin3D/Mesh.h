@@ -11,6 +11,12 @@ namespace Bin3D
 
         DataRegion Vertices;
         DataRegion Indices;
+
+        DataRegion Meshlets;
+        DataRegion PrimitiveIndices;
+        DataRegion UniqueVertexIndices;
+
+        uint8_t IndexSize = 4; //bytes
         
         DirectX::BoundingBox AABB;
     };

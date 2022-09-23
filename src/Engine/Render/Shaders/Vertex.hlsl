@@ -13,4 +13,12 @@ struct Vertex1N1UV1T
     float4 Tangent : TANGENT;
 };
 
+struct Meshlet
+{
+    uint VertCount;
+    uint VertOffset;
+    uint PrimCount;
+    uint PrimOffset;
+};
+
 #endif

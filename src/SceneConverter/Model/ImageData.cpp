@@ -17,12 +17,12 @@ namespace SceneConverter::Model
         return image;
     }
 
-    std::shared_ptr<ImageData> ImageData::LoadImageFromData(const std::vector<byte>& imageData, const std::string& extension, const std::string& name)
+    std::shared_ptr<ImageData> ImageData::LoadImageFromData(std::vector<byte>&& imageData, const std::string& extension, const std::string& name)
     {
         auto image = std::make_shared<ImageData>();
         image->mPath = name;
         image->mExtension = extension;
-        image->mData = imageData;
+        image->mData = std::move(imageData);
         image->mIsNotEmpty = true;
 
         return image;

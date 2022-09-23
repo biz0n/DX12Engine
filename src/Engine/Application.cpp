@@ -66,7 +66,17 @@ namespace Engine
 
         mSceneLoadingInfo = MakeShared<Scene::SceneLoadingInfo>();
         mSceneLoadingInfo->scenes = {
-            { "Sponza.Bin3D", R"(C:\Users\Maxim\Documents\dev\3d\3DModels\sponza\sponza.bin3d)"},
+            { "Sponza.Bin3D", R"(C:\Users\Maxim\Documents\dev\3d\3DModels\sponza\model.bin3d)"},
+            { "SponzaNew.Bin3D", R"(C:\Users\Maxim\Documents\dev\3d\3DModels\sponza_new\model.bin3d)"},
+            { "DamagedHelmet.Bin3D", R"(C:\Users\Maxim\Documents\dev\3d\3DModels\DamagedHelmet\model.bin3d)"},
+            { "Cube.Bin3D", R"(C:\Users\Maxim\Documents\dev\3d\3DModels\cube\model.bin3d)"},
+            { "FlightHelmet.Bin3D", R"(C:\Users\Maxim\Documents\dev\3d\3DModels\FlightHelmet\model.bin3d)"},
+            { "Corset.Bin3D", R"(C:\Users\Maxim\Documents\dev\3d\3DModels\Corset\model.bin3d)"},
+            { "Avocado.Bin3D", R"(C:\Users\Maxim\Documents\dev\3d\3DModels\Avocado\model.bin3d)"},
+            { "BoomBoxWithAxes.Bin3D", R"(C:\Users\Maxim\Documents\dev\3d\3DModels\BoomBoxWithAxes\model.bin3d)"},
+            { "BoomBox.Bin3D", R"(C:\Users\Maxim\Documents\dev\3d\3DModels\BoomBox\model.bin3d)"},
+
+
             { "Sponza", R"(Resources\Scenes\gltf2\sponza\sponza.gltf)" },
             { "Corset", R"(Resources\Scenes\glTF-Sample-Models-master\2.0\Corset\glTF\Corset.gltf)" },
             { "Axis Test", R"(Resources\Scenes\gltf2\axis.gltf)" },

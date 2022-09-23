@@ -34,6 +34,8 @@ NAMESPACE_START(Engine::Shader)
 #define POINT_LIGHT 1
 #define SPOT_LIGHT 2
 
+#define AS_GROUP_SIZE 32
+
 struct MeshUniform
 {
     float4x4 World;
@@ -42,9 +44,16 @@ struct MeshUniform
     int VertexBufferIndex;
     int VertexPropertiesBufferIndex;
     int IndexBufferIndex;
+
     int MaterialIndex;
 
+    int MeshletBufferIndex;
+    int PrimitiveIndexBufferIndex;
+    int UniqueVertexIndexBufferIndex;
+
     int Id;
+
+    int MeshletCount;
     float3 __Padding;
 };
 
@@ -95,6 +104,7 @@ struct LightUniform
 
 struct FrameUniform
 {
+    float4x4 View;
     float4x4 ViewProj;
     float4x4 ShadowTransform;
 

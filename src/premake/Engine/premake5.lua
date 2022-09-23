@@ -28,6 +28,8 @@ project "Engine"
         "%{IncludeDir.ImGui}",
         "%{IncludeDir.ImGui}/imgui",
         "%{IncludeDir.PIX}",
+        "%{IncludeDir.libassert}",
+        "%{IncludeDir.spdlog}",
     }
 
     links
@@ -45,6 +47,7 @@ project "Engine"
         "ImGui",
         "ImGuizmo",
         "ImGuiNodeEditor",
+        "libassert",
     }
 
     links

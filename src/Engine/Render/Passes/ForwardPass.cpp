@@ -61,14 +61,13 @@ namespace Engine::Render::Passes
 
     void ForwardPass::CreatePipelineStates(Render::PipelineStateProvider *pipelineStateProvider)
     {
-        CD3DX12_RASTERIZER_DESC rasterizer = {};
-        rasterizer.FillMode = D3D12_FILL_MODE_SOLID;
-        rasterizer.CullMode = D3D12_CULL_MODE_BACK;
+        auto rasterizer = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+        rasterizer.DepthClipEnable = false;
 
         Render::PipelineStateProxy pipelineStateCullModeBack = {
             .rootSignatureName = RootSignatureNames::Forward,
-            .vertexShaderName = Shaders::ForwardVS,
             .pixelShaderName = Shaders::ForwardPS,
+            .meshShaderName = Shaders::ForwardMS,
             .dsvFormat = DXGI_FORMAT_D32_FLOAT,
             .rtvFormats = {
                 DXGI_FORMAT_R16G16B16A16_FLOAT,
@@ -134,7 +133,7 @@ namespace Engine::Render::Passes
 
         commandRecorder->SetRoot32BitConstant(0, 0, meshIndex);
 
-        commandRecorder->Draw(mesh.GetIndicesCount(), 0);
+        commandRecorder->DispatchMesh(mesh.GetMeshletsCount(), 1, 1);
     }
 
     void ForwardPass::Render(const RenderRequest& renderRequest, Render::PassRenderContext& passContext, const Timer& timer)
@@ -154,6 +153,8 @@ namespace Engine::Render::Passes
 
         auto& camera = renderRequest.GetCamera();
         auto cb = CommandListUtils::GetFrameUniform(camera.viewProjection, camera.eyePosition, static_cast<uint32>(renderRequest.GetLightsCount()));
+        dx::XMStoreFloat4x4(&cb.View, camera.view);
+
         cb.HasShadowTexture = !renderRequest.GetShadowCameras().empty();
 
         if (cb.HasShadowTexture)

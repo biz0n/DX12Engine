@@ -40,6 +40,7 @@ namespace Engine::Scene
         uint32_t CreateTexture(Context& context, SharedPtr<const DirectX::ScratchImage> image, const std::string& name);
         MeshResources GetMeshResources(Context& context, const Bin3D::Mesh& meshDto);
         Engine::Scene::SceneData CreateSceneData(Context& context, const SceneDataDto& sceneData);
+        SharedPtr<Memory::Buffer> CreateBuffer(Size bufferSize, Size strideSize, const void* data);
     private:
         struct Context
         {

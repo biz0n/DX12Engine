@@ -19,13 +19,22 @@ StructuredBuffer<MaterialUniform> Materials : register(t2, space1);
 
 struct VertexShaderOutput
 {
-    float3 PositionW : POSITION0;
-    float4 ShadowPosH : POSITION1;
-    float3 NormalW : NORMAL;
-    float2 TextureCoord : TEXCOORD;
-    float3x3 TBN : TBN;
     float4 PositionH : SV_Position;
+    float3 PositionW : POSITION0;
+   // float4 ShadowPosH : POSITION1;
+    float3 NormalW : NORMAL;
+   // float2 TextureCoord : TEXCOORD;
+   // float3x3 TBN : TBN;
+    
     uint indexId : INDEX;
+};
+
+struct VertexOut
+{
+    float4 PositionHS : SV_Position;
+    float3 PositionVS : POSITION0;
+    float3 Normal : NORMAL0;
+    uint MeshletIndex : COLOR0;
 };
  
 struct PixelShaderOutput
@@ -109,17 +118,54 @@ VertexShaderOutput mainVS(uint indexId : SV_VertexID)
 
     OUT.NormalW = normalW;
     OUT.PositionW = posW.xyz;
-    OUT.ShadowPosH = mul(posW, FrameCB.ShadowTransform);
+  //  OUT.ShadowPosH = mul(posW, FrameCB.ShadowTransform);
     OUT.PositionH = mul(posW, FrameCB.ViewProj);
-    OUT.TBN = TBN;
-    OUT.TextureCoord = properties.TextureCoord;
+  //  OUT.TBN = TBN;
+  //  OUT.TextureCoord = properties.TextureCoord;
     OUT.indexId = indexId;
  
     return OUT;
 }
 
-PixelShaderOutput mainPS(VertexShaderOutput IN)
+PixelShaderOutput mainPS(VertexShaderOutput input)
 {
+    float ambientIntensity = 0.1;
+    float3 lightColor = float3(1, 1, 1);
+    float3 lightDir = -normalize(float3(1, -1, 1));
+
+    float3 diffuseColor;
+    float shininess;
+    
+        uint meshletIndex = input.indexId;
+        diffuseColor = float3(
+            float(meshletIndex & 1),
+            float(meshletIndex & 3) / 4,
+            float(meshletIndex & 7) / 8);
+        shininess = 16.0;
+
+    float3 normal = normalize(input.NormalW);
+
+    // Do some fancy Blinn-Phong shading!
+    float cosAngle = saturate(dot(normal, lightDir));
+    float3 viewDir = -normalize(input.PositionW);
+    float3 halfAngle = normalize(lightDir + viewDir);
+
+    float blinnTerm = saturate(dot(normal, halfAngle));
+    blinnTerm = cosAngle != 0.0 ? blinnTerm : 0.0;
+    blinnTerm = pow(blinnTerm, shininess);
+
+    float3 finalColor = (cosAngle + blinnTerm + ambientIntensity) * diffuseColor;
+    
+    PixelShaderOutput output;
+    output.Color = float4(finalColor, 1);
+    float4 cc = float4(
+            float(input.indexId & 1),
+            float(input.indexId & 5) / 4,
+            float(input.indexId & 9) / 8, 1);
+    
+    output.VisibilityBuffer = cc; 
+    return output;
+    /*
     MaterialUniform MaterialCB = Materials[Meshes[MeshIndex].MaterialIndex];
     
     float4 baseColor = MaterialCB.BaseColor;
@@ -232,4 +278,5 @@ PixelShaderOutput mainPS(VertexShaderOutput IN)
     output.VisibilityBuffer = cc;//
     //half4(sin(f / 10), sin(f / 100), sin(f / 1000), 1) * 0.3 + 0.7;
     return output;
+*/
 }

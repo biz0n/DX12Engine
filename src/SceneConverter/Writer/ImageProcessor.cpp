@@ -7,6 +7,9 @@
 #include <d3d11.h>
 #include <DirectXTex.h>
 
+#include <spdlog/spdlog.h>
+
+
 #include <wrl.h>
 #include <dxgi1_6.h>
 
@@ -14,9 +17,11 @@ namespace SceneConverter::Writer
 {
     void ImageProcessor::ProcessImages(const std::filesystem::path& path, Model::Scene& scene)
     {
+        CoInitialize(nullptr);
+
         Microsoft::WRL::ComPtr<ID3D11Device> device;
         Microsoft::WRL::ComPtr<ID3D11DeviceContext> deviceContext;
-        D3D_FEATURE_LEVEL SupportedLevel;
+        D3D_FEATURE_LEVEL supportedLevel;
         D3D11CreateDevice(
             nullptr,
             D3D_DRIVER_TYPE_HARDWARE,
@@ -26,7 +31,7 @@ namespace SceneConverter::Writer
             0,
             D3D11_SDK_VERSION,
             &device,
-            &SupportedLevel,
+            &supportedLevel,
             &deviceContext);
 
         for (auto image : scene.GetImageResources())
@@ -49,46 +54,55 @@ namespace SceneConverter::Writer
         DirectX::ScratchImage scratch;
 
         bool isHdr = false;
+        HRESULT loadResult = E_FAIL;
         if (image->GetData().empty())
         {
             std::filesystem::path imageOriginalPath = image->GetOriginalPath();
+            spdlog::info("Load image from file: {}", imageOriginalPath.string());
+            
             if (extension == "dds")
             {
-                DirectX::LoadFromDDSFile(imageOriginalPath.c_str(), DirectX::DDS_FLAGS_NONE, nullptr, scratch);
+                loadResult = DirectX::LoadFromDDSFile(imageOriginalPath.c_str(), DirectX::DDS_FLAGS_NONE, nullptr, scratch);
             }
             else if (extension == "tga")
             {
-                DirectX::LoadFromTGAFile(imageOriginalPath.c_str(), nullptr, scratch);
+                loadResult = DirectX::LoadFromTGAFile(imageOriginalPath.c_str(), nullptr, scratch);
             }
             else if (extension == "hdr")
             {
-                DirectX::LoadFromHDRFile(imageOriginalPath.c_str(), nullptr, scratch);
+                loadResult = DirectX::LoadFromHDRFile(imageOriginalPath.c_str(), nullptr, scratch);
                 bool isHdr = true;
             }
             else
             {
-                DirectX::LoadFromWICFile(imageOriginalPath.c_str(), DirectX::WIC_FLAGS_NONE, nullptr, scratch);
+                loadResult = DirectX::LoadFromWICFile(imageOriginalPath.c_str(), DirectX::WIC_FLAGS_NONE, nullptr, scratch);
             }
         }
         else
         {
+            spdlog::info("Load image from memory: {}", extension);
             if (extension == "dds")
             {
-                DirectX::LoadFromDDSMemory(image->GetData().data(), image->GetData().size(), DirectX::DDS_FLAGS_NONE, nullptr, scratch);
+                loadResult = DirectX::LoadFromDDSMemory(image->GetData().data(), image->GetData().size(), DirectX::DDS_FLAGS_NONE, nullptr, scratch);
             }
             else if (extension == "tga")
             {
-                DirectX::LoadFromTGAMemory(image->GetData().data(), image->GetData().size(), nullptr, scratch);
+                loadResult = DirectX::LoadFromTGAMemory(image->GetData().data(), image->GetData().size(), nullptr, scratch);
             }
             else if (extension == "hdr")
             {
-                DirectX::LoadFromHDRMemory(image->GetData().data(), image->GetData().size(), nullptr, scratch);
+                loadResult = DirectX::LoadFromHDRMemory(image->GetData().data(), image->GetData().size(), nullptr, scratch);
                 bool isHdr = true;
             }
             else
             {
-                DirectX::LoadFromWICMemory(image->GetData().data(), image->GetData().size(), DirectX::WIC_FLAGS_NONE, nullptr, scratch);
+                loadResult = DirectX::LoadFromWICMemory(image->GetData().data(), image->GetData().size(), DirectX::WIC_FLAGS_NONE, nullptr, scratch);
             }
+        }
+
+        if (FAILED(loadResult))
+        {
+            spdlog::error("Load image failed: {}", std::system_category().message(loadResult));
         }
 
 #if 0
@@ -104,6 +118,8 @@ namespace SceneConverter::Writer
                 mipChain);
 
             scratch = std::move(mipChain);
+
+            spdlog::info("Generate MipMaps");
         }
 
         if (!DirectX::IsCompressed(scratch.GetMetadata().format))
@@ -121,6 +137,8 @@ namespace SceneConverter::Writer
             );
 
             scratch = std::move(compressed);
+
+            spdlog::info("Compress {}", isHdr ? "BC6H_UF16" : "BC7_UNORM");
         }
 #endif
         const auto& imageMeta = scratch.GetMetadata();
@@ -137,6 +155,8 @@ namespace SceneConverter::Writer
         image->SetFileName(imagePath.filename().string());
 
         DirectX::SaveToDDSFile(scratch.GetImages(), scratch.GetImageCount(), scratch.GetMetadata(), DirectX::DDS_FLAGS_NONE, imagePath.c_str());
+
+        spdlog::info("Save: {}", imagePath.string());
     }
 
     std::filesystem::path ImageProcessor::GenerateImageName(const std::filesystem::path& path, std::shared_ptr<const Model::ImageData> image, const ImageMeta& meta)
@@ -173,7 +193,7 @@ namespace SceneConverter::Writer
         }
         if (image->IsUseAs(Model::TextureUsage::Emissive))
         {
-            prefixBuilder << "_emissive_";
+            prefixBuilder << "_emissive";
         }
 
         prefixBuilder << '_' << meta.Width << 'x' << meta.Height;

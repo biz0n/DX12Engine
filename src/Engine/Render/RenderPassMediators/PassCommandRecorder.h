@@ -17,13 +17,13 @@ namespace Engine::Render
     public:
         PassCommandRecorder(
             PassContext* passContext,
-            ComPtr<ID3D12GraphicsCommandList> commandList,
+            ComPtr<ID3D12GraphicsCommandList6> commandList,
             Memory::ResourceStateTracker *resourceStateTracker,
             RenderContext *renderContext,
             const FrameResourceProvider *frameResourceProvider);
         ~PassCommandRecorder();
 
-        ComPtr<ID3D12GraphicsCommandList> GetD3D12CommandList() const { return mCommandList; }
+        ComPtr<ID3D12GraphicsCommandList6> GetD3D12CommandList() const { return mCommandList; }
 
         void SetViewPort(uint32 width = 0, uint32 height = 0);
 
@@ -47,6 +47,8 @@ namespace Engine::Render
         void DrawIndexed(uint32 vertexStart, uint32 indexCount, uint32 indexStart);
         void DrawIndexedInstanced(uint32 vertexStart, uint32 indexCount, uint32 indexStart, uint32 instanceCount);
 
+        void DispatchMesh(uint32 x, uint32 y, uint32 z = 1);
+
         void Dispatch(uint32 x, uint32 y, uint32 z = 1);
 
         void UAVBarrier(ID3D12Resource* res);
@@ -54,7 +56,7 @@ namespace Engine::Render
         void SetRootSignature(const Name& rootSignature);
     private:
         PassContext* mPassContext;
-        ComPtr<ID3D12GraphicsCommandList> mCommandList;
+        ComPtr<ID3D12GraphicsCommandList6> mCommandList;
         Memory::ResourceStateTracker *mResourceStateTracker;
         RenderContext *mRenderContext;
         const FrameResourceProvider *mFrameResourceProvider;

@@ -123,13 +123,13 @@ namespace Engine::Render
         return nullptr;
     }
 
-    ComPtr<ID3D12GraphicsCommandList> RenderContext::CreateCommandList(D3D12_COMMAND_LIST_TYPE type)
+    ComPtr<ID3D12GraphicsCommandList6> RenderContext::CreateCommandList(D3D12_COMMAND_LIST_TYPE type)
     {
         auto currentBackBufferIndex = mSwapChain->GetCurrentBackBufferIndex();
 
         auto allocator = mCommandAllocators[currentBackBufferIndex]->GetNextAllocator(type);
 
-        ComPtr<ID3D12GraphicsCommandList> commandList;
+        ComPtr<ID3D12GraphicsCommandList6> commandList;
 
         ThrowIfFailed(Device()->CreateCommandList(0, type, allocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
 

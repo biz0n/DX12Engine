@@ -46,11 +46,26 @@ namespace Engine::Render
         PipelineStateStream stateStream;
         stateStream.depthStencil = CD3DX12_DEPTH_STENCIL_DESC(pipelineStateProxy.depthStencil);
         stateStream.dsvFormat = pipelineStateProxy.dsvFormat;
-        stateStream.PS = mShaderProvider->GetShader({pipelineStateProxy.pixelShaderName, "mainPS", "ps_6_6"});
-        stateStream.VS = mShaderProvider->GetShader({pipelineStateProxy.vertexShaderName, "mainVS", "vs_6_6"});
+        if (!pipelineStateProxy.vertexShaderName.empty())
+        {
+            stateStream.VS = mShaderProvider->GetShader({ pipelineStateProxy.vertexShaderName, "mainVS", "vs_6_6" });
+        }
+        
+        if (!pipelineStateProxy.pixelShaderName.empty())
+        {
+            stateStream.PS = mShaderProvider->GetShader({ pipelineStateProxy.pixelShaderName, "mainPS", "ps_6_6" });
+        }
         if (!pipelineStateProxy.geometryShaderName.empty())
         {
             stateStream.GS = mShaderProvider->GetShader({pipelineStateProxy.geometryShaderName, "mainGS", "gs_6_6"});
+        }
+        if (!pipelineStateProxy.meshShaderName.empty())
+        {
+            stateStream.MS = mShaderProvider->GetShader({ pipelineStateProxy.meshShaderName, "mainMS", "ms_6_6" });
+        }
+        if (!pipelineStateProxy.amplificationShaderName.empty())
+        {
+            stateStream.AS = mShaderProvider->GetShader({ pipelineStateProxy.amplificationShaderName, "mainAS", "as_6_6" });
         }
         stateStream.rasterizer = CD3DX12_RASTERIZER_DESC(pipelineStateProxy.rasterizer);
         stateStream.rootSignature = mRootSignatureProvider->GetRootSignature(pipelineStateProxy.rootSignatureName)->GetD3D12RootSignature().Get();

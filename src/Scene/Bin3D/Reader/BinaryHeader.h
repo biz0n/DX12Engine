@@ -17,6 +17,9 @@ namespace Bin3D::Reader
         DataRegion VerticesPropertiesStorage;
         DataRegion IndicesStorage;
         DataRegion ImagePaths;
+        DataRegion Meshlets;
+        DataRegion PrimitiveIndices;
+        DataRegion UniqueVertexIndices;
         DataRegion StringsStorage;
     };
 }

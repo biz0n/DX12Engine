@@ -28,7 +28,7 @@ namespace Engine::Render
 
         SharedPtr<Memory::DescriptorAllocatorPool> GetDescriptorAllocator() const { return mDescriptorAllocatorPool; }
 
-        ComPtr<ID3D12GraphicsCommandList> CreateCommandList(D3D12_COMMAND_LIST_TYPE type);
+        ComPtr<ID3D12GraphicsCommandList6> CreateCommandList(D3D12_COMMAND_LIST_TYPE type);
 
         SharedPtr<HAL::SwapChain> GetSwapChain() const { return mSwapChain; }
 
@@ -59,9 +59,9 @@ namespace Engine::Render
         SharedPtr<HAL::CommandQueue> GetCopyCommandQueue() const { return GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY); };
         SharedPtr<HAL::CommandQueue> GetComputeCommandQueue() const { return GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COMPUTE); };
 
-        ComPtr<ID3D12GraphicsCommandList> CreateGraphicsCommandList() { return CreateCommandList(D3D12_COMMAND_LIST_TYPE_DIRECT); }
-        ComPtr<ID3D12GraphicsCommandList> CreateCopyCommandList() { return CreateCommandList(D3D12_COMMAND_LIST_TYPE_COPY); }
-        ComPtr<ID3D12GraphicsCommandList> CreateComputeCommandList() { return CreateCommandList(D3D12_COMMAND_LIST_TYPE_COMPUTE); }
+        ComPtr<ID3D12GraphicsCommandList6> CreateGraphicsCommandList() { return CreateCommandList(D3D12_COMMAND_LIST_TYPE_DIRECT); }
+        ComPtr<ID3D12GraphicsCommandList6> CreateCopyCommandList() { return CreateCommandList(D3D12_COMMAND_LIST_TYPE_COPY); }
+        ComPtr<ID3D12GraphicsCommandList6> CreateComputeCommandList() { return CreateCommandList(D3D12_COMMAND_LIST_TYPE_COMPUTE); }
 
         uint32 GetCurrentBackBufferIndex() const;
 

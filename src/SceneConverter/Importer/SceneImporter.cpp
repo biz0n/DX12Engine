@@ -20,6 +20,8 @@
 
 #include <DirectXCollision.h>
 
+#include <spdlog/spdlog.h>
+
 using namespace Bin3D;
 
 namespace SceneConverter::Importer
@@ -46,6 +48,8 @@ namespace SceneConverter::Importer
 
     Model::Scene SceneImporter::LoadScene(const std::string& path, std::optional<float> scale)
     {
+        spdlog::info("Import scene: {}", path);
+
         std::filesystem::path filePath = path;
 
         Assimp::Importer importer;
@@ -80,6 +84,8 @@ namespace SceneConverter::Importer
             context.Scene.AddImage(image);
         }
 
+        spdlog::info("Images parsed: {}", aScene->mNumTextures);
+
         for (unsigned int i = 0; i < aScene->mNumMaterials; ++i)
         {
             aiMaterial *aMaterial = aScene->mMaterials[i];
@@ -87,12 +93,15 @@ namespace SceneConverter::Importer
             context.Scene.AddMaterial(material);
         }
 
+        spdlog::info("Materials parsed: {}", aScene->mNumMaterials);
+
         for (unsigned int i = 0; i < aScene->mNumMeshes; ++i)
         {
             aiMesh *aMesh = aScene->mMeshes[i];
             auto mesh = ParseMesh(aMesh, context);
             context.Scene.AddMesh(mesh);
         }
+        spdlog::info("Meshes parsed: {}", aScene->mNumMeshes);
 
         for (unsigned int i = 0; i < aScene->mNumLights; ++i)
         {
@@ -100,11 +109,15 @@ namespace SceneConverter::Importer
             context.LightsIndexMap[aLight->mName.C_Str()] = context.Scene.AddLight(ParseLight(aLight));
         }
 
+        spdlog::info("Lights parsed: {}", aScene->mNumLights);
+
         for (unsigned int i = 0; i < aScene->mNumCameras; ++i)
         {
             aiCamera* aCamera = aScene->mCameras[i];
             context.CamerasIndexMap[aCamera->mName.C_Str()] = context.Scene.AddCamera(ParseCamera(aCamera));
         }
+
+        spdlog::info("Cameras parsed: {}", aScene->mNumCameras);
 
         const auto rootNode = ParseNode(aScene->mRootNode, aScene, context);
         context.Scene.AddRootNode(rootNode);
@@ -117,7 +130,8 @@ namespace SceneConverter::Importer
             camera.FarPlane = 100.0f;
             camera.FoV = 45 * std::numbers::pi_v<float> / 180.0f;
 
-            Model::Node cameraNode;
+            Model::Node cameraNode = {};
+            cameraNode.Type = Bin3D::Node::NodeType::Camera;
             cameraNode.CameraIndex = context.Scene.AddCamera(camera);
             DirectX::XMStoreFloat4x4(&cameraNode.LocalTransform, DirectX::XMMatrixIdentity());
             context.Scene.AddCamera(camera);
@@ -126,7 +140,8 @@ namespace SceneConverter::Importer
 
         std::function<void(const PunctualLight&, const DirectX::XMMATRIX&)> addLight = [&context](const PunctualLight& light, const DirectX::XMMATRIX& transform)
         {
-            Model::Node lightNode;
+            Model::Node lightNode = {};
+            lightNode.Type = Bin3D::Node::NodeType::Light;
             DirectX::XMStoreFloat4x4(&lightNode.LocalTransform, transform);
             lightNode.LightIndex = context.Scene.AddLight(light);
             context.Scene.AddRootNode(lightNode);
@@ -158,6 +173,10 @@ namespace SceneConverter::Importer
        // addLight(light2, DirectX::XMMatrixTranslation(0.0f, 2.0f, 0.0f));
 
         context.Scene.UnwrapNodeTree();
+
+        spdlog::info("Compute meshlets. Start");
+        context.Scene.ComputeMeshlets();
+        spdlog::info("Compute meshlets. Finish");
 
         return context.Scene;
     }
@@ -344,7 +363,7 @@ namespace SceneConverter::Importer
         buffer.resize(aTexture->mWidth);
         memcpy(buffer.data(), aTexture->pcData, aTexture->mWidth);
         std::string name = context.RootPath + "\\" + aTexture->mFilename.C_Str();
-        std::shared_ptr<Model::ImageData> image = Model::ImageData::LoadImageFromData(buffer, aTexture->achFormatHint, name);
+        std::shared_ptr<Model::ImageData> image = Model::ImageData::LoadImageFromData(std::move(buffer), aTexture->achFormatHint, name);
 
         return image;
     }

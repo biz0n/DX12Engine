@@ -22,6 +22,9 @@ namespace Bin3D
         mVerticesPropertiesStorage = GetSpan<VertexProperties>(data, header.VerticesPropertiesStorage);
         mIndicesStorage = GetSpan<uint32_t>(data, header.IndicesStorage);
         mImagePaths = GetSpan<ImagePath>(data, header.ImagePaths);
+        mMeshlets = GetSpan<Meshlet>(data, header.Meshlets);
+        mPrimitiveIndices = GetSpan<MeshletTriangle>(data, header.PrimitiveIndices);
+        mUniqueVertexIndices = GetSpan<uint8_t>(data, header.UniqueVertexIndices);
         mStringsStorage = GetSpan<char>(data, header.StringsStorage);
     }
 
@@ -38,6 +41,21 @@ namespace Bin3D
     std::span<const uint32_t> SceneStorage::GetIndices(const DataRegion& range) const
     {
         return mIndicesStorage.subspan(range.Offset, range.Size);
+    }
+
+    std::span<const Bin3D::Meshlet> SceneStorage::GetMeshlets(const DataRegion& range) const
+    {
+        return mMeshlets.subspan(range.Offset, range.Size);
+    }
+
+    std::span<const Bin3D::MeshletTriangle> SceneStorage::GetPrimitiveIndices(const DataRegion& range) const
+    {
+        return mPrimitiveIndices.subspan(range.Offset, range.Size);
+    }
+
+    std::span<const uint8_t> SceneStorage::GetUniqueVertexIndices(const DataRegion& range) const
+    {
+        return mUniqueVertexIndices.subspan(range.Offset, range.Size);
     }
 
     std::string_view SceneStorage::GetImageName(uint32_t index) const

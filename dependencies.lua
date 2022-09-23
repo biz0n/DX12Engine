@@ -15,6 +15,8 @@ IncludeDir["DirectXTex"] = "%{LIBRARY_PATH}/DirectXTex/DirectXTex"
 IncludeDir["EnTT"] = "%{LIBRARY_PATH}/entt/single_include"
 IncludeDir["ImGui"] = "%{LIBRARY_PATH}/imgui"
 IncludeDir["PIX"] = "%{LIBRARY_PATH}/PIX"
+IncludeDir["libassert"] = "%{LIBRARY_PATH}/libassert/include"
+IncludeDir["spdlog"] = "%{LIBRARY_PATH}/spdlog/include"
 
 Library = {}
 Library["DirectXShaderCompiler"] = "%{LIBRARY_PATH}/DirectXShaderCompiler/lib/x64/dxcompiler.lib"

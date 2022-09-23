@@ -20,6 +20,8 @@ namespace Engine::Render
         std::string vertexShaderName;
         std::string pixelShaderName;
         std::string geometryShaderName;
+        std::string meshShaderName;
+        std::string amplificationShaderName;
         DXGI_FORMAT dsvFormat;
         std::vector<DXGI_FORMAT> rtvFormats;
         D3D12_RASTERIZER_DESC rasterizer;
@@ -44,6 +46,8 @@ namespace Engine::Render
         CD3DX12_PIPELINE_STATE_STREAM_VS VS;
         CD3DX12_PIPELINE_STATE_STREAM_PS PS;
         CD3DX12_PIPELINE_STATE_STREAM_GS GS;
+        CD3DX12_PIPELINE_STATE_STREAM_AS AS;
+        CD3DX12_PIPELINE_STATE_STREAM_MS MS;
         CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL_FORMAT dsvFormat;
         CD3DX12_PIPELINE_STATE_STREAM_RENDER_TARGET_FORMATS rtvFormats;
         CD3DX12_PIPELINE_STATE_STREAM_RASTERIZER rasterizer;

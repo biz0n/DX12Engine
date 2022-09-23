@@ -22,7 +22,7 @@ namespace SceneConverter::Model
     {
     public:
         static std::shared_ptr<ImageData> LoadImageFromFile(const std::string& path);
-        static std::shared_ptr<ImageData> LoadImageFromData(const std::vector<byte>& data, const std::string& extension, const std::string& name);
+        static std::shared_ptr<ImageData> LoadImageFromData(std::vector<byte>&& data, const std::string& extension, const std::string& name);
 
         ImageData() = default;
         ~ImageData() = default;
@@ -47,8 +47,8 @@ namespace SceneConverter::Model
         std::string mExtension;
         std::vector<byte> mData = {};
         std::string mFileName;
-        bool mIsNotEmpty;
-        TextureUsage mUsage;
+        bool mIsNotEmpty = false;
+        TextureUsage mUsage = TextureUsage::Unset;
         std::vector<uint32_t> mMaterialIds;
     };
 

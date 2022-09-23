@@ -22,7 +22,7 @@ namespace Engine::Memory
         Size RenderTargetHeapSize = 64;
         Size DepthStencilHeapSize = 64;
         Size ConstantBufferViewRange = 1024;
-        Size ShaderResourceViewRange = 1024;
+        Size ShaderResourceViewRange = 4096;
         Size UnorderedAccessViewRange = 1024;
         Size SamplerHeapSize = 64;
         static constexpr Index CBVRange = 0;

@@ -23,7 +23,7 @@ namespace Engine::Render
 {
     PassCommandRecorder::PassCommandRecorder(
         PassContext* passContext,
-        ComPtr<ID3D12GraphicsCommandList> commandList,
+        ComPtr<ID3D12GraphicsCommandList6> commandList,
         Memory::ResourceStateTracker *resourceStateTracker,
         RenderContext *renderContext,
         const FrameResourceProvider *frameResourceProvider) : mPassContext{passContext}, 
@@ -282,6 +282,12 @@ namespace Engine::Render
     {
         assert(mPassContext->GetQueueType() == CommandQueueType::Graphics);
         mCommandList->DrawIndexedInstanced(indexCount, instanceCount, indexStart, vertexStart, 1);
+    }
+
+    void PassCommandRecorder::DispatchMesh(uint32 x, uint32 y, uint32 z)
+    {
+        assert(mPassContext->GetQueueType() == CommandQueueType::Graphics);
+        mCommandList->DispatchMesh(x, y, z);
     }
 
     void PassCommandRecorder::Dispatch(uint32 x, uint32 y, uint32 z)

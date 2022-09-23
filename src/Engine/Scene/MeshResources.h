@@ -15,9 +15,18 @@ namespace Engine::Scene
         SharedPtr<Memory::Buffer> vertexCoordinatesBuffer;
         SharedPtr<Memory::Buffer> vertexPropertiesBuffer;
 
+        SharedPtr<Memory::Buffer> meshletsBuffer;
+        SharedPtr<Memory::Buffer> primitiveIndicesBuffer;
+        SharedPtr<Memory::Buffer> uniqueVertexIndexBuffer;
+
         uint32 GetIndicesCount() const
         {
             return indexBuffer->GetDescription().Width / indexBuffer->GetStride();
+        }
+
+        uint32 GetMeshletsCount() const
+        {
+            return meshletsBuffer->GetDescription().Width / meshletsBuffer->GetStride();
         }
     };
 }
