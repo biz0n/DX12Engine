@@ -6,6 +6,7 @@ project "SceneConverter"
     systemversion "latest"
     characterset "MBCS"
     location "%{SCENE_CONVERTER_PATH}"
+    usestandardpreprocessor "On"
 
     targetdir (bin_location .. "/%{prj.name}")
     objdir (obj_location .. "/%{prj.name}")

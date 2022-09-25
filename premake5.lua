@@ -1,3 +1,5 @@
+include "premake/extensions/vs_extension.lua"
+
 include "dependencies.lua"
 
 workspace "Engine"

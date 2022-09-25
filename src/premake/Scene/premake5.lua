@@ -3,6 +3,7 @@ project "Scene"
     language "C++"
     cppdialect "C++20"
     location "%{SCENE_PATH}"
+    usestandardpreprocessor "On"
 
     targetdir (bin_location .. "/%{prj.name}")
     objdir (obj_location .. "/%{prj.name}")

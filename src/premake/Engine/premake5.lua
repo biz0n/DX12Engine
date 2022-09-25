@@ -6,6 +6,7 @@ project "Engine"
     systemversion "latest"
     characterset "MBCS"
     location "%{ENGINE_PATH}"
+    usestandardpreprocessor "On"
 
     targetdir (bin_location .. "/%{prj.name}")
     objdir (obj_location .. "/%{prj.name}")
