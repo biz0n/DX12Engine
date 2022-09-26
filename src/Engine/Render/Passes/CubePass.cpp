@@ -19,8 +19,6 @@
 #include <Render/RenderPassMediators/ResourcePlanner.h>
 #include <Render/RenderRequest.h>
 
-#include <Scene/SceneObject.h>
-
 #include <Memory/TextureCreationInfo.h>
 #include <Memory/Texture.h>
 #include <Memory/IndexBuffer.h>

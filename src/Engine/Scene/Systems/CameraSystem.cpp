@@ -3,7 +3,7 @@
 #include <Render/RenderContext.h>
 #include <HAL/SwapChain.h>
 
-#include <Scene/SceneObject.h>
+#include <Scene/SceneRegistry.h>
 #include <Scene/Components/CameraComponent.h>
 #include <Scene/Components/LightComponent.h>
 #include <Scene/Components/WorldTransformComponent.h>
@@ -18,7 +18,7 @@ namespace Engine::Scene::Systems
 
     CameraSystem::~CameraSystem() = default;
 
-    void CameraSystem::Process(SceneObject *scene, const Timer &timer)
+    void CameraSystem::Process(SceneRegistry *scene, const Timer &timer)
     {
         auto& registry = scene->GetRegistry();
 

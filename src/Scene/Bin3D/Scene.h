@@ -18,10 +18,10 @@
 
 namespace Bin3D
 {
-    class SceneStorage
+    class Scene
     {
     public:
-        SceneStorage(const std::filesystem::path& path, std::vector<char>&& dataVector);
+        Scene(const std::filesystem::path& path, std::vector<char>&& dataVector);
 
         const std::filesystem::path& GetPath() const { return mPath; }
 

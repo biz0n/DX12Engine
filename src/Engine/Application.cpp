@@ -20,10 +20,10 @@
 #include <HAL/SwapChain.h>
 #include <HAL/CommandQueue.h>
 
-#include <Bin3D/SceneStorage.h>
+#include <Bin3D/Scene.h>
 #include <Bin3D/Reader/BinaryReader.h>
 
-#include <Scene/SceneObject.h>
+#include <Scene/SceneRegistry.h>
 #include <Scene/SceneLoadingInfo.h>
 #include <Scene/SceneToGPULoader.h>
 #include <Scene/SceneStorage.h>
@@ -85,14 +85,14 @@ namespace Engine
         mSceneLoadingInfo->loadScene = true;
     }
 
-    void Application::InitScene(SharedPtr<Bin3D::SceneStorage> sceneDto)
+    void Application::InitScene(SharedPtr<Bin3D::Scene> sceneDto)
     {
-        UniquePtr<Scene::SceneObject> scene = MakeUnique<Scene::SceneObject>();
+        UniquePtr<Scene::SceneRegistry> scene = MakeUnique<Scene::SceneRegistry>();
 
         Scene::SceneToGPULoader toRegisterLoader{mRenderContext->GetResourceFactory(), mRenderContext->GetResourceCopyManager()};
 
         Scene::SceneToGPULoader::SceneDataDto sceneData = {};
-        sceneData.skyBoxPath = PathResolver::GetResourcePath(R"(Cubemaps\snowcube1024.dds)").string();
+        sceneData.skyBoxPath = PathResolver::GetResourcePath(R"(Cubemaps\old_outdoor_theater_4k.dds)").string();
         SharedPtr<Scene::SceneStorage> sceneStorage = toRegisterLoader.LoadSceneToGPU(scene->GetRegistry(), sceneDto, sceneData);
 
         

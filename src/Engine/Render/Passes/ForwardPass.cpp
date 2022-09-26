@@ -9,7 +9,6 @@
 #include <HAL/SwapChain.h>
 
 #include <Bin3D/Material.h>
-#include <Scene/SceneObject.h>
 #include <Scene/MeshResources.h>
 #include <Scene/SceneStorage.h>
 

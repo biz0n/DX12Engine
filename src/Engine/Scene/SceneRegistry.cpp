@@ -1,24 +1,24 @@
-#include "SceneObject.h"
+#include "SceneRegistry.h"
 
 #include <Scene/Components/CameraComponent.h>
 
 namespace Engine::Scene
 {
-    SceneObject::SceneObject() = default;
+    SceneRegistry::SceneRegistry() = default;
 
-    SceneObject::~SceneObject() = default;
+    SceneRegistry::~SceneRegistry() = default;
 
-    entt::registry& SceneObject::GetRegistry() 
+    entt::registry& SceneRegistry::GetRegistry()
     { 
         return registry; 
     }
 
-    const entt::registry& SceneObject::GetRegistry() const
+    const entt::registry& SceneRegistry::GetRegistry() const
     {
         return registry;
     }
 
-    const std::tuple<entt::entity, Scene::Components::CameraComponent> SceneObject::GetMainCamera() const
+    const std::tuple<entt::entity, Scene::Components::CameraComponent> SceneRegistry::GetMainCamera() const
     {
         entt::entity cameraEntity = entt::null;
         Scene::Components::CameraComponent component{};
@@ -32,13 +32,13 @@ namespace Engine::Scene
         return {cameraEntity, component};
     }
 
-    void SceneObject::AddSystem(UniquePtr<Systems::System> system)
+    void SceneRegistry::AddSystem(UniquePtr<Systems::System> system)
     {
         system->Init(this);
         mSystems.push_back(std::move(system));
     }
 
-    void SceneObject::Process(const Timer &timer)
+    void SceneRegistry::Process(const Timer &timer)
     {
         for (int i = 0; i < mSystems.size(); ++i)
         {

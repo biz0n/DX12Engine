@@ -8,7 +8,7 @@ namespace Engine::Scene::Loader
 
 namespace Engine::Scene
 {
-    class SceneObject;
+    class SceneRegistry;
     class MeshResources;
     class SceneStorage;
     class SceneToGPULoader;

@@ -3,7 +3,7 @@
 #include <Types.h>
 
 #include <Memory/MemoryForwards.h>
-#include <Bin3D/SceneStorage.h>
+#include <Bin3D/Scene.h>
 #include <Bin3D/PunctualLight.h>
 #include <Bin3D/Material.h>
 #include <Scene/Components/ComponentsForwards.h>
@@ -30,7 +30,7 @@ namespace Engine::Scene
     public:
         SceneToGPULoader(Memory::ResourceFactory* resourceFactory, Memory::ResourceCopyManager* resourceCopyManager);
         ~SceneToGPULoader() = default;
-        SharedPtr<SceneStorage> LoadSceneToGPU(entt::registry& registry, SharedPtr<Bin3D::SceneStorage> scene, const SceneDataDto& sceneData);
+        SharedPtr<SceneStorage> LoadSceneToGPU(entt::registry& registry, SharedPtr<Bin3D::Scene> scene, const SceneDataDto& sceneData);
     private:
         static void BuildNodeHierarchy(Context& context);
         static void CreateLightNode(Context& context, const Bin3D::PunctualLight& light, entt::entity entity);
@@ -48,7 +48,7 @@ namespace Engine::Scene
             std::vector<SharedPtr<Memory::Texture>> textures;
             std::vector<Bin3D::Material> materials;
             std::vector<MeshResources> meshes;
-            SharedPtr<Bin3D::SceneStorage> scene;
+            SharedPtr<Bin3D::Scene> scene;
             bool isMainCameraAssigned;
         };
 

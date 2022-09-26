@@ -1,6 +1,6 @@
 #include "RenderRequestBuilder.h"
 
-#include <Scene/SceneObject.h>
+#include <Scene/SceneRegistry.h>
 #include <Scene/Components/AABBComponent.h>
 #include <Scene/Components/MeshComponent.h>
 #include <Scene/Components/IsDisabledComponent.h>
@@ -18,7 +18,7 @@
 
 namespace Engine::Render
 {
-    RenderRequest RenderRequestBuilder::BuildRequest(const Engine::Scene::SceneObject* sceneObject, SharedPtr<Engine::Scene::SceneStorage> sceneStorage)
+    RenderRequest RenderRequestBuilder::BuildRequest(const Engine::Scene::SceneRegistry* sceneObject, SharedPtr<Engine::Scene::SceneStorage> sceneStorage)
     {
         RenderRequest renderRequest{
             std::move(PrepareMeshes(sceneObject, sceneStorage)),
@@ -32,7 +32,7 @@ namespace Engine::Render
         return renderRequest;
     }
 
-    RenderCamera RenderRequestBuilder::PrepareRenderCamera(const Engine::Scene::SceneObject* sceneObject)
+    RenderCamera RenderRequestBuilder::PrepareRenderCamera(const Engine::Scene::SceneRegistry* sceneObject)
     {
         const auto& [cameraEntity, camera] = sceneObject->GetMainCamera();
 
@@ -45,7 +45,7 @@ namespace Engine::Render
         return renderCamera;
     }
 
-    MeshPack RenderRequestBuilder::PrepareMeshes(const Engine::Scene::SceneObject* sceneObject, SharedPtr<Engine::Scene::SceneStorage> sceneStorage)
+    MeshPack RenderRequestBuilder::PrepareMeshes(const Engine::Scene::SceneRegistry* sceneObject, SharedPtr<Engine::Scene::SceneStorage> sceneStorage)
     {
         auto& registry = sceneObject->GetRegistry();
 
@@ -98,7 +98,7 @@ namespace Engine::Render
         return pack;
     }
 
-    std::vector<Shader::MaterialUniform> RenderRequestBuilder::PrepareMaterials(const Engine::Scene::SceneObject* sceneObject, SharedPtr<Engine::Scene::SceneStorage> sceneStorage)
+    std::vector<Shader::MaterialUniform> RenderRequestBuilder::PrepareMaterials(const Engine::Scene::SceneRegistry* sceneObject, SharedPtr<Engine::Scene::SceneStorage> sceneStorage)
     {
         std::vector<Shader::MaterialUniform> materials;
 
@@ -152,7 +152,7 @@ namespace Engine::Render
         return materials;
     }
 
-    std::vector<Shader::LightUniform> RenderRequestBuilder::PrepareLights(const Engine::Scene::SceneObject* sceneObject, SharedPtr<Engine::Scene::SceneStorage> sceneStorage)
+    std::vector<Shader::LightUniform> RenderRequestBuilder::PrepareLights(const Engine::Scene::SceneRegistry* sceneObject, SharedPtr<Engine::Scene::SceneStorage> sceneStorage)
     {
         auto& registry = sceneObject->GetRegistry();
 
@@ -193,7 +193,7 @@ namespace Engine::Render
         return lights;
     }
 
-    std::vector<RenderCamera> RenderRequestBuilder::PrepareShadowCameras(const Engine::Scene::SceneObject* sceneObject)
+    std::vector<RenderCamera> RenderRequestBuilder::PrepareShadowCameras(const Engine::Scene::SceneRegistry* sceneObject)
     {
         auto& registry = sceneObject->GetRegistry();
 

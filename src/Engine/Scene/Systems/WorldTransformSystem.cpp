@@ -1,7 +1,7 @@
 #include "WorldTransformSystem.h"
 
 #include <entt/entt.hpp>
-#include <Scene/SceneObject.h>
+#include <Scene/SceneRegistry.h>
 #include <Scene/Components/LocalTransformComponent.h>
 #include <Scene/Components/RelationshipComponent.h>
 #include <Scene/Components/WorldTransformComponent.h>
@@ -19,7 +19,7 @@ namespace Engine::Scene::Systems
 
     WorldTransformSystem::~WorldTransformSystem() = default;
 
-    void WorldTransformSystem::Init(SceneObject *scene)
+    void WorldTransformSystem::Init(SceneRegistry* scene)
     {
         auto& registry = scene->GetRegistry();
         registry.on_construct<Components::LocalTransformComponent>().connect<&WorldTransformSystem::InitWithDirty>(this);
@@ -34,7 +34,7 @@ namespace Engine::Scene::Systems
         }
     }
 
-    void WorldTransformSystem::Process(SceneObject *scene, const Timer &timer)
+    void WorldTransformSystem::Process(SceneRegistry* scene, const Timer &timer)
     {
         auto& registry = scene->GetRegistry();
         auto group = registry.group<Scene::Components::Dirty, Scene::Components::LocalTransformComponent, Scene::Components::RelationshipComponent>();

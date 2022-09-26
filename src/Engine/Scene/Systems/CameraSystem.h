@@ -14,7 +14,7 @@ namespace Engine::Scene::Systems
             CameraSystem(SharedPtr<Render::RenderContext> renderContext);
             ~CameraSystem() override;
         public:
-            void Process(SceneObject *scene, const Timer& timer) override;
+            void Process(SceneRegistry *scene, const Timer& timer) override;
         private:
             SharedPtr<Render::RenderContext> mRenderContext;
 

@@ -11,8 +11,8 @@ namespace Engine::Scene::Systems
             System(){}
             virtual ~System() = 0;
         public:
-            virtual void Init(SceneObject *scene){}
-            virtual void Process(SceneObject *scene, const Timer& timer){}
+            virtual void Init(SceneRegistry*scene){}
+            virtual void Process(SceneRegistry*scene, const Timer& timer){}
             
     };
 

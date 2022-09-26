@@ -34,7 +34,7 @@ namespace Engine::Scene
 
     }
 
-    SharedPtr<SceneStorage> SceneToGPULoader::LoadSceneToGPU(entt::registry& registry, SharedPtr<Bin3D::SceneStorage> scene, const SceneDataDto& sceneDataDto)
+    SharedPtr<SceneStorage> SceneToGPULoader::LoadSceneToGPU(entt::registry& registry, SharedPtr<Bin3D::Scene> scene, const SceneDataDto& sceneDataDto)
     {
         Context context = {};
         context.registry = &registry;

@@ -2,5 +2,5 @@
 
 namespace Bin3D
 {
-    class SceneStorage;
+    class Scene;
 }

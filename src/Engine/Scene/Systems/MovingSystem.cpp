@@ -2,7 +2,7 @@
 
 #include <Types.h>
 #include <MathUtils.h>
-#include <Scene/SceneObject.h>
+#include <Scene/SceneRegistry.h>
 #include <Scene/Components/MovingComponent.h>
 #include <Scene/Components/LocalTransformComponent.h>
 #include <Scene/Components/WorldTransformComponent.h>
@@ -18,7 +18,7 @@ namespace Engine::Scene::Systems
 
    MovingSystem::~MovingSystem() = default;
 
-   void MovingSystem::Process(SceneObject *scene, const Timer &timer)
+   void MovingSystem::Process(SceneRegistry* scene, const Timer &timer)
    {
       auto& registry = scene->GetRegistry();
       const auto &view = registry.view<

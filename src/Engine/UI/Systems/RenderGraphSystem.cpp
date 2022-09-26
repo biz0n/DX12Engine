@@ -1,7 +1,7 @@
 #include "RenderGraphSystem.h"
 
 #include <Hash.h>
-#include <Scene/SceneObject.h>
+#include <Scene/SceneRegistry.h>
 
 #include <Render/Renderer.h>
 
@@ -149,7 +149,7 @@ namespace Engine::UI::Systems
         return sizes;
     }
 
-    void RenderGraphSystem::Process(Scene::SceneObject *scene, const Timer& timer)
+    void RenderGraphSystem::Process(Scene::SceneRegistry *scene, const Timer& timer)
     {
 
         auto graphBuilder = &mRenderer->GetGraph();

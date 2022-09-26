@@ -12,12 +12,12 @@
 
 namespace Engine::Scene
 {
-    class SceneObject
+    class SceneRegistry
     {
     public:
-        SceneObject();
+        SceneRegistry();
 
-        ~SceneObject();
+        ~SceneRegistry();
     public:
         entt::registry& GetRegistry();
         const entt::registry& GetRegistry() const;

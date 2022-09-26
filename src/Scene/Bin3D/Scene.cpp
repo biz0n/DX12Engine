@@ -1,10 +1,10 @@
-#include "SceneStorage.h"
+#include "Scene.h"
 
 #include <Bin3D/Reader/BinaryHeader.h>
 
 namespace Bin3D
 {
-    SceneStorage::SceneStorage(const std::filesystem::path& path, std::vector<char>&& dataVector) : mPath{path}, mDataVector { std::move(dataVector) }
+    Scene::Scene(const std::filesystem::path& path, std::vector<char>&& dataVector) : mPath{path}, mDataVector { std::move(dataVector) }
     {
         const auto* data = mDataVector.data();
 
@@ -28,42 +28,42 @@ namespace Bin3D
         mStringsStorage = GetSpan<char>(data, header.StringsStorage);
     }
 
-    std::span<const Bin3D::VertexCoordinates> SceneStorage::GetVerticesCoordinates(const DataRegion& range) const
+    std::span<const Bin3D::VertexCoordinates> Scene::GetVerticesCoordinates(const DataRegion& range) const
     {
         return mVerticesCoordinatesStorage.subspan(range.Offset, range.Size);
     }
 
-    std::span<const Bin3D::VertexProperties> SceneStorage::GetVerticesProperties(const DataRegion& range) const
+    std::span<const Bin3D::VertexProperties> Scene::GetVerticesProperties(const DataRegion& range) const
     {
         return mVerticesPropertiesStorage.subspan(range.Offset, range.Size);
     }
 
-    std::span<const uint32_t> SceneStorage::GetIndices(const DataRegion& range) const
+    std::span<const uint32_t> Scene::GetIndices(const DataRegion& range) const
     {
         return mIndicesStorage.subspan(range.Offset, range.Size);
     }
 
-    std::span<const Bin3D::Meshlet> SceneStorage::GetMeshlets(const DataRegion& range) const
+    std::span<const Bin3D::Meshlet> Scene::GetMeshlets(const DataRegion& range) const
     {
         return mMeshlets.subspan(range.Offset, range.Size);
     }
 
-    std::span<const Bin3D::MeshletTriangle> SceneStorage::GetPrimitiveIndices(const DataRegion& range) const
+    std::span<const Bin3D::MeshletTriangle> Scene::GetPrimitiveIndices(const DataRegion& range) const
     {
         return mPrimitiveIndices.subspan(range.Offset, range.Size);
     }
 
-    std::span<const uint8_t> SceneStorage::GetUniqueVertexIndices(const DataRegion& range) const
+    std::span<const uint8_t> Scene::GetUniqueVertexIndices(const DataRegion& range) const
     {
         return mUniqueVertexIndices.subspan(range.Offset, range.Size);
     }
 
-    std::string_view SceneStorage::GetImageName(uint32_t index) const
+    std::string_view Scene::GetImageName(uint32_t index) const
     {
         return GetString(mImagePaths[index].PathIndex);
     }
 
-    std::string_view SceneStorage::GetString(const DataRegion& range) const
+    std::string_view Scene::GetString(const DataRegion& range) const
     {
         return std::string_view{ mStringsStorage.data() + range.Offset, range.Size };
     }

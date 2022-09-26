@@ -27,7 +27,7 @@ namespace Engine::UI::Systems
             RenderGraphSystem(SharedPtr<Engine::Render::Renderer> renderer);
             ~RenderGraphSystem() override;
         public:
-            void Process(Scene::SceneObject *scene, const Timer& timer) override;
+            void Process(Scene::SceneRegistry *scene, const Timer& timer) override;
         private:
             NodeSizes CalculateNodeSizes(const Engine::Graph::Node*);
         private:

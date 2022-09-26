@@ -32,7 +32,7 @@ namespace Engine
         void OnResize(int32 width, int32 height);
 
     private:
-        void InitScene(SharedPtr<Bin3D::SceneStorage> scene);
+        void InitScene(SharedPtr<Bin3D::Scene> scene);
 
     private:
         SharedPtr<Render::RenderContext> mRenderContext;
@@ -40,7 +40,7 @@ namespace Engine
         SharedPtr<Keyboard> mKeyboard;
         SharedPtr<Scene::SceneLoadingInfo> mSceneLoadingInfo;
 
-        UniquePtr<Scene::SceneObject> mScene;
+        UniquePtr<Scene::SceneRegistry> mScene;
         SharedPtr<Scene::SceneStorage> mSceneStorage;
 
         UniquePtr<UI::Systems::UISystem> mUiSystem;

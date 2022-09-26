@@ -7,7 +7,7 @@
 
 #include <Bin3D/Camera.h>
 #include <Bin3D/PunctualLight.h>
-#include <Scene/SceneObject.h>
+#include <Scene/SceneRegistry.h>
 #include <Scene/Components/CameraComponent.h>
 #include <Scene/Components/LightComponent.h>
 #include <Scene/Components/WorldTransformComponent.h>
@@ -28,7 +28,7 @@ namespace Engine::Scene::Systems
 
     LightCameraSystem::~LightCameraSystem() = default;
 
-    void LightCameraSystem::Process(SceneObject *scene, const Timer &timer)
+    void LightCameraSystem::Process(SceneRegistry *scene, const Timer &timer)
     {
         auto& registry = scene->GetRegistry();
 

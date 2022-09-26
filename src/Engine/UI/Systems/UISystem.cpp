@@ -5,7 +5,7 @@
 #include <HAL/SwapChain.h>
 #include <Memory/Texture.h>
 
-#include <Scene/SceneObject.h>
+#include <Scene/SceneRegistry.h>
 #include <Scene/SceneStorage.h>
 #include <Scene/Components/NameComponent.h>
 #include <Scene/Components/RelationshipComponent.h>
@@ -37,7 +37,7 @@ namespace Engine::UI::Systems
 
     UISystem::~UISystem() = default;
 
-    void UISystem::Process(Scene::SceneObject *scene, const Timer &timer)
+    void UISystem::Process(Scene::SceneRegistry* scene, const Timer &timer)
     {
         auto& registry = scene->GetRegistry();
         static bool show_demo_window = true;

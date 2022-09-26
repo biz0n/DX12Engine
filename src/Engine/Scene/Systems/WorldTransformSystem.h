@@ -14,8 +14,8 @@ namespace Engine::Scene::Systems
             WorldTransformSystem();
             ~WorldTransformSystem() override;
         public:
-            void Init(SceneObject *scene) override;
-            void Process(SceneObject *scene, const Timer& timer) override;
+            void Init(SceneRegistry* scene) override;
+            void Process(SceneRegistry* scene, const Timer& timer) override;
         private:
             void InitWithDirty(entt::registry& r, entt::entity entity);
             void MarkAsDirty(entt::registry& r, entt::entity entity);
