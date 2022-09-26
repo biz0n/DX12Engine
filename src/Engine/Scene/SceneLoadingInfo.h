@@ -7,6 +7,7 @@
 #include <future>
 #include <memory>
 #include <vector>
+#include <filesystem>
 
 #include <imgui/imgui.h>
 #include <UI/ImGuiEx.h>
@@ -16,8 +17,8 @@ namespace Engine::Scene
     struct SceneLoadingInfo
     {
         bool loadScene;
-        std::map<std::string, std::string> scenes;
-        std::string scenePath;
+        std::map<std::string, std::filesystem::path> scenes;
+        std::filesystem::path scenePath;
 
         std::future<SharedPtr<Bin3D::SceneStorage>> sceneFuture;
 
@@ -26,7 +27,7 @@ namespace Engine::Scene
             ImGui::Begin("Scene selector");
             {
                 std::vector<std::string> keys;
-                std::vector<std::string> values;
+                std::vector<std::filesystem::path> values;
                 keys.reserve(scenes.size());
                 values.reserve(scenes.size());
                 for (auto &i : scenes)

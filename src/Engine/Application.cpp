@@ -42,6 +42,8 @@
 #include <UI/Systems/RenderGraphSystem.h>
 #include <Render/RenderRequestBuilder.h>
 
+#include <PathResolver.h>
+
 #include <Exceptions.h>
 
 #include <future>
@@ -66,29 +68,15 @@ namespace Engine
 
         mSceneLoadingInfo = MakeShared<Scene::SceneLoadingInfo>();
         mSceneLoadingInfo->scenes = {
-            { "Sponza.Bin3D", R"(C:\Users\Maxim\Documents\dev\3d\3DModels\sponza\model.bin3d)"},
-            { "SponzaNew.Bin3D", R"(C:\Users\Maxim\Documents\dev\3d\3DModels\sponza_new\model.bin3d)"},
-            { "DamagedHelmet.Bin3D", R"(C:\Users\Maxim\Documents\dev\3d\3DModels\DamagedHelmet\model.bin3d)"},
-            { "Cube.Bin3D", R"(C:\Users\Maxim\Documents\dev\3d\3DModels\cube\model.bin3d)"},
-            { "FlightHelmet.Bin3D", R"(C:\Users\Maxim\Documents\dev\3d\3DModels\FlightHelmet\model.bin3d)"},
-            { "Corset.Bin3D", R"(C:\Users\Maxim\Documents\dev\3d\3DModels\Corset\model.bin3d)"},
-            { "Avocado.Bin3D", R"(C:\Users\Maxim\Documents\dev\3d\3DModels\Avocado\model.bin3d)"},
-            { "BoomBoxWithAxes.Bin3D", R"(C:\Users\Maxim\Documents\dev\3d\3DModels\BoomBoxWithAxes\model.bin3d)"},
-            { "BoomBox.Bin3D", R"(C:\Users\Maxim\Documents\dev\3d\3DModels\BoomBox\model.bin3d)"},
-
-
-            { "Sponza", R"(Resources\Scenes\gltf2\sponza\sponza.gltf)" },
-            { "Corset", R"(Resources\Scenes\glTF-Sample-Models-master\2.0\Corset\glTF\Corset.gltf)" },
-            { "Axis Test", R"(Resources\Scenes\gltf2\axis.gltf)" },
-            { "Metal Rough Spheres", R"(Resources\Scenes\glTF-Sample-Models-master\2.0\MetalRoughSpheres\glTF\MetalRoughSpheres.gltf)" },
-            { "Texture Settings Test", R"(Resources\Scenes\glTF-Sample-Models-master\2.0\TextureSettingsTest\glTF\TextureSettingsTest.gltf)" },
-            { "Normal Tangent Mirror Test", R"(Resources\Scenes\glTF-Sample-Models-master\2.0\NormalTangentMirrorTest\glTF\NormalTangentMirrorTest.gltf)" },
-            { "Flight Helmet", R"(Resources\Scenes\glTF-Sample-Models-master\2.0\FlightHelmet\glTF\FlightHelmet.gltf)" },
-            { "Damaged Helmet", R"(Resources\Scenes\glTF-Sample-Models-master\2.0\DamagedHelmet\glTF\DamagedHelmet.gltf)" },
-            { "Orientation Test", R"(Resources\Scenes\glTF-Sample-Models-master\2.0\OrientationTest\glTF\OrientationTest.gltf)" },
-            { "s_test", R"(Resources\Scenes\shadow\test1.gltf)" },
-            { "sPONZA_NEW_CURTAINS", R"(C:\Users\Maxim\Downloads\PKG_A_Curtains\PKG_A_Curtains\NewSponza_Curtains_glTF.gltf)"},
-             { "sPONZA_NEW", R"(C:\Users\Maxim\Downloads\Main\Main\NewSponza_Main_Blender_glTF - Copy.gltf)"}
+            { "Sponza.Bin3D",  PathResolver::GetResourcePath(R"(3DModels\sponza\model.bin3d)")},
+            { "SponzaNew.Bin3D", PathResolver::GetResourcePath(R"(3DModels\sponza_new\model.bin3d)")},
+            { "DamagedHelmet.Bin3D", PathResolver::GetResourcePath(R"(3DModels\DamagedHelmet\model.bin3d)")},
+            { "Cube.Bin3D", PathResolver::GetResourcePath(R"(3DModels\cube\model.bin3d)")},
+            { "FlightHelmet.Bin3D", PathResolver::GetResourcePath(R"(3DModels\FlightHelmet\model.bin3d)")},
+            { "Corset.Bin3D", PathResolver::GetResourcePath(R"(Corset\model.bin3d)")},
+            { "Avocado.Bin3D", PathResolver::GetResourcePath(R"(3DModels\Avocado\model.bin3d)")},
+            { "BoomBoxWithAxes.Bin3D", PathResolver::GetResourcePath(R"(3DModels\BoomBoxWithAxes\model.bin3d)")},
+            { "BoomBox.Bin3D", PathResolver::GetResourcePath(R"(3DModels\BoomBox\model.bin3d)")},
         };
 
         mRenderer = MakeShared<Render::Renderer>(mRenderContext);
@@ -104,7 +92,7 @@ namespace Engine
         Scene::SceneToGPULoader toRegisterLoader{mRenderContext->GetResourceFactory(), mRenderContext->GetResourceCopyManager()};
 
         Scene::SceneToGPULoader::SceneDataDto sceneData = {};
-        sceneData.skyBoxPath = R"(Resources\Scenes\cubemaps\snowcube1024.dds)";
+        sceneData.skyBoxPath = PathResolver::GetResourcePath(R"(Cubemaps\snowcube1024.dds)").string();
         SharedPtr<Scene::SceneStorage> sceneStorage = toRegisterLoader.LoadSceneToGPU(scene->GetRegistry(), sceneDto, sceneData);
 
         

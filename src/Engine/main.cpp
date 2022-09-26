@@ -23,9 +23,14 @@ void ReportLiveObjects()
 
 int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmdShow)
 {
-	std::filesystem::current_path("C:\\Users\\Maxim\\Documents\\dev\\3d\\src\\Engine\\");
+    CHAR szPath[MAX_PATH];
 
-	CoInitialize(nullptr);
+    GetModuleFileNameA(NULL, szPath, MAX_PATH);
+
+    std::filesystem::path executablePath = szPath;
+    std::filesystem::path workingDirectory = executablePath.parent_path();
+
+	std::filesystem::current_path(workingDirectory);
 
 	Engine::Application app;
 	Engine::Window window(800, 600, TEXT("Window"));

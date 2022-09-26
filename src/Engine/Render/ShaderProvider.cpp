@@ -4,6 +4,8 @@
 
 #include <HAL/ShaderCreationInfo.h>
 
+#include <PathResolver.h>
+
 namespace Engine::Render
 {
     ShaderProvider::ShaderProvider()
@@ -25,7 +27,7 @@ namespace Engine::Render
         else
         {
             auto shader = mShaderCompiler->Compile(
-                creationInfo.path,
+                PathResolver::GetShaderPath(creationInfo.path).string(),
                 creationInfo.entryPoint,
                 creationInfo.target,
                 creationInfo.defines);

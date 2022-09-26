@@ -8,23 +8,23 @@ namespace Engine::Render::Passes
 {
     namespace Shaders
     {
-        inline std::string ForwardPS {"Render\\Shaders\\Forward.hlsl"};
-        inline std::string ForwardVS {"Render\\Shaders\\Forward.hlsl"};
+        inline std::string ForwardPS {"Shaders\\Forward.hlsl"};
+        inline std::string ForwardVS {"Shaders\\Forward.hlsl"};
 
-        inline std::string ForwardMS{ "Render\\Shaders\\Mesh.hlsl" };
+        inline std::string ForwardMS{ "Shaders\\Mesh.hlsl" };
 
-        inline std::string CubePS {"Render\\Shaders\\CubeMap.hlsl"};
-        inline std::string CubeVS {"Render\\Shaders\\CubeMap.hlsl"};
+        inline std::string CubePS {"Shaders\\CubeMap.hlsl"};
+        inline std::string CubeVS {"Shaders\\CubeMap.hlsl"};
 
-        inline std::string ToneMapPS {"Render\\Shaders\\TonemappingPS.hlsl"};
-        inline std::string TonemapVS {"Render\\Shaders\\ScreenVS.hlsl"};
-        inline std::string ToneMapCS {"Render\\Shaders\\TonemappingPS.hlsl"};
+        inline std::string ToneMapPS {"Shaders\\TonemappingPS.hlsl"};
+        inline std::string TonemapVS {"Shaders\\ScreenVS.hlsl"};
+        inline std::string ToneMapCS {"Shaders\\TonemappingPS.hlsl"};
 
-        inline std::string DepthPS {"Render\\Shaders\\Depth.hlsl"};
-        inline std::string DepthVS {"Render\\Shaders\\Depth.hlsl"};
+        inline std::string DepthPS {"Shaders\\Depth.hlsl"};
+        inline std::string DepthVS {"Shaders\\Depth.hlsl"};
 
-        inline std::string BackBufferPS {"Render\\Shaders\\BackBufferPS.hlsl"};
-        inline std::string BackBufferVS {"Render\\Shaders\\ScreenVS.hlsl"};
+        inline std::string BackBufferPS {"Shaders\\BackBufferPS.hlsl"};
+        inline std::string BackBufferVS {"Shaders\\ScreenVS.hlsl"};
     }
 
     namespace ResourceNames

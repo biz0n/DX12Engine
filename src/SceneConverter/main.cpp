@@ -8,6 +8,21 @@
 
 #include <assert.hpp>
 
+/*
+{ "Sponza", R"(Resources\Scenes\gltf2\sponza\sponza.gltf)" },
+            { "Corset", R"(Resources\Scenes\glTF-Sample-Models-master\2.0\Corset\glTF\Corset.gltf)" },
+            { "Axis Test", R"(Resources\Scenes\gltf2\axis.gltf)" },
+            { "Metal Rough Spheres", R"(Resources\Scenes\glTF-Sample-Models-master\2.0\MetalRoughSpheres\glTF\MetalRoughSpheres.gltf)" },
+            { "Texture Settings Test", R"(Resources\Scenes\glTF-Sample-Models-master\2.0\TextureSettingsTest\glTF\TextureSettingsTest.gltf)" },
+            { "Normal Tangent Mirror Test", R"(Resources\Scenes\glTF-Sample-Models-master\2.0\NormalTangentMirrorTest\glTF\NormalTangentMirrorTest.gltf)" },
+            { "Flight Helmet", R"(Resources\Scenes\glTF-Sample-Models-master\2.0\FlightHelmet\glTF\FlightHelmet.gltf)" },
+            { "Damaged Helmet", R"(Resources\Scenes\glTF-Sample-Models-master\2.0\DamagedHelmet\glTF\DamagedHelmet.gltf)" },
+            { "Orientation Test", R"(Resources\Scenes\glTF-Sample-Models-master\2.0\OrientationTest\glTF\OrientationTest.gltf)" },
+            { "s_test", R"(Resources\Scenes\shadow\test1.gltf)" },
+            { "sPONZA_NEW_CURTAINS", R"(C:\Users\Maxim\Downloads\PKG_A_Curtains\PKG_A_Curtains\NewSponza_Curtains_glTF.gltf)"},
+             { "sPONZA_NEW", R"(C:\Users\Maxim\Downloads\Main\Main\NewSponza_Main_Blender_glTF - Copy.gltf)"}
+*/
+
 int main(int argc, char* argv[])
 {
    // auto path = R"(C:\Users\Maxim\Downloads\Main\Main\NewSponza_Main_Blender_glTF - Copy.gltf)";

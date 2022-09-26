@@ -57,6 +57,11 @@ project "Engine"
         "%{Library.DirectXShaderCompiler}",
     }
 
+    defines
+    {
+        'RESOURCES_RELATIVE_PATH="%{path.getrelative(cfg.buildtarget.directory, RESOURCES_PATH)}"'
+    }
+
     postbuildcommands { '{COPYFILE} "%{StaticLibrary.dxcompiler}"            "%{cfg.buildtarget.directory}"' }
     postbuildcommands { '{COPYFILE} "%{StaticLibrary.dxil}"                  "%{cfg.buildtarget.directory}"'}
     postbuildcommands { '{COPYFILE} "%{StaticLibrary.WinPixEventRuntime}"    "%{cfg.buildtarget.directory}"' }
