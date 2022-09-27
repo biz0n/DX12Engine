@@ -38,5 +38,6 @@ namespace Engine::UI::Systems
             SharedPtr<Engine::Render::Renderer> mRenderer;
             std::unordered_map<Engine::Graph::Resource, std::unordered_set<Engine::Name>> mReads;
             ax::NodeEditor::EditorContext* mEditorContext;
+            std::string mConfigPath;
     };
 }

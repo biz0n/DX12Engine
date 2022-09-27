@@ -4,22 +4,16 @@
 
 namespace Engine::Scene
 {
-    SharedPtr<const DirectX::ScratchImage> ImageLoader::LoadImageFromFile(const std::string& path)
+    SharedPtr<const DirectX::ScratchImage> ImageLoader::LoadImageFromFile(const std::filesystem::path& path)
     {
-        std::filesystem::path filename = path;
-
-        auto extension = filename.extension();
+        auto extension = path.extension();
 
         SharedPtr<DirectX::ScratchImage> image = MakeShared<DirectX::ScratchImage>();
 
         HRESULT hr;
         if (extension == ".dds")
         {
-            hr = DirectX::LoadFromDDSFile(filename.c_str(), DirectX::DDS_FLAGS_NONE, nullptr, *image);
-        }
-        else if (extension == ".hdr")
-        {
-            hr = DirectX::LoadFromHDRFile(filename.c_str(), nullptr, *image);
+            hr = DirectX::LoadFromDDSFile(path.c_str(), DirectX::DDS_FLAGS_NONE, nullptr, *image);
         }
         else
         {
@@ -36,7 +30,7 @@ namespace Engine::Scene
 
     SharedPtr<const DirectX::ScratchImage> ImageLoader::CreateFromColor(DirectX::XMFLOAT4 color)
     {
-        uint8_t maxValue = std::numeric_limits<uint8_t>::max();
+        constexpr uint8_t maxValue = std::numeric_limits<uint8_t>::max();
         uint8_t c[4] = { maxValue * color.x, maxValue * color.y, maxValue * color.z, maxValue * color.w };
 
         SharedPtr<DirectX::ScratchImage> image = MakeShared<DirectX::ScratchImage>();

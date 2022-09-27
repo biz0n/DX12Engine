@@ -15,7 +15,7 @@ namespace Engine::HAL
     }
 
     ComPtr<IDxcBlob> ShaderCompiler::Compile(
-        const std::string& filename,
+        const std::filesystem::path& path,
         const std::string& entrypoint,
         const std::string& target,
         const std::vector<std::string>& defines)
@@ -40,7 +40,7 @@ namespace Engine::HAL
             ThrowIfFailed(pUtils->CreateDefaultIncludeHandler(pDefaultIncludeHandler.GetAddressOf()));
         }
 
-        HRESULT br = mLibrary->CreateBlobFromFile(StringToWString(filename).c_str(), nullptr, pSource.GetAddressOf());
+        HRESULT br = mLibrary->CreateBlobFromFile(path.c_str(), nullptr, pSource.GetAddressOf());
 
         std::vector<std::wstring> arguments;
 
@@ -50,7 +50,7 @@ namespace Engine::HAL
         arguments.push_back(wEntryPoint);
 
         arguments.push_back(L"-I");
-        auto inc = std::filesystem::path{ filename }.parent_path();
+        auto inc = path.parent_path();
         arguments.push_back(inc.wstring());
 
         //-T for the target profile (eg. ps_6_2)

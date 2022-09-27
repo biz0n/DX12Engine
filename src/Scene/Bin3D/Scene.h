@@ -42,6 +42,7 @@ namespace Bin3D
         std::span<const Bin3D::MeshletTriangle> GetPrimitiveIndices(const DataRegion& range) const;
         std::span<const uint8_t> GetUniqueVertexIndices(const DataRegion& range) const;
 
+        std::string_view GetImageName(const Bin3D::ImagePath& path) const;
         std::string_view GetImageName(uint32_t index) const;
         std::string_view GetString(const DataRegion& range) const;
 

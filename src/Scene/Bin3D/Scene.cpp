@@ -58,6 +58,11 @@ namespace Bin3D
         return mUniqueVertexIndices.subspan(range.Offset, range.Size);
     }
 
+    std::string_view Scene::GetImageName(const Bin3D::ImagePath& path) const
+    {
+        return GetString(path.PathIndex);
+    }
+
     std::string_view Scene::GetImageName(uint32_t index) const
     {
         return GetString(mImagePaths[index].PathIndex);

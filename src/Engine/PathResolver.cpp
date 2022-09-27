@@ -11,7 +11,7 @@ namespace Engine
 
     std::filesystem::path PathResolver::GetResourcePath(const char* path)
     {
-        return mResourcesPath / path;
+        return (mResourcesPath / path).make_preferred();
     }
 
     std::filesystem::path PathResolver::GetShaderPath(const std::string& path)
@@ -21,6 +21,6 @@ namespace Engine
 
     std::filesystem::path PathResolver::GetShaderPath(const char* path)
     {
-        return path;
+        return std::filesystem::path(path).make_preferred();
     }
 }

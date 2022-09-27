@@ -42,15 +42,14 @@ namespace Engine::Scene
         context.isMainCameraAssigned = false;
 
         context.textures.reserve(scene->GetImagePaths().size());
-        for (const auto& imageName : scene->GetImagePaths())
+        for (const auto& imagePath : scene->GetImagePaths())
         {
-            std::string name = context.scene->GetString(imageName.PathIndex).data();
+            std::string name = context.scene->GetImageName(imagePath).data();
             if (name != "")
             {
                 std::filesystem::path imagePath = context.scene->GetPath() / name;
-                std::string imagePathStr = imagePath.string();
-                auto image = ImageLoader::LoadImageFromFile(imagePathStr);
-                CreateTexture(context, image, imagePathStr);
+                auto image = ImageLoader::LoadImageFromFile(imagePath);
+                CreateTexture(context, image, name);
                
             }
             else

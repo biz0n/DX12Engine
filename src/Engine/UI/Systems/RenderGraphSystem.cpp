@@ -1,6 +1,7 @@
 #include "RenderGraphSystem.h"
 
 #include <Hash.h>
+#include <PathResolver.h>
 #include <Scene/SceneRegistry.h>
 
 #include <Render/Renderer.h>
@@ -32,7 +33,11 @@ namespace Engine::UI::Systems
 {
     RenderGraphSystem::RenderGraphSystem(SharedPtr<Engine::Render::Renderer> renderer) : System(), mRenderer{ renderer }
     {
-        mEditorContext = ed::CreateEditor();
+        mConfigPath = PathResolver::GetResourcePath("ImGui/RenderGraphEditor.json").string();
+        ed::Config config;
+        config.SettingsFile = mConfigPath.c_str();
+
+        mEditorContext = ed::CreateEditor(&config);
 
         /*
         g_GraphBuilder = new Graph::GraphBuilder();

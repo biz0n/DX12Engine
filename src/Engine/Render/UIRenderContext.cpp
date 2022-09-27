@@ -1,10 +1,12 @@
 #include "UIRenderContext.h"
 
+#include <PathResolver.h>
 #include <View.h>
 #include <imgui/imgui.h>
 #include <imgui/backends/imgui_impl_dx12.h>
 #include <imgui/backends/imgui_impl_win32.h>
 #include <ImGuizmo/ImGuizmo.h>
+
 
 #include <cassert>
 #include <d3dx12.h>
@@ -30,6 +32,9 @@ namespace Engine::Render
         //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
        // io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
        // io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
+
+        mConfigPath = PathResolver::GetResourcePath("ImGui/imgui.ini").string();
+        io.IniFilename = mConfigPath.c_str();
 
         ImGui_ImplWin32_Init(view.WindowHandle);
 

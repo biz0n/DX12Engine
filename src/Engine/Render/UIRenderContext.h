@@ -40,5 +40,6 @@ namespace Engine::Render
         void Resize(uint32 width, uint32 height);
     private:
         void ConfigureDockSpace();
+        std::string mConfigPath;
     };
 } // namespace Engine::Render

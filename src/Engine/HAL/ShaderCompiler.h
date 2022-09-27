@@ -18,7 +18,7 @@ namespace Engine::HAL
         ~ShaderCompiler() = default;
 
         ComPtr<IDxcBlob> Compile(
-            const std::string& filename,
+            const std::filesystem::path& path,
             const std::string& entrypoint,
             const std::string& target,
             const std::vector<std::string>& defines);

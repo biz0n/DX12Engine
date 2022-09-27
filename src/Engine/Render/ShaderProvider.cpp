@@ -27,7 +27,7 @@ namespace Engine::Render
         else
         {
             auto shader = mShaderCompiler->Compile(
-                PathResolver::GetShaderPath(creationInfo.path).string(),
+                PathResolver::GetShaderPath(creationInfo.path),
                 creationInfo.entryPoint,
                 creationInfo.target,
                 creationInfo.defines);
