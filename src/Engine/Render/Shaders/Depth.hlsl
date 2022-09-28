@@ -20,14 +20,34 @@ struct VertexShaderOutput
     float4 PositionH : SV_Position;
 };
 
+uint GetVertexIndex(uint localIndex, ByteAddressBuffer indices, int indexSize)
+{
+    if (indexSize == 4) // 32-bit Vertex Indices
+    {
+        return indices.Load(localIndex * 4);
+    }
+    else // 16-bit Vertex Indices
+    {
+        // Byte address must be 4-byte aligned.
+        uint wordOffset = (localIndex & 0x1);
+        uint byteOffset = (localIndex / 2) * 4;
+
+        // Grab the pair of 16-bit indices, shift & mask off proper 16-bits.
+        uint indexPair = indices.Load(byteOffset);
+        uint index = (indexPair >> (wordOffset * 16)) & 0xffff;
+
+        return index;
+    }
+}
+
 VertexShaderOutput mainVS(uint indexId : SV_VertexID)
 {
     MeshUniform ObjectCB = Meshes[MeshIndex];
     StructuredBuffer<Vertex1P> verticesCoordinates = ResourceDescriptorHeap[ObjectCB.VertexBufferIndex];
     StructuredBuffer<Vertex1N1UV1T> verticesProperties = ResourceDescriptorHeap[ObjectCB.VertexPropertiesBufferIndex];
-    StructuredBuffer<uint> indices = ResourceDescriptorHeap[ObjectCB.IndexBufferIndex];
+    ByteAddressBuffer indices = ResourceDescriptorHeap[ObjectCB.IndexBufferIndex];
 
-    uint vertexId = indices[indexId];
+    uint vertexId = GetVertexIndex(indexId, indices, ObjectCB.IndexSize);
 
     Vertex1P IN = verticesCoordinates[vertexId];
     Vertex1N1UV1T properties = verticesProperties[vertexId];

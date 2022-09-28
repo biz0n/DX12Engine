@@ -55,15 +55,23 @@ namespace SceneConverter::Importer
         Assimp::Importer importer;
 
         unsigned int preprocessFlags = 0
+            | aiProcess_JoinIdenticalVertices
             | aiProcess_Triangulate 
             | aiProcess_ConvertToLeftHanded
             //| aiProcess_JoinIdenticalVertices
             //| aiProcess_GenNormals
             | aiProcess_CalcTangentSpace
             | aiProcess_GenBoundingBoxes 
-            //| aiProcess_OptimizeMeshes 
-            //| aiProcess_OptimizeGraph
+            | aiProcess_OptimizeMeshes 
+            | aiProcess_OptimizeGraph
+            | aiProcess_RemoveRedundantMaterials
+            | aiProcess_SplitLargeMeshes
             ;
+
+        importer.SetPropertyInteger(AI_CONFIG_PP_SBP_REMOVE, aiPrimitiveType_LINE | aiPrimitiveType_POINT);
+        importer.SetPropertyInteger(AI_CONFIG_PP_SLM_VERTEX_LIMIT, std::pow(2, 21) - 1); // 20 bit indices
+        importer.SetPropertyInteger(AI_CONFIG_PP_SLM_TRIANGLE_LIMIT, std::pow(2, 21) - 1);
+
         if (scale.has_value())
         {
             preprocessFlags |= aiProcess_GlobalScale;
@@ -523,17 +531,35 @@ namespace SceneConverter::Importer
 
         mesh.Vertices = context.Scene.AddVertices(verticesCoordinates, verticesProperties);
 
-        std::vector<uint32_t> indices;
-        indices.reserve(aMesh->mNumFaces * 3);
-        for (unsigned int i = 0; i < aMesh->mNumFaces; ++i)
+        uint32_t indicesCount = aMesh->mNumFaces * 3;
+        if (indicesCount <= std::numeric_limits<uint16_t>::max())
         {
-            const auto &face = aMesh->mFaces[i];
-            indices.push_back(face.mIndices[0]);
-            indices.push_back(face.mIndices[1]);
-            indices.push_back(face.mIndices[2]);
+            std::vector<uint16_t> indices;
+            indices.reserve(indicesCount);
+            for (unsigned int i = 0; i < aMesh->mNumFaces; ++i)
+            {
+                const auto& face = aMesh->mFaces[i];
+                indices.push_back(face.mIndices[0]);
+                indices.push_back(face.mIndices[1]);
+                indices.push_back(face.mIndices[2]);
+            }
+            mesh.IndexSize = sizeof(uint16_t);
+            mesh.Indices = context.Scene.AddIndices(indices);
         }
-
-        mesh.Indices = context.Scene.AddIndices(indices);
+        else
+        {
+            std::vector<uint32_t> indices;
+            indices.reserve(indicesCount);
+            for (unsigned int i = 0; i < aMesh->mNumFaces; ++i)
+            {
+                const auto& face = aMesh->mFaces[i];
+                indices.push_back(face.mIndices[0]);
+                indices.push_back(face.mIndices[1]);
+                indices.push_back(face.mIndices[2]);
+            }
+            mesh.IndexSize = sizeof(uint32_t);
+            mesh.Indices = context.Scene.AddIndices(indices);
+        }
 
         mesh.MaterialIndex = aMesh->mMaterialIndex;
 

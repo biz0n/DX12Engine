@@ -42,9 +42,26 @@ uint3 GetPrimitive(Meshlet m, uint index, StructuredBuffer<uint> primitiveIndice
     return UnpackPrimitive(primitiveIndices[(m.PrimOffset + index)]);
 }
 
-uint GetVertexIndex(Meshlet m, uint localIndex, ByteAddressBuffer uniqueVertexIndices)
+uint GetVertexIndex(Meshlet m, uint localIndex, ByteAddressBuffer uniqueVertexIndices, int indexSize)
 {
-    return uniqueVertexIndices.Load((m.VertOffset + localIndex) * 4);
+    localIndex = m.VertOffset + localIndex;
+
+    if (indexSize == 4) // 32-bit Vertex Indices
+    {
+        return uniqueVertexIndices.Load(localIndex * 4);
+    }
+    else // 16-bit Vertex Indices
+    {
+        // Byte address must be 4-byte aligned.
+        uint wordOffset = (localIndex & 0x1);
+        uint byteOffset = (localIndex / 2) * 4;
+
+        // Grab the pair of 16-bit indices, shift & mask off proper 16-bits.
+        uint indexPair = uniqueVertexIndices.Load(byteOffset);
+        uint index = (indexPair >> (wordOffset * 16)) & 0xffff;
+
+        return index;
+    }
 }
 
 VertexOut GetVertexAttributes(uint meshletIndex, uint vertexIndex, MeshUniform meshInfo, 
@@ -120,7 +137,7 @@ void mainMS(
 
     if (gtid < m.VertCount)
     {
-        uint vertexIndex = GetVertexIndex(m, gtid, uniqueVertexIndices);
+        uint vertexIndex = GetVertexIndex(m, gtid, uniqueVertexIndices, meshInfo.IndexSize);
         verts[gtid] = GetVertexAttributes(gid, vertexIndex, meshInfo, verticesCoordinates, verticesProperties, gtid);
     }
 }

@@ -10,7 +10,7 @@ namespace Engine
         constexpr float _2PI = 2.0f * PI;
 
         template <typename T>
-        T WrapAngle(T theta) noexcept
+        constexpr T WrapAngle(T theta) noexcept
         {
             constexpr T twoPi = (T)_2PI;
             const T mod = fmod(theta, twoPi);
@@ -26,27 +26,33 @@ namespace Engine
         }
 
         template <typename T>
-        inline T AlignUpWithMask(T value, size_t mask)
+        constexpr T AlignUpWithMask(T value, size_t mask)
         {
             return (T)(((size_t)value + mask) & ~mask);
         }
 
         template <typename T>
-        inline T AlignDownWithMask(T value, size_t mask)
+        constexpr T AlignDownWithMask(T value, size_t mask)
         {
             return (T)((size_t)value & ~mask);
         }
 
         template <typename T>
-        inline T AlignUp(T value, size_t alignment)
+        constexpr T AlignUp(T value, size_t alignment)
         {
             return AlignUpWithMask(value, alignment - 1);
         }
 
         template <typename T>
-        inline T AlignDown(T value, size_t alignment)
+        constexpr T AlignDown(T value, size_t alignment)
         {
             return AlignDownWithMask(value, alignment - 1);
+        }
+
+        template <typename T, typename U>
+        constexpr T DivRoundUp(T num, U denom)
+        {
+            return (num + denom - 1) / denom;
         }
 
         inline void ExtractPitchYawRollFromXMMatrix(float* flt_p_PitchOut, float* flt_p_YawOut, float* flt_p_RollOut, const DirectX::XMMATRIX* XMMatrix_p_Rotation)

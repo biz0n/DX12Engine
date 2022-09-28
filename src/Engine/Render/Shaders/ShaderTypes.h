@@ -54,7 +54,8 @@ struct MeshUniform
     int Id;
 
     int MeshletCount;
-    float3 __Padding;
+    int IndexSize;
+    float2 __Padding;
 };
 
 struct MaterialUniform

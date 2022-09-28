@@ -34,7 +34,7 @@ namespace SceneConverter::Model
 
             const std::vector<Bin3D::VertexCoordinates>& GetVerticesCoordinatesStorage() const { return mVerticesCoordinatesStorage; }
             const std::vector<Bin3D::VertexProperties>& GetVerticesPropertiesStorage() const { return mVerticesPropertiesStorage; }
-            const std::vector<uint32_t>& GetIndicesStorage() const { return mIndicesStorage; }
+            const std::vector<uint8_t>& GetIndicesStorage() const { return mIndicesStorage; }
             const std::vector<Bin3D::ImagePath>& GetImagePaths() const { return mImagePaths; }
             const std::vector<Bin3D::Meshlet>& GetMeshlets() const { return mMeshlets; }
             const std::vector<Bin3D::MeshletTriangle>& GetPrimitiveIndices() const { return mPrimitiveIndices; }
@@ -52,6 +52,7 @@ namespace SceneConverter::Model
             uint32_t AddSampler(const Bin3D::Sampler& sampler);
 
             Bin3D::DataRegion AddIndices(const std::vector<uint32_t>& indices);
+            Bin3D::DataRegion AddIndices(const std::vector<uint16_t>& indices);
             Bin3D::DataRegion AddVertices(const std::vector<Bin3D::VertexCoordinates>& coordinates, const std::vector<Bin3D::VertexProperties>& properties);
             
             Bin3D::DataRegion AddString(const std::string& str);
@@ -62,6 +63,8 @@ namespace SceneConverter::Model
             void FulfillImagePaths();
             void ComputeMeshlets();
 
+        private:
+            Bin3D::DataRegion AddIndices(const uint8_t* indices, uint32_t count);
         private:
             std::vector<Bin3D::Mesh> mMeshes;
             std::vector<Bin3D::Material> mMaterials;
@@ -76,15 +79,12 @@ namespace SceneConverter::Model
             std::vector<std::shared_ptr<ImageData>> mImageResources;
             std::vector<Bin3D::VertexCoordinates> mVerticesCoordinatesStorage;
             std::vector<Bin3D::VertexProperties> mVerticesPropertiesStorage;
-            std::vector<uint32_t> mIndicesStorage;
+            std::vector<uint8_t> mIndicesStorage;
             std::vector<char> mStringsStorage;
 
             std::vector<Node> mRootNodes;
 
             std::unordered_map<std::string, Bin3D::DataRegion> mStringsMap;
             std::map<Bin3D::Sampler, uint32_t> mSamplersMap;
-
-            std::vector<uint32_t> mUniqueVertexIB32;
-            std::vector<uint16_t> mUniqueVertexIB16;
     };
 }

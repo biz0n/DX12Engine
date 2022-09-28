@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
  //   auto path = R"(C:\Users\Maxim\Documents\dev\3d\src\Engine\Resources\Scenes\glTF-Sample-Models-master\2.0\BoomBoxWithAxes\glTF\BoomBoxWithAxes.gltf)";
   //  auto path = R"(C:\Users\Maxim\Documents\dev\3d\src\Engine\Resources\Scenes\glTF-Sample-Models-master\2.0\BoomBox\glTF\BoomBox.gltf)";
 
-    std::filesystem::path output = R"(C:\Users\Maxim\Documents\dev\3d\3DModels\sponza)";
+    std::filesystem::path output = R"(C:\Users\Maxim\Documents\dev\3d\Resources\3DModels\sponza)";
     
 #if 1
     SceneConverter::Importer::SceneImporter importer;

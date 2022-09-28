@@ -79,6 +79,7 @@ namespace Engine::Render
             meshUniform.PrimitiveIndexBufferIndex = mesh.primitiveIndicesBuffer->GetSRDescriptor().GetFullIndex();
             meshUniform.UniqueVertexIndexBufferIndex = mesh.uniqueVertexIndexBuffer->GetSRDescriptor().GetFullIndex();
             meshUniform.MeshletCount = mesh.GetMeshletsCount();
+            meshUniform.IndexSize = mesh.indexSize;
             
 
             DirectX::XMMATRIX tWorld = DirectX::XMMatrixTranspose(transformComponent.transform);

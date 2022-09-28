@@ -20,7 +20,7 @@ namespace Bin3D
         
         mVerticesCoordinatesStorage = GetSpan<VertexCoordinates>(data, header.VerticesCoordinatesStorage);
         mVerticesPropertiesStorage = GetSpan<VertexProperties>(data, header.VerticesPropertiesStorage);
-        mIndicesStorage = GetSpan<uint32_t>(data, header.IndicesStorage);
+        mIndicesStorage = GetSpan<uint8_t>(data, header.IndicesStorage);
         mImagePaths = GetSpan<ImagePath>(data, header.ImagePaths);
         mMeshlets = GetSpan<Meshlet>(data, header.Meshlets);
         mPrimitiveIndices = GetSpan<MeshletTriangle>(data, header.PrimitiveIndices);
@@ -38,7 +38,7 @@ namespace Bin3D
         return mVerticesPropertiesStorage.subspan(range.Offset, range.Size);
     }
 
-    std::span<const uint32_t> Scene::GetIndices(const DataRegion& range) const
+    std::span<const uint8_t> Scene::GetIndices(const DataRegion& range) const
     {
         return mIndicesStorage.subspan(range.Offset, range.Size);
     }

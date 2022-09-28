@@ -1,6 +1,6 @@
 #include "SceneToGPULoader.h"
 
-#include <StringUtils.h>
+#include <MathUtils.h>
 
 #include <Scene/Components/RelationshipComponent.h>
 #include <Scene/Components/LocalTransformComponent.h>
@@ -292,25 +292,31 @@ namespace Engine::Scene
         auto primitiveIndices = context.scene->GetPrimitiveIndices(meshDto.PrimitiveIndices);
         auto uniqueVertexIndices = context.scene->GetUniqueVertexIndices(meshDto.UniqueVertexIndices);
 
-        using TIndexType = typename std::decay<decltype(*indices.begin())>::type;
+        using TIndexType = uint32;
         using TVertexCoordinatesType = typename std::decay<decltype(*verticesCoordinates.begin())>::type;
         using TVertexPropertiesType = typename std::decay<decltype(*verticesProperties.begin())>::type;
 
         using TMeshletType = typename std::decay<decltype(*meshlets.begin())>::type;
         using TPrimitiveIndexType = typename std::decay<decltype(*primitiveIndices.begin())>::type;
-        using TUniqueVertexIndexType = typename std::decay<decltype(*uniqueVertexIndices.begin())>::type;
+        using TUniqueVertexIndexType = uint32;
+
+        Size indicesSize = Math::DivRoundUp(indices.size_bytes(), sizeof(TIndexType)) * sizeof(TIndexType);
+        Size uniqueVertexIndicesSize = Math::DivRoundUp(uniqueVertexIndices.size_bytes(), sizeof(TUniqueVertexIndexType)) * sizeof(TUniqueVertexIndexType);
 
         MeshResources mesh;
 
-        mesh.indexBuffer = CreateBuffer(indices.size_bytes(), sizeof(TIndexType), indices.data());
+        mesh.indexBuffer = CreateBuffer(indicesSize, sizeof(TIndexType), indices.data());
         mesh.vertexCoordinatesBuffer = CreateBuffer(verticesCoordinates.size_bytes(), sizeof(TVertexCoordinatesType), verticesCoordinates.data());
         mesh.vertexPropertiesBuffer = CreateBuffer(verticesProperties.size_bytes(), sizeof(TVertexPropertiesType), verticesProperties.data());
 
         mesh.meshletsBuffer = CreateBuffer(meshlets.size_bytes(), sizeof(TMeshletType), meshlets.data());
         mesh.primitiveIndicesBuffer = CreateBuffer(primitiveIndices.size_bytes(), sizeof(TPrimitiveIndexType), primitiveIndices.data());
 
+        mesh.uniqueVertexIndexBuffer = CreateBuffer(uniqueVertexIndicesSize, sizeof(TUniqueVertexIndexType), uniqueVertexIndices.data());
 
-        mesh.uniqueVertexIndexBuffer = CreateBuffer(uniqueVertexIndices.size_bytes(), sizeof(TUniqueVertexIndexType) * 4, uniqueVertexIndices.data());
+        mesh.indexSize = meshDto.IndexSize;
+        mesh.indicesCount = indices.size() / meshDto.IndexSize;
+        mesh.meshletsCount = meshDto.Meshlets.Size;
         
 
         return mesh;

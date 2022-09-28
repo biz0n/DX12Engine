@@ -74,10 +74,33 @@ namespace SceneConverter::Model
 
     Bin3D::DataRegion Scene::AddIndices(const std::vector<uint32_t>& indices)
     {
+        return AddIndices(reinterpret_cast<const uint8_t*>(indices.data()), indices.size() * sizeof(uint32_t));
+    }
+
+    Bin3D::DataRegion Scene::AddIndices(const std::vector<uint16_t>& indices)
+    {
+        auto region =  AddIndices(reinterpret_cast<const uint8_t*>(indices.data()), indices.size() * sizeof(uint16_t));
+        
+        // round up to uint32 sizes
+        if (indices.size() % 2 == 1)
+        {
+            mIndicesStorage.push_back(0);
+            mIndicesStorage.push_back(0);
+        }
+
+        return region;
+    }
+
+    Bin3D::DataRegion Scene::AddIndices(const uint8_t* indices, uint32_t count)
+    {
         Bin3D::DataRegion index = {};
         index.Offset = mIndicesStorage.size();
-        index.Size = indices.size();
-        mIndicesStorage.insert(mIndicesStorage.end(), indices.begin(), indices.end());
+        index.Size = count;
+
+        for (uint32_t i = 0; i < count; ++i)
+        {
+            mIndicesStorage.push_back(indices[i]);
+        }
 
         return index;
     }
@@ -206,16 +229,34 @@ namespace SceneConverter::Model
             uniqueVertexIB.clear();
             primitiveIndices.clear();
 
-            const uint32_t* indices = mIndicesStorage.data() + mesh.Indices.Offset;
-            const DirectX::XMFLOAT3* positions = reinterpret_cast<const DirectX::XMFLOAT3*>(mVerticesCoordinatesStorage.data() + mesh.Vertices.Offset);
+            
+            const DirectX::XMFLOAT3* positions = reinterpret_cast<const DirectX::XMFLOAT3*>(&mVerticesCoordinatesStorage.data()[mesh.Vertices.Offset]);
+            const auto nFaces = mesh.Indices.Size / mesh.IndexSize / 3;
+            
+            HRESULT result = S_OK;
 
-            auto nFaces = mesh.Indices.Size / 3;
-            auto result = DirectX::ComputeMeshlets(
-                indices, nFaces,
-                positions, mesh.Vertices.Size,
-                nullptr,
-                meshlets, uniqueVertexIB, primitiveIndices,
-                mesheltMaxVerts, meshletMaxPrimitives);
+            if (mesh.IndexSize == 2)
+            {
+                const uint16_t* indices = reinterpret_cast<const uint16_t*>(&mIndicesStorage.data()[mesh.Indices.Offset]);
+                
+                result = DirectX::ComputeMeshlets(
+                    indices, nFaces,
+                    positions, mesh.Vertices.Size,
+                    nullptr,
+                    meshlets, uniqueVertexIB, primitiveIndices,
+                    mesheltMaxVerts, meshletMaxPrimitives);
+            }
+            else
+            {
+                const uint32_t* indices = reinterpret_cast<const uint32_t*>(&mIndicesStorage.data()[mesh.Indices.Offset]);
+                
+                result = DirectX::ComputeMeshlets(
+                    indices, nFaces,
+                    positions, mesh.Vertices.Size,
+                    nullptr,
+                    meshlets, uniqueVertexIB, primitiveIndices,
+                    mesheltMaxVerts, meshletMaxPrimitives);
+            }
 
             if (FAILED(result))
             {
@@ -249,18 +290,13 @@ namespace SceneConverter::Model
                 mPrimitiveIndices.push_back(*reinterpret_cast<const Bin3D::MeshletTriangle*>(&meshletTriangle));
             }
 
-            if (uniqueVertexIB.size() % 4 != 0)
-            {
-                spdlog::error("Wrong index buffer size: {}", uniqueVertexIB.size());
-            }
-
             mUniqueVertexIndexBuffer.insert(mUniqueVertexIndexBuffer.end(), uniqueVertexIB.begin(), uniqueVertexIB.end());
+
+            if (mesh.IndexSize == 2 && uniqueVertexIB.size() % 4 == 1)
+            {
+                mUniqueVertexIndexBuffer.push_back(0);
+                mUniqueVertexIndexBuffer.push_back(0);
+            }
         }
-
-        auto uniqueVertexIB32 = std::span(reinterpret_cast<uint32_t*>(mUniqueVertexIndexBuffer.data()), mUniqueVertexIndexBuffer.size() / 4);
-        auto uniqueVertexIB16 = std::span(reinterpret_cast<uint16_t*>(mUniqueVertexIndexBuffer.data()), mUniqueVertexIndexBuffer.size() / 2);
-
-        mUniqueVertexIB32.insert(mUniqueVertexIB32.end(), uniqueVertexIB32.begin(), uniqueVertexIB32.end());
-        mUniqueVertexIB16.insert(mUniqueVertexIB16.end(), uniqueVertexIB16.begin(), uniqueVertexIB16.end());
     }
 }
