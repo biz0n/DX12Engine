@@ -40,7 +40,6 @@ project "AssImp"
         -- '%{ASSIMP_PATH}/code/AssetLib/**', -- All importers
         '%{ASSIMP_PATH}/code/AssetLib/glTF/**',
         '%{ASSIMP_PATH}/code/AssetLib/glTF2/**',
-        '%{ASSIMP_PATH}/code/AssetLib/Assbin/**' -- For caching
     }
 
     defines {
@@ -55,7 +54,7 @@ project "AssImp"
         'ASSIMP_BUILD_NO_AC_IMPORTER',
         'ASSIMP_BUILD_NO_AMF_IMPORTER',
         'ASSIMP_BUILD_NO_ASE_IMPORTER',
-        -- 'ASSIMP_BUILD_NO_ASSBIN_IMPORTER'
+        'ASSIMP_BUILD_NO_ASSBIN_IMPORTER',
         'ASSIMP_BUILD_NO_B3D_IMPORTER',
         'ASSIMP_BUILD_NO_BLEND_IMPORTER',
         'ASSIMP_BUILD_NO_BVH_IMPORTER',
@@ -110,7 +109,7 @@ project "AssImp"
         'ASSIMP_BUILD_NO_PLY_EXPORTER',
         'ASSIMP_BUILD_NO_3DS_EXPORTER',
         'ASSIMP_BUILD_NO_GLTF_EXPORTER',
-        -- 'ASSIMP_BUILD_NO_ASSBIN_EXPORTER',
+        'ASSIMP_BUILD_NO_ASSBIN_EXPORTER',
         'ASSIMP_BUILD_NO_ASSXML_EXPORTER',
         'ASSIMP_BUILD_NO_X3D_EXPORTER',
         'ASSIMP_BUILD_NO_FBX_EXPORTER',

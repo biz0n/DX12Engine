@@ -19,12 +19,12 @@ IncludeDir["PIX"] = "%{LIBRARY_PATH}/PIX"
 IncludeDir["libassert"] = "%{LIBRARY_PATH}/libassert/include"
 IncludeDir["spdlog"] = "%{LIBRARY_PATH}/spdlog/include"
 
-Library = {}
-Library["DirectXShaderCompiler"] = "%{LIBRARY_PATH}/DirectXShaderCompiler/lib/x64/dxcompiler.lib"
-Library["PIX"] = "%{LIBRARY_PATH}/PIX/WinPixEventRuntime.lib"
-
-
 StaticLibrary = {}
-StaticLibrary["dxcompiler"] = "%{LIBRARY_PATH}/DirectXShaderCompiler/bin/x64/dxcompiler.dll"
-StaticLibrary["dxil"] = "%{LIBRARY_PATH}/DirectXShaderCompiler/bin/x64/dxil.dll"
-StaticLibrary["WinPixEventRuntime"] = "%{LIBRARY_PATH}/PIX/WinPixEventRuntime.dll"
+StaticLibrary["DirectXShaderCompiler"] = "%{LIBRARY_PATH}/DirectXShaderCompiler/lib/x64/dxcompiler.lib"
+StaticLibrary["PIX"] = "%{LIBRARY_PATH}/PIX/WinPixEventRuntime.lib"
+
+
+SharedLibrary = {}
+SharedLibrary["dxcompiler"] = "%{LIBRARY_PATH}/DirectXShaderCompiler/bin/x64/dxcompiler.dll"
+SharedLibrary["dxil"] = "%{LIBRARY_PATH}/DirectXShaderCompiler/bin/x64/dxil.dll"
+SharedLibrary["WinPixEventRuntime"] = "%{LIBRARY_PATH}/PIX/WinPixEventRuntime.dll"

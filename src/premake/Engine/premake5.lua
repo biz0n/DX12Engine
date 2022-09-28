@@ -53,8 +53,8 @@ project "Engine"
 
     links
     {
-        "%{Library.PIX}",
-        "%{Library.DirectXShaderCompiler}",
+        "%{StaticLibrary.PIX}",
+        "%{StaticLibrary.DirectXShaderCompiler}",
     }
 
     defines
@@ -62,9 +62,9 @@ project "Engine"
         'RESOURCES_RELATIVE_PATH="%{path.getrelative(cfg.buildtarget.directory, RESOURCES_PATH)}"'
     }
 
-    postbuildcommands { '{COPYFILE} "%{StaticLibrary.dxcompiler}"            "%{cfg.buildtarget.directory}"' }
-    postbuildcommands { '{COPYFILE} "%{StaticLibrary.dxil}"                  "%{cfg.buildtarget.directory}"'}
-    postbuildcommands { '{COPYFILE} "%{StaticLibrary.WinPixEventRuntime}"    "%{cfg.buildtarget.directory}"' }
+    postbuildcommands { '{COPYFILE} "%{SharedLibrary.dxcompiler}"            "%{cfg.buildtarget.directory}"' }
+    postbuildcommands { '{COPYFILE} "%{SharedLibrary.dxil}"                  "%{cfg.buildtarget.directory}"'}
+    postbuildcommands { '{COPYFILE} "%{SharedLibrary.WinPixEventRuntime}"    "%{cfg.buildtarget.directory}"' }
 
     postbuildcommands { '{COPYDIR} "%{SHADERS_PATH}"                         "%{cfg.buildtarget.directory}/Shaders"' }
 
