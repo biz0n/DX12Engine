@@ -9,13 +9,7 @@
 #include <Render/RenderContext.h>
 #include <Render/UIRenderContext.h>
 #include <Render/Renderer.h>
-
-#include <Render/Passes/ForwardPass.h>
-#include <Render/Passes/ToneMappingPass.h>
-#include <Render/Passes/CubePass.h>
-#include <Render/Passes/ForwardPass.h>
-#include <Render/Passes/DepthPass.h>
-#include <Render/Passes/BackBufferPass.h>
+#include <Render/Systems/RenderSystem.h>
 
 #include <HAL/SwapChain.h>
 #include <HAL/CommandQueue.h>
@@ -40,7 +34,6 @@
 #include <Scene/Systems/LightCameraSystem.h>
 #include <UI/Systems/UISystem.h>
 #include <UI/Systems/RenderGraphSystem.h>
-#include <Render/RenderRequestBuilder.h>
 
 #include <PathResolver.h>
 
@@ -95,8 +88,6 @@ namespace Engine
         sceneData.skyBoxPath = PathResolver::GetResourcePath(R"(Cubemaps\old_outdoor_theater_4k.dds)").string();
         SharedPtr<Scene::SceneStorage> sceneStorage = toRegisterLoader.LoadSceneToGPU(scene->GetRegistry(), sceneDto, sceneData);
 
-        
-
         auto& registry = scene->GetRegistry();
         auto [cameraEntity, camera] = scene->GetMainCamera();
         if (cameraEntity != entt::null)
@@ -111,8 +102,11 @@ namespace Engine
 
         scene->AddSystem(MakeUnique<Scene::Systems::MovingSystem>(mKeyboard));
 
-        mUiSystem = MakeUnique<UI::Systems::UISystem>(mRenderContext, sceneStorage);
-        mRenderGraphSystem = MakeUnique<UI::Systems::RenderGraphSystem>(mRenderer);
+        scene->AddSystem(MakeUnique<Render::System::RenderSystem>(mRenderer, mRenderContext, sceneStorage));
+
+        scene->AddSystem(MakeUnique<UI::Systems::UISystem>(mRenderContext, sceneStorage));
+        scene->AddSystem(MakeUnique<UI::Systems::RenderGraphSystem>(mRenderer));
+
         mScene = std::move(scene);
         mSceneStorage = sceneStorage;
     }
@@ -140,10 +134,7 @@ namespace Engine
                 mScene.reset();
 
                 mSceneLoadingInfo->sceneFuture = std::async(std::launch::async, [this]()
-                {    
-                    CoInitialize(nullptr);
-
-
+                {
                     Bin3D::Reader::BinaryReader reader;
 
                     auto sceneDto = reader.ReadScene(mSceneLoadingInfo->scenePath);
@@ -158,48 +149,17 @@ namespace Engine
                 mSceneLoadingInfo->sceneFuture = {};
             }
 
-            if (mScene != nullptr)
-            {
-                mScene->Process(timer);
-            }
-
             mRenderContext->BeginFrame();
 
             if (mScene != nullptr)
             {
-                RenderWork();
+                mScene->Process(timer);
             }
 
             mSceneLoadingInfo->DrawSelector();
 
             mRenderContext->EndFrame();
         }
-    }
-
-    void Application::RenderWork()
-    {
-        auto renderRequest = Render::RenderRequestBuilder::BuildRequest(mScene.get(), mSceneStorage);
-
-        renderRequest.UploadUniforms(mRenderContext->GetUploadBuffer());
-
-        auto tmp = MakeUnique<Render::Passes::ToneMappingPass>();
-        auto bbp = MakeUnique<Render::Passes::BackBufferPass>();
-        auto dp = MakeUnique<Render::Passes::DepthPass>();
-        auto fp = MakeUnique<Render::Passes::ForwardPass>();
-        auto cp = MakeUnique<Render::Passes::CubePass>();
-
-        mRenderer->RegisterRenderPass(tmp.get());
-        mRenderer->RegisterRenderPass(bbp.get());
-        mRenderer->RegisterRenderPass(dp.get());
-        mRenderer->RegisterRenderPass(fp.get());
-        mRenderer->RegisterRenderPass(cp.get());
-
-        mRenderer->Render(renderRequest, timer);
-
-        mUiSystem->Process(mScene.get(), timer);
-        mRenderGraphSystem->Process(mScene.get(), timer);
-
-        mRenderer->Reset();
     }
 
     void Application::OnActiveChanged(bool isActive)

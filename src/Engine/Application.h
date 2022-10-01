@@ -25,8 +25,6 @@ namespace Engine
 
         void Draw();
 
-        void RenderWork();
-
         void OnActiveChanged(bool isActive);
         void OnKeyPressed(KeyEvent event);
         void OnResize(int32 width, int32 height);
