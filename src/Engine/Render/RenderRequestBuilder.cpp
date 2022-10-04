@@ -51,21 +51,16 @@ namespace Engine::Render
 
         auto& [cameraEntity, camera] = sceneObject->GetMainCamera();
 
-        std::vector<Shader::MeshUniform> meshes;
-
+        MeshPack pack;
         const auto& meshsView = registry.view<
             Scene::Components::MeshComponent,
             Scene::Components::WorldTransformComponent,
             Scene::Components::AABBComponent>(entt::exclude<Scene::Components::IsDisabledComponent>);
-        meshes.reserve(meshsView.size_hint());
-
+        
+        pack.meshes.reserve(meshsView.size_hint());
+        Index index = 0;
         for (auto&& [entity, meshComponent, transformComponent, aabbComponent] : meshsView.each())
         {
-            if (!camera.frustum.Intersects(aabbComponent.boundingBox))
-            {
-               // continue;
-            }
-
             Shader::MeshUniform meshUniform = {};
             const auto& mesh = sceneStorage->GetMeshes()[meshComponent.MeshIndex];
 
@@ -90,12 +85,25 @@ namespace Engine::Render
             DirectX::XMStoreFloat4x4(&meshUniform.World, tWorld);
             DirectX::XMStoreFloat4x4(&meshUniform.InverseTranspose, tWorldInverseTranspose);
 
-            meshes.push_back(meshUniform);
+            pack.meshes.push_back(meshUniform);
+            
+            const Bin3D::Material& material = sceneStorage->GetMaterials()[meshComponent.MaterialIndex];
+            switch (material.MaterialProperties.alphaMode)
+            {
+            case Bin3D::AlphaMode::Opaque:
+                pack.opaque.push_back(index);
+                break;
+            case Bin3D::AlphaMode::Mask:
+                pack.clip.push_back(index);
+                break;
+            case Bin3D::AlphaMode::Blend:
+                pack.transparent.push_back(index);
+                break;
+            }
+
+            index++;
         }
 
-        MeshPack pack;
-        pack.meshes = std::move(meshes);
-        pack.opaque = { 0, pack.meshes.size() };
         return pack;
     }
 

@@ -14,7 +14,9 @@ namespace Engine::Render
     struct MeshPack
     {
         std::vector<Shader::MeshUniform> meshes;
-        std::ranges::iota_view<Index, Index> opaque;
+        std::vector<Index> opaque;
+        std::vector<Index> clip;
+        std::vector<Index> transparent;
     };
 
     struct RenderCamera

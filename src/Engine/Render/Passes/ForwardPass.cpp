@@ -8,7 +8,6 @@
 
 #include <HAL/SwapChain.h>
 
-#include <Bin3D/Material.h>
 #include <Scene/MeshResources.h>
 #include <Scene/SceneStorage.h>
 
@@ -119,17 +118,6 @@ namespace Engine::Render::Passes
         const auto& meshUniform = renderRequest.GetMeshes().meshes[meshIndex];
         const auto& mesh = renderRequest.GetSceneStorage()->GetMeshes()[meshUniform.Id];
 
-        const auto& material = renderRequest.GetSceneStorage()->GetMaterials()[meshUniform.MaterialIndex];
-
-        if (material.MaterialProperties.doubleSided)
-        {
-            commandRecorder->SetPipelineState(PSONames::ForwardCullNone);
-        }
-        else
-        {
-            commandRecorder->SetPipelineState(PSONames::ForwardCullBack);
-        }
-
         commandRecorder->SetRoot32BitConstant(0, 0, meshIndex);
 
         commandRecorder->DispatchMesh(mesh.GetMeshletsCount(), 1, 1);
@@ -146,9 +134,6 @@ namespace Engine::Render::Passes
         commandRecorder->ClearRenderTargets({ResourceNames::ForwardOutput, ResourceNames::VisibilityOutput });
         commandRecorder->ClearDepthStencil(ResourceNames::ForwardDepth);
 
-        commandRecorder->SetPipelineState(PSONames::ForwardCullBack);
-
-        
 
         auto& camera = renderRequest.GetCamera();
         auto cb = CommandListUtils::GetFrameUniform(camera.viewProjection, camera.eyePosition, static_cast<uint32>(renderRequest.GetLightsCount()));
@@ -174,6 +159,8 @@ namespace Engine::Render::Passes
             CommandListUtils::TransitionBarrier(passContext.resourceStateTracker.get(), depth->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
         }
 
+        commandRecorder->SetPipelineState(PSONames::ForwardCullNone);
+
         auto cbAllocation = passContext.uploadBuffer->Allocate(sizeof(Shader::FrameUniform));
         cbAllocation.CopyTo(&cb);
 
@@ -187,6 +174,13 @@ namespace Engine::Render::Passes
 
         for (Index meshIndex : renderRequest.GetMeshes().opaque)
         {
+            Draw(renderRequest, meshIndex, passContext);
+        }
+
+        commandRecorder->SetPipelineState(PSONames::ForwardCullBack);
+        for (Index meshIndex : renderRequest.GetMeshes().clip)
+        {
+            
             Draw(renderRequest, meshIndex, passContext);
         }
     }
