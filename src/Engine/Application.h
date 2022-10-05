@@ -6,6 +6,7 @@
 
 #include <Bin3D/Forwards.h>
 #include <Render/RenderForwards.h>
+#include <UI/UIContext.h>
 #include <UI/Systems/UISystem.h>
 #include <UI/Systems/RenderGraphSystem.h>
 
@@ -37,12 +38,10 @@ namespace Engine
         SharedPtr<Render::Renderer> mRenderer;
         SharedPtr<Keyboard> mKeyboard;
         SharedPtr<Scene::SceneLoadingInfo> mSceneLoadingInfo;
+        SharedPtr<UI::UIContext> mUiContext;
 
         UniquePtr<Scene::SceneRegistry> mScene;
         SharedPtr<Scene::SceneStorage> mSceneStorage;
-
-        UniquePtr<UI::Systems::UISystem> mUiSystem;
-        UniquePtr<UI::Systems::RenderGraphSystem> mRenderGraphSystem;
 
     private:
         Timer timer;

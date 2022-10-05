@@ -82,11 +82,12 @@ namespace Engine
     {
         UniquePtr<Scene::SceneRegistry> scene = MakeUnique<Scene::SceneRegistry>();
 
-        Scene::SceneToGPULoader toRegisterLoader{mRenderContext->GetResourceFactory(), mRenderContext->GetResourceCopyManager()};
+        Scene::SceneToGPULoader toGPULoader{mRenderContext->GetResourceFactory(), mRenderContext->GetResourceCopyManager()};
 
         Scene::SceneToGPULoader::SceneDataDto sceneData = {};
         sceneData.skyBoxPath = PathResolver::GetResourcePath(R"(Cubemaps\old_outdoor_theater_4k.dds)").string();
-        SharedPtr<Scene::SceneStorage> sceneStorage = toRegisterLoader.LoadSceneToGPU(scene->GetRegistry(), sceneDto, sceneData);
+        SharedPtr<Scene::SceneStorage> sceneStorage = toGPULoader.LoadSceneToGPU(scene->GetRegistry(), sceneDto, sceneData);
+        mUiContext = MakeShared<UI::UIContext>();
 
         auto& registry = scene->GetRegistry();
         auto [cameraEntity, camera] = scene->GetMainCamera();
@@ -104,11 +105,12 @@ namespace Engine
 
         scene->AddSystem(MakeUnique<Render::System::RenderSystem>(mRenderer, mRenderContext, sceneStorage));
 
-        scene->AddSystem(MakeUnique<UI::Systems::UISystem>(mRenderContext, sceneStorage));
+        scene->AddSystem(MakeUnique<UI::Systems::UISystem>(mRenderContext, sceneStorage, mUiContext));
         scene->AddSystem(MakeUnique<UI::Systems::RenderGraphSystem>(mRenderer));
 
         mScene = std::move(scene);
         mSceneStorage = sceneStorage;
+        
     }
 
     void Application::Destroy()

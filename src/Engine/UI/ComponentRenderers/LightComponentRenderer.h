@@ -1,6 +1,6 @@
 #pragma once
 
-#include <UI/ComponentRenderers/ComponentRenderer.h>
+#include <UI/ComponentRenderers/DefaultComponentRenderer.h>
 
 #include <Scene/Components/LightComponent.h>
 
@@ -11,71 +11,67 @@
 
 namespace Engine::UI::ComponentRenderers
 {
-    
-    class LightComponentRenderer : public ComponentRenderer<Engine::Scene::Components::LightComponent>
+    template <>
+    static void RenderComponent<Scene::Components::LightComponent>(
+        entt::registry& registry, 
+        entt::entity entity, 
+        Scene::Components::LightComponent& component, 
+        SharedPtr<Scene::SceneStorage>)
     {
-        public:
-            LightComponentRenderer() : ComponentRenderer("Light Component") {}
-            ~LightComponentRenderer() override = default;
+        auto light = component.light;
 
-        protected:
-            void RenderComponent(entt::registry& registry, entt::entity entity, Engine::Scene::Components::LightComponent& component) override
-            {
-                auto light = component.light;
+        const auto& color = light.Color;
+        const float intensity = light.Intensity;
+        const float constantAttenuation = light.ConstantAttenuation;
+        const float linearAttenuation = light.LinearAttenuation;
+        const float quadraticAttenuation = light.QuadraticAttenuation;
 
-                const auto& color = light.Color;
-                const float intensity = light.Intensity;
-                const float constantAttenuation = light.ConstantAttenuation;
-                const float linearAttenuation = light.LinearAttenuation;
-                const float quadraticAttenuation = light.QuadraticAttenuation;
+        float normalizedColor[3] = { color.x, color.y, color.z };
+        float newIntensity = intensity;
 
-                float normalizedColor[3] = {color.x, color.y, color.z};
-                float newIntensity = intensity;
-                
-                float newConstantAttenuation = constantAttenuation;
-                float newLinearAttenuation = linearAttenuation;
-                float newQuadraticAttenuation = quadraticAttenuation;
+        float newConstantAttenuation = constantAttenuation;
+        float newLinearAttenuation = linearAttenuation;
+        float newQuadraticAttenuation = quadraticAttenuation;
 
-                const std::string types[3] = {"Directional", "Point", "Spot"};
-                ImGui::LabelText("Type", types[(uint32)light.LightType].c_str());
+        const std::string types[3] = { "Directional", "Point", "Spot" };
+        ImGui::LabelText("Type", types[(uint32)light.LightType].c_str());
 
-                bool changed = false;
-                if (ImGui::SliderFloat("Intensity", &newIntensity, 0.1f, 100.0f))
-                {
-                    light.Intensity = newIntensity;
-                    changed = true;
-                }
+        bool changed = false;
+        if (ImGui::SliderFloat("Intensity", &newIntensity, 0.1f, 100.0f))
+        {
+            light.Intensity = newIntensity;
+            changed = true;
+        }
 
-                if (ImGui::ColorEdit3("Color", normalizedColor))
-                {
-                    dx::XMFLOAT3 newColor = { (normalizedColor[0]), (normalizedColor[1]), (normalizedColor[2])};
-                    light.Color = newColor;
-                    changed = true;
-                }
+        if (ImGui::ColorEdit3("Color", normalizedColor))
+        {
+            dx::XMFLOAT3 newColor = { (normalizedColor[0]), (normalizedColor[1]), (normalizedColor[2]) };
+            light.Color = newColor;
+            changed = true;
+        }
 
-                if (ImGui::SliderFloat("ConstantAttenuation", &newConstantAttenuation, 0.0f, 10.0f))
-                {
-                    light.ConstantAttenuation = newConstantAttenuation;
-                    changed = true;
-                }
+        if (ImGui::SliderFloat("ConstantAttenuation", &newConstantAttenuation, 0.0f, 10.0f))
+        {
+            light.ConstantAttenuation = newConstantAttenuation;
+            changed = true;
+        }
 
-                if (ImGui::SliderFloat("LinearAttenuation", &newLinearAttenuation, 0.0f, 10.0f))
-                {
-                    light.LinearAttenuation = newLinearAttenuation;
-                    changed = true;
-                }
+        if (ImGui::SliderFloat("LinearAttenuation", &newLinearAttenuation, 0.0f, 10.0f))
+        {
+            light.LinearAttenuation = newLinearAttenuation;
+            changed = true;
+        }
 
-                if (ImGui::SliderFloat("QuadraticAttenuation", &newQuadraticAttenuation, 0.0f, 10.0f))
-                {
-                    light.QuadraticAttenuation = newQuadraticAttenuation;
-                    changed = true;
-                }
+        if (ImGui::SliderFloat("QuadraticAttenuation", &newQuadraticAttenuation, 0.0f, 10.0f))
+        {
+            light.QuadraticAttenuation = newQuadraticAttenuation;
+            changed = true;
+        }
 
-                if (changed)
-                {
-                    component.light = light;
-                    registry.replace<Engine::Scene::Components::LightComponent>(entity, component);
-                }
-            }
-    };
+        if (changed)
+        {
+            component.light = light;
+            registry.replace<Engine::Scene::Components::LightComponent>(entity, component);
+        }
+    }
 }

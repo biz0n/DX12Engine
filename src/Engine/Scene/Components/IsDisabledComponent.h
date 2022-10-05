@@ -7,5 +7,6 @@ namespace Engine::Scene::Components
 {
     struct IsDisabledComponent
     {
+        uint8_t __dummy;
     };
 }

@@ -6,7 +6,6 @@
 #include <Bin3D/Scene.h>
 #include <Bin3D/PunctualLight.h>
 #include <Bin3D/Material.h>
-#include <Scene/Components/ComponentsForwards.h>
 #include <Scene/MeshResources.h>
 #include <Scene/SceneStorage.h>
 

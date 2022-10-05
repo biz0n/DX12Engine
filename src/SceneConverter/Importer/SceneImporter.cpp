@@ -62,8 +62,8 @@ namespace SceneConverter::Importer
             //| aiProcess_GenNormals
             | aiProcess_CalcTangentSpace
             | aiProcess_GenBoundingBoxes 
-            | aiProcess_OptimizeMeshes 
-            | aiProcess_OptimizeGraph
+            //| aiProcess_OptimizeMeshes 
+            //| aiProcess_OptimizeGraph
             | aiProcess_RemoveRedundantMaterials
             | aiProcess_SplitLargeMeshes
             ;
@@ -222,7 +222,8 @@ namespace SceneConverter::Importer
                 meshNode.Type = Node::NodeType::Mesh;
                 meshNode.MeshIndex = meshIndex;
                 DirectX::XMStoreFloat4x4(&meshNode.LocalTransform, DirectX::XMMatrixIdentity());
-                meshNode.NameIndex = context.Scene.AddString(aScene->mMeshes[meshIndex]->mName.C_Str());
+                std::string meshName = aScene->mMeshes[meshIndex]->mName.C_Str();
+                meshNode.NameIndex = context.Scene.AddString(meshName);
                 node.Children.push_back(meshNode);
             }
         }

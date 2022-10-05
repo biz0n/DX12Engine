@@ -3,7 +3,7 @@
 #include <Types.h>
 #include <Scene/SceneForwards.h>
 #include <Scene/Systems/System.h>
-#include <UI/ComponentRenderers/ComponentRenderer.h>
+#include <UI/UIContext.h>
 
 #include <Render/RenderForwards.h>
 
@@ -14,14 +14,14 @@ namespace Engine::UI::Systems
     class UISystem : public Scene::Systems::System
     {
         public:
-            UISystem(SharedPtr<Render::RenderContext> renderContext, SharedPtr<Scene::SceneStorage> sceneStorage);
+            UISystem(SharedPtr<Render::RenderContext> renderContext, SharedPtr<Scene::SceneStorage> sceneStorage, SharedPtr<UIContext> uiContext);
             ~UISystem() override;
         public:
             void Process(Scene::SceneRegistry* scene, const Timer& timer) override;
 
         private:
             SharedPtr<Render::RenderContext> mRenderContext;
-
-            std::vector<UniquePtr<Engine::UI::ComponentRenderers::ComponentRendererBase>> mComponentRenderers;
+            SharedPtr<UIContext> mUiContext;
+            SharedPtr<Scene::SceneStorage> mSceneStorage;
     };
 }
