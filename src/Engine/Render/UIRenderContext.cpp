@@ -6,6 +6,7 @@
 #include <imgui/backends/imgui_impl_dx12.h>
 #include <imgui/backends/imgui_impl_win32.h>
 #include <ImGuizmo/ImGuizmo.h>
+#include <UI/Fonts/IconsFontAwesome6.h>
 
 
 #include <cassert>
@@ -45,6 +46,18 @@ namespace Engine::Render
             descriptorAllocatorPool->GetCbvSrvUavDescriptorHeap(),
             mFontDescriptorAllocation.GetCPUDescriptor(),
             mFontDescriptorAllocation.GetGPUDescriptor());
+
+
+        io.Fonts->AddFontDefault();
+
+        // merge in icons from Font Awesome
+        static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_16_FA, 0 };
+        ImFontConfig icons_config; 
+        icons_config.MergeMode = true; 
+        icons_config.PixelSnapH = true;
+        icons_config.GlyphMinAdvanceX = 14.0f; // Use if you want to make the icon monospaced
+        icons_config.GlyphOffset = { 0, 2 };
+        io.Fonts->AddFontFromFileTTF(PathResolver::GetResourcePath("Fonts/" FONT_ICON_FILE_NAME_FAS).string().c_str(), 14.0f, &icons_config, icons_ranges);
     }
 
     UIRenderContext::~UIRenderContext()
