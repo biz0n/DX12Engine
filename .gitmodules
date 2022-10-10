@@ -28,3 +28,6 @@
 [submodule "src/Libraries/spdlog"]
 	path = src/Libraries/spdlog
 	url = git@github.com:gabime/spdlog.git
+[submodule "src/Libraries/freetype"]
+	path = src/Libraries/freetype
+	url = git@github.com:freetype/freetype.git

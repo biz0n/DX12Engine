@@ -59,7 +59,8 @@ project "Engine"
 
     defines
     {
-        'RESOURCES_RELATIVE_PATH="%{path.getrelative(cfg.buildtarget.directory, RESOURCES_PATH)}"'
+        'RESOURCES_RELATIVE_PATH="%{path.getrelative(cfg.buildtarget.directory, RESOURCES_PATH)}"',
+        'IMGUI_ENABLE_FREETYPE'
     }
 
     postbuildcommands { '{COPYFILE} "%{SharedLibrary.dxcompiler}"            "%{cfg.buildtarget.directory}"' }

@@ -11,7 +11,8 @@ project "ImGui"
 
     includedirs 
     {
-        '%{IMGUI_PATH}/imgui'
+        '%{IMGUI_PATH}/imgui',
+        "%{IncludeDir.freetype}"
     }
 
     files {
@@ -21,6 +22,18 @@ project "ImGui"
         '%{IMGUI_PATH}/imgui/backends/imgui_impl_dx12.cpp',
         '%{IMGUI_PATH}/imgui/backends/imgui_impl_win32.h',
         '%{IMGUI_PATH}/imgui/backends/imgui_impl_win32.cpp',
+        '%{IMGUI_PATH}/imgui/misc/freetype/imgui_freetype.h',
+        '%{IMGUI_PATH}/imgui/misc/freetype/imgui_freetype.cpp',
+    }
+
+    defines
+    {
+        'IMGUI_ENABLE_FREETYPE'
+    }
+
+    links
+    {
+        'freetype'
     }
 
     filter "configurations:Debug"
@@ -33,7 +46,7 @@ project "ImGui"
         runtime "Release"
         optimize "on"
 
-
+    
 project "ImGuizmo"
     kind "StaticLib"
     language "C++"

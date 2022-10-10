@@ -17,6 +17,8 @@
 #include <UI/ComponentRenderers/CameraComponentRenderer.h>
 #include <UI/ComponentRenderers/DefaultComponentRenderer.h>
 
+#include <UI/Fonts/IconsFontAwesome6.h>
+
 #include <imgui/imgui.h>
 #include <ImGuizmo/ImGuizmo.h>
 #include <entt/entt.hpp>
@@ -55,7 +57,21 @@ namespace Engine::UI::Systems
             
             if (r.first == entt::null)
             {
-                ImGui::TreeNodeEx((void *)(intptr_t)e, node_flags, "%i: %s(%i)", e, name.Name.c_str(), r.depth);
+                const char* icon = ICON_FA_OBJECT_GROUP;
+                if (registry.all_of<Scene::Components::LightComponent>(e))
+                {
+                    icon = ICON_FA_LIGHTBULB;
+                }
+                else if (registry.all_of<Scene::Components::CameraComponent>(e))
+                {
+                    icon = ICON_FA_VIDEO;
+                }
+                else if (registry.all_of<Scene::Components::MeshComponent>(e))
+                {
+                    icon = ICON_FA_CUBE;
+                }
+
+                ImGui::TreeNodeEx((void *)(intptr_t)e, node_flags, "%s %i: %s(%i)", icon, e, name.Name.c_str(), r.depth);
                 if (ImGui::IsItemClicked())
                 {
                     mUiContext->SelectedEntity = e;
@@ -63,7 +79,7 @@ namespace Engine::UI::Systems
             }
             else
             {
-                bool isOpened = ImGui::TreeNodeEx((void *)(intptr_t)e, node_flags, "%i: %s(%i) [%i]", e, name.Name.c_str(), r.depth, r.childsCount);
+                bool isOpened = ImGui::TreeNodeEx((void *)(intptr_t)e, node_flags, ICON_FA_OBJECT_GROUP " %i: %s(%i) [%i]", e, name.Name.c_str(), r.depth, r.childsCount);
                 if (ImGui::IsItemClicked())
                 {
                     mUiContext->SelectedEntity = e;
@@ -142,33 +158,6 @@ namespace Engine::UI::Systems
             }
         }
         ImGui::End();
-
-        
-
-        if (mUiContext->SelectedEntity != entt::null && registry.all_of<Scene::Components::WorldTransformComponent>(mUiContext->SelectedEntity))
-        {
-            auto [cameraEntity, camera] = scene->GetMainCamera();
-            auto worldTransformComponent = registry.get<Scene::Components::WorldTransformComponent>(mUiContext->SelectedEntity);
-            if (mUiContext->SelectedEntity == cameraEntity)
-            {
-                return;
-            }
-            
-
-            dx::XMFLOAT4X4 view;
-            dx::XMFLOAT4X4 proj; 
-            dx::XMFLOAT4X4 matrix; 
-            dx::XMStoreFloat4x4(&view, camera.view);
-            dx::XMStoreFloat4x4(&proj, camera.projection);
-            dx::XMStoreFloat4x4(&matrix, worldTransformComponent.transform);
-
-           // ImGuizmo::Manipulate(*view.m, *proj.m, ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::MODE::WORLD, *matrix.m);
-
-            // ImGuizmo::DrawCubes(*view.m, *proj.m, *matrix.m, 1);
-
-            
-            
-        }
     }
 
 } // namespace Engine::Scene::Systems
