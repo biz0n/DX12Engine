@@ -36,7 +36,6 @@ namespace Engine::Render
 
         mConfigPath = PathResolver::GetResourcePath("ImGui/imgui.ini").string();
         io.IniFilename = mConfigPath.c_str();
-
         ImGui_ImplWin32_Init(view.WindowHandle);
 
         ImGui_ImplDX12_Init(
@@ -49,16 +48,20 @@ namespace Engine::Render
 
         //io.Fonts->AddFontDefault();
 
-        io.Fonts->AddFontFromFileTTF(PathResolver::GetResourcePath("Fonts/Roboto/Roboto-Medium.ttf").string().c_str(), 15.0f);
+        const float fontScale = 2;
+        io.FontDefault = io.Fonts->AddFontFromFileTTF(PathResolver::GetResourcePath("Fonts/Roboto/Roboto-Medium.ttf").string().c_str(), 15.0f * fontScale);
+        io.FontDefault->Scale = 1 / fontScale;
 
         // merge in icons from Font Awesome
         static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_16_FA, 0 };
         ImFontConfig icons_config; 
         icons_config.MergeMode = true; 
         icons_config.PixelSnapH = true;
-        icons_config.GlyphMinAdvanceX = 16.0f; // Use if you want to make the icon monospaced
+        icons_config.GlyphMinAdvanceX = 16.0f * fontScale; // Use if you want to make the icon monospaced
         icons_config.GlyphOffset = { 0, 2 };
-        io.Fonts->AddFontFromFileTTF(PathResolver::GetResourcePath("Fonts/FontAwesome/" FONT_ICON_FILE_NAME_FAS).string().c_str(), 16.0f, &icons_config, icons_ranges);
+        
+        auto* iconsFont = io.Fonts->AddFontFromFileTTF(PathResolver::GetResourcePath("Fonts/FontAwesome/" FONT_ICON_FILE_NAME_FAS).string().c_str(), 16.0f * fontScale, &icons_config, icons_ranges);
+        iconsFont->Scale = 1 / fontScale;
     }
 
     UIRenderContext::~UIRenderContext()
