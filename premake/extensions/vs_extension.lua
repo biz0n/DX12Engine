@@ -12,6 +12,20 @@ premake.api.register {
         }
 }
 
+premake.api.register {
+        name = "copyDistenation",
+        scope = "config",
+        kind = "string",
+}
+
+function copyToOutputDirectory(filecfg, condition)
+    --premake.vstudio.vc2010.element("DeploymentContent", condition, "true")
+    --premake.vstudio.vc2010.element("CopyToOutputDirectory", condition, "Always")
+    if not filecfg or filecfg.copyDistenation then
+        premake.vstudio.vc2010.element("DestinationFolders", condition, filecfg.copyDistenation)
+    end
+end
+
 function useStandardPreprocessor(cfg)
     if _ACTION >= "vs2019" and cfg.usestandardpreprocessor ~= nil then
         if cfg.usestandardpreprocessor == 'On' then
@@ -28,3 +42,23 @@ premake.override(premake.vstudio.vc2010.elements, "clCompile", function(base, pr
     return calls
 end)
 
+
+---
+-- None group
+---
+premake.vstudio.vc2010.categories.CopyToOutputDirectory = {
+        name = "CopyToOutputDirectory",
+        priority = 5,
+
+        emitFiles = function(prj, group)
+            local fileCfgFunc = {
+                copyToOutputDirectory,
+            }
+
+            premake.vstudio.vc2010.emitFiles(prj, group, "CopyFileToFolders", nil, fileCfgFunc)
+        end,
+
+        emitFilter = function(prj, group)
+            premake.vstudio.vc2010.filterGroup(prj, group, "CopyFileToFolders")
+        end
+    }

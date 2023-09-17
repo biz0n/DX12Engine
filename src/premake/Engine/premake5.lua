@@ -67,7 +67,7 @@ project "Engine"
     postbuildcommands { '{COPYFILE} "%{SharedLibrary.dxil}"                  "%{cfg.buildtarget.directory}"'}
     postbuildcommands { '{COPYFILE} "%{SharedLibrary.WinPixEventRuntime}"    "%{cfg.buildtarget.directory}"' }
 
-    postbuildcommands { '{COPYDIR} "%{SHADERS_PATH}"                         "%{cfg.buildtarget.directory}/Shaders"' }
+    --postbuildcommands { '{COPYDIR} "%{SHADERS_PATH}"                         "%{cfg.buildtarget.directory}/Shaders"' }
 
     filter "configurations:Debug"
         defines "DEBUG"
@@ -79,5 +79,6 @@ project "Engine"
         runtime "Release"
         optimize "on"
 
-    filter "files:**.hlsl" 
-        buildaction "None"
+    filter "files:**/Render/Shaders/**" 
+        buildaction "CopyToOutputDirectory"
+        copyDistenation "$(OutDir)\\Shaders"
