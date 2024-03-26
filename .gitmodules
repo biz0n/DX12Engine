@@ -33,4 +33,10 @@
 	url = git@github.com:freetype/freetype.git
 [submodule "src/Libraries/meshoptimizer"]
 	path = src/Libraries/meshoptimizer
-	url = https://github.com/zeux/meshoptimizer
+	url = git@github.com/zeux/meshoptimizer
+[submodule "src/Libraries/METIS"]
+	path = src/Libraries/METIS
+	url = git@github.com/KarypisLab/METIS.git
+[submodule "src/Libraries/GKlib"]
+	path = src/Libraries/GKlib
+	url = git@/github.com/KarypisLab/GKlib.git

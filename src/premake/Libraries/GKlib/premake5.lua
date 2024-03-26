@@ -1,8 +1,8 @@
-MESHOPTIMIZER_PATH = "%{LIBRARY_PATH}/meshoptimizer"
+GKLIB_PATH = "%{LIBRARY_PATH}/GKlib"
 
-project "meshoptimizer"
+project "GKlib"
     kind "StaticLib"
-    language "C++"
+    language "C"
     cppdialect "C++20"
 
     targetdir (bin_location .. "/%{prj.name}")
@@ -10,16 +10,20 @@ project "meshoptimizer"
 
     includedirs 
     {
-        '%{MESHOPTIMIZER_PATH}/src'
+        '%{GKLIB_PATH}',
+        '%{GKLIB_PATH}/win32'
     }
 
     files {
-        '%{MESHOPTIMIZER_PATH}/src/*.h',
-        '%{MESHOPTIMIZER_PATH}/src/*.cpp'
+        '%{GKLIB_PATH}/*.h',
+        '%{GKLIB_PATH}/*.c',
+        '%{GKLIB_PATH}/win32/*.h',
+        '%{GKLIB_PATH}/win32/*.c'
     }
 
     defines {
-
+        "USE_GKREGEX",
+        "__thread=__declspec(thread)"
     }
 
     links {

@@ -1,6 +1,6 @@
-MESHOPTIMIZER_PATH = "%{LIBRARY_PATH}/meshoptimizer"
+METIS_PATH = "%{LIBRARY_PATH}/METIS"
 
-project "meshoptimizer"
+project "METIS"
     kind "StaticLib"
     language "C++"
     cppdialect "C++20"
@@ -10,19 +10,25 @@ project "meshoptimizer"
 
     includedirs 
     {
-        '%{MESHOPTIMIZER_PATH}/src'
+        '%{METIS_PATH}/include',
+        "%{IncludeDir.GKlib}",
     }
 
     files {
-        '%{MESHOPTIMIZER_PATH}/src/*.h',
-        '%{MESHOPTIMIZER_PATH}/src/*.cpp'
+        '%{METIS_PATH}/libmetis/*.h',
+        '%{METIS_PATH}/libmetis/*.c',
+        '%{METIS_PATH}/include/*.h',
     }
 
     defines {
-
+        "IDXTYPEWIDTH=64",
+        "REALTYPEWIDTH=64",
+        "USE_GKREGEX",
+        "__thread=__declspec(thread)"
     }
 
     links {
+        "GKlib"
     }
 
     filter "configurations:Debug"

@@ -21,7 +21,8 @@ project "SceneConverter"
         "%{IncludeDir.DirectXTex}",
         "%{IncludeDir.libassert}",
         "%{IncludeDir.spdlog}",
-        "%{IncludeDir.meshoptimizer}"
+        "%{IncludeDir.meshoptimizer}",
+        "%{IncludeDir.METIS}"
     }
 
     links
@@ -31,7 +32,8 @@ project "SceneConverter"
         "DirectXTex",
         "AssImp",
         "libassert",
-        "meshoptimizer"
+        "meshoptimizer",
+        "METIS"
     }
 
     links
