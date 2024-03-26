@@ -61,6 +61,7 @@ namespace Engine::Render::Passes
     {
         auto rasterizer = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
         rasterizer.DepthClipEnable = false;
+        rasterizer.CullMode = D3D12_CULL_MODE_BACK;
 
         Render::PipelineStateProxy pipelineStateCullModeBack = {
             .rootSignatureName = RootSignatureNames::Forward,
@@ -159,7 +160,7 @@ namespace Engine::Render::Passes
             CommandListUtils::TransitionBarrier(passContext.resourceStateTracker.get(), depth->D3DResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
         }
 
-        commandRecorder->SetPipelineState(PSONames::ForwardCullNone);
+        commandRecorder->SetPipelineState(PSONames::ForwardCullBack);
 
         auto cbAllocation = passContext.uploadBuffer->Allocate(sizeof(Shader::FrameUniform));
         cbAllocation.CopyTo(&cb);
@@ -177,10 +178,9 @@ namespace Engine::Render::Passes
             Draw(renderRequest, meshIndex, passContext);
         }
 
-        commandRecorder->SetPipelineState(PSONames::ForwardCullBack);
+        commandRecorder->SetPipelineState(PSONames::ForwardCullNone);
         for (Index meshIndex : renderRequest.GetMeshes().clip)
         {
-            
             Draw(renderRequest, meshIndex, passContext);
         }
     }

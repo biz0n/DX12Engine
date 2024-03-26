@@ -127,6 +127,44 @@ VertexShaderOutput mainVS(uint indexId : SV_VertexID)
     return OUT;
 }
 
+// https://martin.ankerl.com/2009/12/09/how-to-create-random-colors-programmatically/
+float3 HSVToRGB(float h, float s, float v)
+{
+    float h_i = floor(h * 6.0f);
+    float f = h * 6.0f - h_i;
+    float p = v * (1.0f - s);
+    float q = v * (1.0f - f * s);
+    float t = v * (1.0f - (1.0f - f) * s);
+    switch (int(h_i))
+    {
+        case 0:
+            return float3(v, t, p);
+        case 1:
+            return float3(q, v, p);
+        case 2:
+            return float3(p, v, t);
+        case 3:
+            return float3(p, q, v);
+        case 4:
+            return float3(t, p, v);
+        case 5:
+            return float3(v, p, q);
+        default:
+            return float3(1.0f, 0.0f, 1.0f); // doesn't happen
+    }
+}
+
+// This uses the golden ratio to make N hues that are maximally distant
+// from each other for any N colors desired. Need to use indices [0,N)
+// for this to work though. Just does a 1D low discrepancy sequence
+// for hue, and has constant s and v values.
+float3 IndexToColor(int index, float s = 0.5f, float v = 0.95f)
+{
+    static const float c_goldenRatioConjugate = 0.61803398875f;
+    float h = frac(float(index) * c_goldenRatioConjugate);
+    return HSVToRGB(h, s, v);
+}
+
 PixelShaderOutput mainPS(VertexShaderOutput input)
 {
     float ambientIntensity = 0.1;
@@ -135,13 +173,11 @@ PixelShaderOutput mainPS(VertexShaderOutput input)
 
     float3 diffuseColor;
     float shininess;
+    float3 cc = IndexToColor(input.indexId, 0.9f);
     
         uint meshletIndex = input.indexId;
-        diffuseColor = float3(
-            float(meshletIndex & 1),
-            float(meshletIndex & 3) / 4,
-            float(meshletIndex & 7) / 8);
-        shininess = 16.0;
+        diffuseColor = cc;
+        shininess = 32.0;
 
     float3 normal = normalize(input.NormalW);
 
@@ -158,12 +194,8 @@ PixelShaderOutput mainPS(VertexShaderOutput input)
     
     PixelShaderOutput output;
     output.Color = float4(finalColor, 1);
-    float4 cc = float4(
-            float(input.indexId & 1),
-            float(input.indexId & 5) / 4,
-            float(input.indexId & 9) / 8, 1);
     
-    output.VisibilityBuffer = cc; 
+    output.VisibilityBuffer = float4(cc, 1);;
     return output;
     /*
     MaterialUniform MaterialCB = Materials[Meshes[MeshIndex].MaterialIndex];
