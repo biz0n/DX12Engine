@@ -13,6 +13,7 @@
 
 #include <Model/ImageData.h>]
 #include <Model/Node.h>
+#include <Model/RawMesh.h>
 
 #include <vector>
 #include <map>
@@ -45,16 +46,12 @@ namespace SceneConverter::Model
             const std::vector<std::shared_ptr<ImageData>>& GetImageResources() const { return mImageResources; }
 
             void AddRootNode(const Node& node);
-            uint32_t AddMesh(const Bin3D::Mesh& mesh);
+            uint32_t AddMesh(const RawMesh& mesh);
             uint32_t AddMaterial(const Bin3D::Material& material);
             uint32_t AddLight(const Bin3D::PunctualLight& light);
             uint32_t AddCamera(const Bin3D::Camera& camera);
             uint32_t AddSampler(const Bin3D::Sampler& sampler);
 
-            Bin3D::DataRegion AddIndices(const std::vector<uint32_t>& indices);
-            Bin3D::DataRegion AddIndices(const std::vector<uint16_t>& indices);
-            Bin3D::DataRegion AddVertices(const std::vector<Bin3D::VertexCoordinates>& coordinates, const std::vector<Bin3D::VertexProperties>& properties);
-            
             Bin3D::DataRegion AddString(const std::string& str);
 
             uint32_t AddImage(std::shared_ptr<ImageData> image);
@@ -64,6 +61,10 @@ namespace SceneConverter::Model
             void ComputeMeshlets();
 
         private:
+            Bin3D::DataRegion AddIndices(const std::vector<uint32_t>& indices);
+            Bin3D::DataRegion AddIndices(const std::vector<uint16_t>& indices);
+            Bin3D::DataRegion AddVertices(const std::vector<Bin3D::VertexCoordinates>& coordinates, const std::vector<Bin3D::VertexProperties>& properties);
+
             Bin3D::DataRegion AddIndices(const uint8_t* indices, uint32_t count);
         private:
             std::vector<Bin3D::Mesh> mMeshes;
@@ -86,5 +87,6 @@ namespace SceneConverter::Model
 
             std::unordered_map<std::string, Bin3D::DataRegion> mStringsMap;
             std::map<Bin3D::Sampler, uint32_t> mSamplersMap;
+            std::vector<RawMesh> mRawMeshes;
     };
 }

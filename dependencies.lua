@@ -19,6 +19,7 @@ IncludeDir["PIX"] = "%{LIBRARY_PATH}/PIX"
 IncludeDir["libassert"] = "%{LIBRARY_PATH}/libassert/include"
 IncludeDir["spdlog"] = "%{LIBRARY_PATH}/spdlog/include"
 IncludeDir["freetype"] = "%{LIBRARY_PATH}/freetype/include"
+IncludeDir["meshoptimizer"] = "%{LIBRARY_PATH}/meshoptimizer/src"
 
 StaticLibrary = {}
 StaticLibrary["DirectXShaderCompiler"] = "%{LIBRARY_PATH}/DirectXShaderCompiler/lib/x64/dxcompiler.lib"

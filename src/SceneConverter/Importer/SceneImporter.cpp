@@ -59,7 +59,7 @@ namespace SceneConverter::Importer
             | aiProcess_Triangulate 
             | aiProcess_ConvertToLeftHanded
             //| aiProcess_JoinIdenticalVertices
-            //| aiProcess_GenNormals
+            | aiProcess_GenNormals
             | aiProcess_CalcTangentSpace
             | aiProcess_GenBoundingBoxes 
             //| aiProcess_OptimizeMeshes 
@@ -141,16 +141,18 @@ namespace SceneConverter::Importer
             Model::Node cameraNode = {};
             cameraNode.Type = Bin3D::Node::NodeType::Camera;
             cameraNode.CameraIndex = context.Scene.AddCamera(camera);
+            cameraNode.NameIndex = context.Scene.AddString("Default Camera");
             DirectX::XMStoreFloat4x4(&cameraNode.LocalTransform, DirectX::XMMatrixIdentity());
             context.Scene.AddCamera(camera);
             context.Scene.AddRootNode(cameraNode);
         }
 
-        std::function<void(const PunctualLight&, const DirectX::XMMATRIX&)> addLight = [&context](const PunctualLight& light, const DirectX::XMMATRIX& transform)
+        std::function<void(const PunctualLight&, const DirectX::XMMATRIX&, const std::string&)> addLight = [&context](const PunctualLight& light, const DirectX::XMMATRIX& transform, const std::string& name)
         {
             Model::Node lightNode = {};
             lightNode.Type = Bin3D::Node::NodeType::Light;
             DirectX::XMStoreFloat4x4(&lightNode.LocalTransform, transform);
+            lightNode.NameIndex = context.Scene.AddString(name);
             lightNode.LightIndex = context.Scene.AddLight(light);
             context.Scene.AddRootNode(lightNode);
         };
@@ -166,7 +168,7 @@ namespace SceneConverter::Importer
         light1.OuterConeAngle = 0;
         light1.LightType = LightType::PointLight;
 
-       // addLight(light1, DirectX::XMMatrixTranslation(4.0f, 5.0f, -2.0f));
+        // addLight(light1, DirectX::XMMatrixTranslation(4.0f, 5.0f, -2.0f), "Default Point light");
 
         PunctualLight light2 = {};
         light2.Color = {1.0f, 1.0f, 1.0f};
@@ -178,7 +180,7 @@ namespace SceneConverter::Importer
         light2.OuterConeAngle = 0;
         light2.LightType = LightType::DirectionalLight;
 
-       // addLight(light2, DirectX::XMMatrixTranslation(0.0f, 2.0f, 0.0f));
+       // addLight(light2, DirectX::XMMatrixTranslation(0.0f, 2.0f, 0.0f), "Default Directional light");
 
         context.Scene.UnwrapNodeTree();
 
@@ -489,14 +491,12 @@ namespace SceneConverter::Importer
         return light;
     }
 
-    Mesh SceneImporter::ParseMesh(const aiMesh* aMesh, LoadingContext& context)
+    Model::RawMesh SceneImporter::ParseMesh(const aiMesh* aMesh, LoadingContext& context)
     {
-        Mesh mesh = {};
+        Model::RawMesh mesh = {};
         
-        std::vector<VertexCoordinates> verticesCoordinates;
-        std::vector<VertexProperties> verticesProperties;
-        verticesCoordinates.reserve(aMesh->mNumVertices);
-        verticesProperties.reserve(aMesh->mNumVertices);
+        mesh.Vertices.reserve(aMesh->mNumVertices);
+        mesh.VertexProperties.reserve(aMesh->mNumVertices);
 
         for (unsigned int i = 0; i < aMesh->mNumVertices; ++i)
         {
@@ -526,42 +526,21 @@ namespace SceneConverter::Importer
 
                 vertexProperties.Tangent = {tangent.x, tangent.y, tangent.z, symmetry};
             }
-            verticesCoordinates.emplace_back(vertexCoordinates);
-            verticesProperties.emplace_back(vertexProperties);
+            mesh.Vertices.emplace_back(vertexCoordinates);
+            mesh.VertexProperties.emplace_back(vertexProperties);
         }
-
-        mesh.Vertices = context.Scene.AddVertices(verticesCoordinates, verticesProperties);
 
         uint32_t indicesCount = aMesh->mNumFaces * 3;
-        if (indicesCount <= std::numeric_limits<uint16_t>::max())
-        {
-            std::vector<uint16_t> indices;
-            indices.reserve(indicesCount);
-            for (unsigned int i = 0; i < aMesh->mNumFaces; ++i)
-            {
-                const auto& face = aMesh->mFaces[i];
-                indices.push_back(face.mIndices[0]);
-                indices.push_back(face.mIndices[1]);
-                indices.push_back(face.mIndices[2]);
-            }
-            mesh.IndexSize = sizeof(uint16_t);
-            mesh.Indices = context.Scene.AddIndices(indices);
-        }
-        else
-        {
-            std::vector<uint32_t> indices;
-            indices.reserve(indicesCount);
-            for (unsigned int i = 0; i < aMesh->mNumFaces; ++i)
-            {
-                const auto& face = aMesh->mFaces[i];
-                indices.push_back(face.mIndices[0]);
-                indices.push_back(face.mIndices[1]);
-                indices.push_back(face.mIndices[2]);
-            }
-            mesh.IndexSize = sizeof(uint32_t);
-            mesh.Indices = context.Scene.AddIndices(indices);
-        }
 
+        mesh.Indices.reserve(indicesCount);
+        for (unsigned int i = 0; i < aMesh->mNumFaces; ++i)
+        {
+            const auto& face = aMesh->mFaces[i];
+            mesh.Indices.push_back(face.mIndices[0]);
+            mesh.Indices.push_back(face.mIndices[1]);
+            mesh.Indices.push_back(face.mIndices[2]);
+        }
+        
         mesh.MaterialIndex = aMesh->mMaterialIndex;
 
         const auto& aabbMin = aMesh->mAABB.mMin;

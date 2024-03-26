@@ -1,14 +1,23 @@
 #include "Scene.h"
 
+#if defined(min)
+#undef min
+#endif
+
+#if defined(max)
+#undef max
+#endif
+
+
 #include <spdlog/spdlog.h>
 
-#include <DirectXMesh.h>
-
+#include <Model/MeshProcessor.h>
 
 #include <queue>
 #include <tuple>
 #include <cstdio>
 #include <span>
+#include <numbers>
 
 namespace SceneConverter::Model
 {
@@ -32,10 +41,10 @@ namespace SceneConverter::Model
         mRootNodes.push_back(node);
     }
 
-    uint32_t Scene::AddMesh(const Bin3D::Mesh& mesh)
+    uint32_t Scene::AddMesh(const RawMesh& mesh)
     {
-        mMeshes.push_back(mesh);
-        return mMeshes.size() - 1;
+        mRawMeshes.push_back(mesh);
+        return mRawMeshes.size() - 1;
     }
 
     uint32_t Scene::AddMaterial(const Bin3D::Material& material)
@@ -97,10 +106,9 @@ namespace SceneConverter::Model
         index.Offset = mIndicesStorage.size();
         index.Size = count;
 
-        for (uint32_t i = 0; i < count; ++i)
-        {
-            mIndicesStorage.push_back(indices[i]);
-        }
+        mIndicesStorage.resize(index.Offset + index.Size);
+
+        memcpy(mIndicesStorage.data() + index.Offset, indices, count);
 
         return index;
     }
@@ -215,88 +223,73 @@ namespace SceneConverter::Model
     }
     void Scene::ComputeMeshlets()
     {
-        std::vector<DirectX::Meshlet> meshlets;
-        std::vector<uint8_t> uniqueVertexIB;
-        std::vector<DirectX::MeshletTriangle> primitiveIndices;
+        MeshProcessor processor = {};
 
-        // https://developer.nvidia.com/blog/introduction-turing-mesh-shaders/
-        constexpr size_t mesheltMaxVerts = 64;
-        constexpr size_t meshletMaxPrimitives = 126;
-
-        for (auto& mesh : mMeshes)
+        for (const auto& rawMesh : mRawMeshes)
         {
-            meshlets.clear();
-            uniqueVertexIB.clear();
-            primitiveIndices.clear();
+            auto meshletsData = processor.GenerateMeshlet(rawMesh);
 
-            
-            const DirectX::XMFLOAT3* positions = reinterpret_cast<const DirectX::XMFLOAT3*>(&mVerticesCoordinatesStorage.data()[mesh.Vertices.Offset]);
-            const auto nFaces = mesh.Indices.Size / mesh.IndexSize / 3;
-            
-            HRESULT result = S_OK;
+            Bin3D::Mesh mesh = {};
 
-            if (mesh.IndexSize == 2)
+            auto verticesCount = rawMesh.Vertices.size();
+            auto indicesCount = rawMesh.Indices.size();
+
+            std::vector<uint8_t> uniqueVertexIB;
+
+            if (verticesCount <= std::numeric_limits<uint16_t>::max())
             {
-                const uint16_t* indices = reinterpret_cast<const uint16_t*>(&mIndicesStorage.data()[mesh.Indices.Offset]);
-                
-                result = DirectX::ComputeMeshlets(
-                    indices, nFaces,
-                    positions, mesh.Vertices.Size,
-                    nullptr,
-                    meshlets, uniqueVertexIB, primitiveIndices,
-                    mesheltMaxVerts, meshletMaxPrimitives);
+                std::vector<uint16_t> indices;
+                indices.reserve(indicesCount);
+                for (size_t i = 0; i < indicesCount; ++i)
+                {
+                    indices.push_back(rawMesh.Indices[i]);
+                }
+                mesh.IndexSize = sizeof(uint16_t);
+                mesh.Indices = AddIndices(indices);
             }
             else
             {
-                const uint32_t* indices = reinterpret_cast<const uint32_t*>(&mIndicesStorage.data()[mesh.Indices.Offset]);
-                
-                result = DirectX::ComputeMeshlets(
-                    indices, nFaces,
-                    positions, mesh.Vertices.Size,
-                    nullptr,
-                    meshlets, uniqueVertexIB, primitiveIndices,
-                    mesheltMaxVerts, meshletMaxPrimitives);
+                std::vector<uint32_t> indices;
+                indices.reserve(indicesCount);
+                for (size_t i = 0; i < indicesCount; ++i)
+                {
+                    indices.push_back(rawMesh.Indices[i]);
+                }
+                mesh.IndexSize = sizeof(uint32_t);
+                mesh.Indices = AddIndices(indices);
             }
 
-            if (FAILED(result))
-            {
-                spdlog::error("ComputeMeshlets Failed: {}", result);
-            }
+            mesh.Vertices = AddVertices(rawMesh.Vertices, rawMesh.VertexProperties);
+            mesh.AABB = rawMesh.AABB;
+            mesh.MaterialIndex = rawMesh.MaterialIndex;
 
-            Bin3D::DataRegion meshletsRegion;
-            Bin3D::DataRegion primitiveIndicesRegion;
-            Bin3D::DataRegion uniqueVertexIndicesRegion;
+            mesh.Meshlets.Offset = mMeshlets.size();
+            mesh.Meshlets.Size = meshletsData.Meshlets.size();
 
-            meshletsRegion.Offset = mMeshlets.size();
-            meshletsRegion.Size = meshlets.size();
+            mesh.PrimitiveIndices.Offset = mPrimitiveIndices.size();
+            mesh.PrimitiveIndices.Size = meshletsData.PrimitiveIndices.size();
 
-            primitiveIndicesRegion.Offset = mPrimitiveIndices.size();
-            primitiveIndicesRegion.Size = primitiveIndices.size();
+            mesh.UniqueVertexIndices.Offset = mUniqueVertexIndexBuffer.size();
+            mesh.UniqueVertexIndices.Size = meshletsData.UniqueVertexIB.size() * mesh.IndexSize;
 
-            uniqueVertexIndicesRegion.Offset = mUniqueVertexIndexBuffer.size();
-            uniqueVertexIndicesRegion.Size = uniqueVertexIB.size();
+            mMeshlets.insert(mMeshlets.end(), meshletsData.Meshlets.begin(), meshletsData.Meshlets.end());
+            mPrimitiveIndices.insert(mPrimitiveIndices.end(), meshletsData.PrimitiveIndices.begin(), meshletsData.PrimitiveIndices.end());
 
-            mesh.Meshlets = meshletsRegion;
-            mesh.PrimitiveIndices = primitiveIndicesRegion;
-            mesh.UniqueVertexIndices = uniqueVertexIndicesRegion;
+            mUniqueVertexIndexBuffer.resize(mUniqueVertexIndexBuffer.size() + mesh.UniqueVertexIndices.Size);
 
-            for (const auto& meshlet : meshlets)
-            {
-                mMeshlets.push_back(*reinterpret_cast<const Bin3D::Meshlet*>(&meshlet));
-            }
+            memcpy(
+                mUniqueVertexIndexBuffer.data() + mesh.UniqueVertexIndices.Offset, 
+                reinterpret_cast<const uint8_t*>(meshletsData.UniqueVertexIB.data()), 
+                mesh.UniqueVertexIndices.Size);
 
-            for (const auto& meshletTriangle : primitiveIndices)
-            {
-                mPrimitiveIndices.push_back(*reinterpret_cast<const Bin3D::MeshletTriangle*>(&meshletTriangle));
-            }
 
-            mUniqueVertexIndexBuffer.insert(mUniqueVertexIndexBuffer.end(), uniqueVertexIB.begin(), uniqueVertexIB.end());
-
-            if (mesh.IndexSize == 2 && uniqueVertexIB.size() % 4 == 1)
+            if (mesh.IndexSize == 2 && mesh.UniqueVertexIndices.Size % 4 == 1)
             {
                 mUniqueVertexIndexBuffer.push_back(0);
                 mUniqueVertexIndexBuffer.push_back(0);
             }
+
+            mMeshes.push_back(mesh);
         }
     }
 }

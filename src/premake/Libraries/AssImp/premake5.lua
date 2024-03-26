@@ -40,6 +40,7 @@ project "AssImp"
         -- '%{ASSIMP_PATH}/code/AssetLib/**', -- All importers
         '%{ASSIMP_PATH}/code/AssetLib/glTF/**',
         '%{ASSIMP_PATH}/code/AssetLib/glTF2/**',
+        '%{ASSIMP_PATH}/code/AssetLib/Obj/**',
     }
 
     defines {
@@ -82,7 +83,7 @@ project "AssImp"
         'ASSIMP_BUILD_NO_NDO_IMPORTER',
         'ASSIMP_BUILD_NO_NFF_IMPORTER',
         'ASSIMP_BUILD_NO_IQM_IMPORTER',
-        'ASSIMP_BUILD_NO_OBJ_IMPORTER',
+        -- 'ASSIMP_BUILD_NO_OBJ_IMPORTER',
         'ASSIMP_BUILD_NO_OFF_IMPORTER',
         'ASSIMP_BUILD_NO_OGRE_IMPORTER',
         'ASSIMP_BUILD_NO_OPENGEX_IMPORTER',

@@ -31,3 +31,6 @@
 [submodule "src/Libraries/freetype"]
 	path = src/Libraries/freetype
 	url = git@github.com:freetype/freetype.git
+[submodule "src/Libraries/meshoptimizer"]
+	path = src/Libraries/meshoptimizer
+	url = https://github.com/zeux/meshoptimizer
