@@ -6,6 +6,11 @@ cbuffer Mesh : register(b0)
     int MeshIndex;
 };
 
+cbuffer LodIndex : register(b1)
+{
+    int Lod;
+};
+
 ConstantBuffer<FrameUniform> FrameCB : register(b1);
 
 StructuredBuffer<MeshUniform> Meshes : register(t0, space1);
@@ -16,18 +21,12 @@ struct VertexOut
     float3 PositionW : POSITION0;
   //  float4 ShadowPosH : POSITION1;
     float3 NormalW : NORMAL;
-  //  float2 TextureCoord : TEXCOORD;
-  //  float3x3 TBN : TBN;
     
+    float2 TextureCoord : TEXCOORD;
+  //  float3x3 TBN : TBN;
     uint indexId : INDEX;
-};
-
-struct VertexOut_
-{
-    float4 PositionHS : SV_Position;
-    float3 PositionVS : POSITION0;
-    float3 Normal : NORMAL0;
-    uint MeshletIndex : COLOR0;
+    uint lod : INDEX1;
+    uint group : INDEX2;
 };
 
 uint3 UnpackPrimitive(uint primitive)
@@ -38,7 +37,6 @@ uint3 UnpackPrimitive(uint primitive)
 
 uint3 GetPrimitive(Meshlet m, uint index, StructuredBuffer<uint> primitiveIndices)
 {
-    
     return UnpackPrimitive(primitiveIndices[(m.PrimOffset + index)]);
 }
 
@@ -74,10 +72,11 @@ VertexOut GetVertexAttributes(uint meshletIndex, uint vertexIndex, MeshUniform m
     VertexOut vout;
     
     float4 posW = mul(float4(v.PositionL, 1.0f), meshInfo.World);
-    float3 normalW = mul(vp.NormalL, (float3x3) meshInfo.InverseTranspose);
+    float3 n = vp.NormalL;
+    float3 normalW = mul(n, (float3x3) meshInfo.InverseTranspose);
 
     float3 T = normalize(mul(vp.Tangent.xyz, (float3x3) meshInfo.World));
-    float3 N = normalize(mul(vp.NormalL, (float3x3) meshInfo.World));
+    float3 N = normalize(mul(n, (float3x3) meshInfo.World));
     T = normalize(T - dot(T, N) * N);
     float3 B = cross(N, T) * vp.Tangent.w;
 
@@ -98,13 +97,28 @@ VertexOut GetVertexAttributes(uint meshletIndex, uint vertexIndex, MeshUniform m
   //  vout.ShadowPosH = mul(posW, FrameCB.ShadowTransform);
    // vout.PositionH = float4(v.PositionL, 1);
   //  vout.TBN = TBN;
-  //  vout.TextureCoord = vp.TextureCoord;
+    vout.TextureCoord = vp.TextureCoord;
     vout.indexId = meshletIndex;
 
 
     return vout;
 }
 
+struct Payload
+{
+    uint meshletIndex;
+};
+
+[NumThreads(32, 1, 1)]
+void mainAS(uint dtid : SV_DispatchThreadID, uint gtid : SV_GroupThreadID, uint gid : SV_GroupID)
+{
+    Payload p;
+    p.meshletIndex = gid;
+    
+    DispatchMesh(1, 1, 1, p);
+    
+    
+}
 
 
 [NumThreads(128, 1, 1)]
@@ -112,10 +126,12 @@ VertexOut GetVertexAttributes(uint meshletIndex, uint vertexIndex, MeshUniform m
 void mainMS(
     uint gtid : SV_GroupThreadID,
     uint gid : SV_GroupID,
+    in payload Payload payload,
     out indices uint3 tris[126],
     out vertices VertexOut verts[64]
 )
 {
+    uint meshletIndex = payload.meshletIndex;
     MeshUniform meshInfo = Meshes[(MeshIndex)];
     
     StructuredBuffer<Vertex1P> verticesCoordinates = ResourceDescriptorHeap[(meshInfo.VertexBufferIndex)];
@@ -126,7 +142,7 @@ void mainMS(
     
     StructuredBuffer<Meshlet> meshlets = ResourceDescriptorHeap[(meshInfo.MeshletBufferIndex)];
  
-    Meshlet m = meshlets[(gid)];
+    Meshlet m = meshlets[(meshletIndex)];
 
     SetMeshOutputCounts(m.VertCount, m.PrimCount);
 
@@ -138,6 +154,9 @@ void mainMS(
     if (gtid < m.VertCount)
     {
         uint vertexIndex = GetVertexIndex(m, gtid, uniqueVertexIndices, meshInfo.IndexSize);
-        verts[gtid] = GetVertexAttributes(gid, vertexIndex, meshInfo, verticesCoordinates, verticesProperties, gtid);
+        VertexOut vout = GetVertexAttributes(meshletIndex, vertexIndex, meshInfo, verticesCoordinates, verticesProperties, gtid);
+        vout.lod = m.Lod;
+        vout.group = m.GroupId;
+        verts[gtid] = vout;
     }
 }

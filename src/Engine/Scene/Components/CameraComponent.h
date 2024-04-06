@@ -13,6 +13,7 @@ namespace Engine::Scene::Components
         dx::XMMATRIX viewProjection;
         dx::XMVECTOR eyePosition; 
         dx::BoundingFrustum frustum;
+        int lod = 0;
 
         dx::XMMATRIX GetProjectionMatrix(float32 width, float32 height) const
         {

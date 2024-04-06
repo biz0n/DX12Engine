@@ -1,6 +1,6 @@
-METIS_PATH = "%{LIBRARY_PATH}/METIS"
+VCGLIB_PATH = "%{LIBRARY_PATH}/vcglib"
 
-project "METIS"
+project "vcglib"
     kind "StaticLib"
     language "C++"
     cppdialect "C++20"
@@ -10,21 +10,18 @@ project "METIS"
 
     includedirs 
     {
-        '%{METIS_PATH}/include',
-        "%{IncludeDir.GKlib}",
+        '%{VCGLIB_PATH}/vcg',
+        '%{VCGLIB_PATH}/eigenlib',
+        
     }
 
     files {
-        '%{METIS_PATH}/libmetis/*.h',
-        '%{METIS_PATH}/libmetis/*.c',
-        '%{METIS_PATH}/include/*.h',
+        '%{VCGLIB_PATH}/vcg/**.h',
+        '%{VCGLIB_PATH}/wrap/callback.h',
+        '%{VCGLIB_PATH}/eigenlib/**'
     }
 
     defines {
-        "IDXTYPEWIDTH=32",
-        "REALTYPEWIDTH=32",
-        "USE_GKREGEX",
-        "__thread=__declspec(thread)"
     }
 
     links {

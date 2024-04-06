@@ -12,6 +12,7 @@ namespace Engine::Render::Passes
         inline std::string ForwardVS {"Shaders\\Forward.hlsl"};
 
         inline std::string ForwardMS{ "Shaders\\Mesh.hlsl" };
+        inline std::string ForwardAS{ "Shaders\\Mesh.hlsl" };
 
         inline std::string CubePS {"Shaders\\CubeMap.hlsl"};
         inline std::string CubeVS {"Shaders\\CubeMap.hlsl"};

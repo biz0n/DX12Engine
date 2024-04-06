@@ -22,6 +22,8 @@ IncludeDir["freetype"] = "%{LIBRARY_PATH}/freetype/include"
 IncludeDir["meshoptimizer"] = "%{LIBRARY_PATH}/meshoptimizer/src"
 IncludeDir["METIS"] = "%{LIBRARY_PATH}/METIS/include"
 IncludeDir["GKlib"] = "%{LIBRARY_PATH}/GKlib"
+IncludeDir["vcglib"] = "%{LIBRARY_PATH}/vcglib"
+IncludeDir["eigen"] = "%{LIBRARY_PATH}/vcglib/eigenlib"
 
 StaticLibrary = {}
 StaticLibrary["DirectXShaderCompiler"] = "%{LIBRARY_PATH}/DirectXShaderCompiler/lib/x64/dxcompiler.lib"

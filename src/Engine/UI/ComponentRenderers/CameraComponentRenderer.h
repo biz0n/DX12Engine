@@ -25,12 +25,14 @@ namespace Engine::UI::ComponentRenderers
         const auto nearPlane = camera.NearPlane;
         const auto fov = camera.FoV;
         const auto type = camera.Type;
+        const auto lod = component.lod;
 
         auto newFoV = dx::XMConvertToDegrees(fov);
 
         auto newNearPlane = nearPlane;
         auto newFarPlane = farPlane;
         auto newType = type;
+        auto newLod = lod;
 
         bool changed = false;
 
@@ -58,6 +60,12 @@ namespace Engine::UI::ComponentRenderers
         if (ImGui::SliderFloat("Far", &newFarPlane, newNearPlane + 1, 1000.0f))
         {
             camera.FarPlane = newFarPlane;
+            changed = true;
+        }
+
+        if (ImGui::SliderInt("LOD", &newLod, 0, 16))
+        {
+            component.lod = newLod;
             changed = true;
         }
 

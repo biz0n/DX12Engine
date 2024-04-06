@@ -113,14 +113,17 @@ namespace SceneConverter::Model
         return index;
     }
 
-    Bin3D::DataRegion Scene::AddVertices(const std::vector<Bin3D::VertexCoordinates>& coordinates, const std::vector<Bin3D::VertexProperties>& properties)
+    Bin3D::DataRegion Scene::AddVertices(const std::vector<RawVertex>& vertices)
     {
         Bin3D::DataRegion index = {};
         index.Offset = mVerticesCoordinatesStorage.size();
-        index.Size = coordinates.size();
+        index.Size = vertices.size();
 
-        mVerticesCoordinatesStorage.insert(mVerticesCoordinatesStorage.end(), coordinates.begin(), coordinates.end());
-        mVerticesPropertiesStorage.insert(mVerticesPropertiesStorage.end(), properties.begin(), properties.end());
+        for (const auto& vertex : vertices)
+        {
+            mVerticesCoordinatesStorage.push_back(vertex.GetVertexCoordinates());
+            mVerticesPropertiesStorage.push_back(vertex.GetVertexProperties());
+        }
 
         return index;
     }
@@ -147,6 +150,11 @@ namespace SceneConverter::Model
             mStringsMap[str] = index;
             return index;
         }
+    }
+
+    std::string Scene::GetString(const Bin3D::DataRegion& region)
+    {
+        return std::string(mStringsStorage.begin() + region.Offset, mStringsStorage.begin() + region.Offset + region.Size);
     }
 
     uint32_t Scene::AddImage(std::shared_ptr<ImageData> image)
@@ -221,20 +229,30 @@ namespace SceneConverter::Model
             mImagePaths.push_back(imagePath);
         }
     }
-    void Scene::ComputeMeshlets()
+    void Scene::ProcessMeshes()
     {
         MeshProcessor processor = {};
 
-        for (const auto& rawMesh : mRawMeshes)
+        for (const auto& node : mNodes)
         {
-            auto meshletsData = processor.GenerateMeshlet(rawMesh);
+            if (node.Type != Bin3D::Node::NodeType::Mesh)
+            {
+                continue;
+            }
+
+            std::string meshName = GetString(node.NameIndex);
+            const auto& rawMesh = mRawMeshes[node.DataIndex];
+
+            spdlog::info("Process `{}` mesh #{}", meshName, node.DataIndex);
+
+            auto meshletsData = processor.ProcessMesh(rawMesh);
+
+            spdlog::info("Process `{}` mesh #{} completed\n", meshName, node.DataIndex);
 
             Bin3D::Mesh mesh = {};
 
             auto verticesCount = rawMesh.Vertices.size();
             auto indicesCount = rawMesh.Indices.size();
-
-            std::vector<uint8_t> uniqueVertexIB;
 
             if (verticesCount <= std::numeric_limits<uint16_t>::max())
             {
@@ -259,7 +277,7 @@ namespace SceneConverter::Model
                 mesh.Indices = AddIndices(indices);
             }
 
-            mesh.Vertices = AddVertices(rawMesh.Vertices, rawMesh.VertexProperties);
+            mesh.Vertices = AddVertices(rawMesh.Vertices);
             mesh.AABB = rawMesh.AABB;
             mesh.MaterialIndex = rawMesh.MaterialIndex;
 
@@ -277,10 +295,29 @@ namespace SceneConverter::Model
 
             mUniqueVertexIndexBuffer.resize(mUniqueVertexIndexBuffer.size() + mesh.UniqueVertexIndices.Size);
 
-            memcpy(
-                mUniqueVertexIndexBuffer.data() + mesh.UniqueVertexIndices.Offset, 
-                reinterpret_cast<const uint8_t*>(meshletsData.UniqueVertexIB.data()), 
-                mesh.UniqueVertexIndices.Size);
+            if (mesh.IndexSize == 2)
+            {
+                std::vector<uint16_t> indices;
+                indices.reserve(meshletsData.UniqueVertexIB.size());
+                for (int i = 0; i < meshletsData.UniqueVertexIB.size(); ++i)
+                {
+                    indices.push_back(meshletsData.UniqueVertexIB[i]);
+                }
+
+                memcpy(
+                    mUniqueVertexIndexBuffer.data() + mesh.UniqueVertexIndices.Offset,
+                    reinterpret_cast<const uint8_t*>(indices.data()),
+                    mesh.UniqueVertexIndices.Size);
+            }
+            else
+            {
+                memcpy(
+                    mUniqueVertexIndexBuffer.data() + mesh.UniqueVertexIndices.Offset,
+                    reinterpret_cast<const uint8_t*>(meshletsData.UniqueVertexIB.data()),
+                    mesh.UniqueVertexIndices.Size);
+            }
+
+            
 
 
             if (mesh.IndexSize == 2 && mesh.UniqueVertexIndices.Size % 4 == 1)

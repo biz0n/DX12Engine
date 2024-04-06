@@ -55,11 +55,13 @@ namespace SceneConverter::Importer
         Assimp::Importer importer;
 
         unsigned int preprocessFlags = 0
-            | aiProcess_JoinIdenticalVertices
+            //| aiProcess_JoinIdenticalVertices
             | aiProcess_Triangulate 
             | aiProcess_ConvertToLeftHanded
-            //| aiProcess_JoinIdenticalVertices
-            | aiProcess_GenNormals
+            //| aiProcessPreset_TargetRealtime_MaxQuality
+            | aiProcess_JoinIdenticalVertices
+            //| aiProcess_GenNormals
+            | aiProcess_GenSmoothNormals
             | aiProcess_CalcTangentSpace
             | aiProcess_GenBoundingBoxes 
             //| aiProcess_OptimizeMeshes 
@@ -184,9 +186,7 @@ namespace SceneConverter::Importer
 
         context.Scene.UnwrapNodeTree();
 
-        spdlog::info("Compute meshlets. Start");
-        context.Scene.ComputeMeshlets();
-        spdlog::info("Compute meshlets. Finish");
+        context.Scene.ProcessMeshes();
 
         return context.Scene;
     }
@@ -496,21 +496,20 @@ namespace SceneConverter::Importer
         Model::RawMesh mesh = {};
         
         mesh.Vertices.reserve(aMesh->mNumVertices);
-        mesh.VertexProperties.reserve(aMesh->mNumVertices);
 
         for (unsigned int i = 0; i < aMesh->mNumVertices; ++i)
         {
-            VertexCoordinates vertexCoordinates = {};
-            VertexProperties vertexProperties = {};
-            vertexCoordinates.Position = *reinterpret_cast<DirectX::XMFLOAT3 *>(&aMesh->mVertices[i]);
-            vertexProperties.Normal = *reinterpret_cast<DirectX::XMFLOAT3 *>(&aMesh->mNormals[i]);
+            Model::RawVertex vertex = {};
+            vertex.Position = *reinterpret_cast<DirectX::XMFLOAT3 *>(&aMesh->mVertices[i]);
+            
+            vertex.Normal = *reinterpret_cast<DirectX::XMFLOAT3 *>(&aMesh->mNormals[i].Normalize());
             if (aMesh->mTextureCoords[0] != nullptr)
             {
-                vertexProperties.TextureCoord = *reinterpret_cast<DirectX::XMFLOAT2 *>(&aMesh->mTextureCoords[0][i]);
+                vertex.TextureCoord = *reinterpret_cast<DirectX::XMFLOAT2 *>(&aMesh->mTextureCoords[0][i]);
             }
             else
             {
-                vertexProperties.TextureCoord = {0.0f, 0.0f};
+                vertex.TextureCoord = {0.0f, 0.0f};
             }
             if (aMesh->mTangents != nullptr && aMesh->mBitangents != nullptr)
             {
@@ -518,16 +517,15 @@ namespace SceneConverter::Importer
                 auto biTangent = *reinterpret_cast<DirectX::XMFLOAT3 *>(&aMesh->mBitangents[i]);
                 float symmetry = +1.0f;
                 if (DirectX::XMVectorGetX(DirectX::XMVector3Dot(
-                        DirectX::XMVector3Cross(DirectX::XMLoadFloat3(&vertexProperties.Normal), DirectX::XMLoadFloat3(&tangent)),
+                        DirectX::XMVector3Cross(DirectX::XMLoadFloat3(&vertex.Normal), DirectX::XMLoadFloat3(&tangent)),
                         DirectX::XMLoadFloat3(&biTangent))) < 0.0f)
                 {
                     symmetry = -1.0f;
                 }
 
-                vertexProperties.Tangent = {tangent.x, tangent.y, tangent.z, symmetry};
+                vertex.Tangent = {tangent.x, tangent.y, tangent.z, symmetry};
             }
-            mesh.Vertices.emplace_back(vertexCoordinates);
-            mesh.VertexProperties.emplace_back(vertexProperties);
+            mesh.Vertices.emplace_back(vertex);
         }
 
         uint32_t indicesCount = aMesh->mNumFaces * 3;

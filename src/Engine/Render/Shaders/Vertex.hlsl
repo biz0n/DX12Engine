@@ -19,6 +19,8 @@ struct Meshlet
     uint VertOffset;
     uint PrimCount;
     uint PrimOffset;
+    uint GroupId;
+    uint Lod;
 };
 
 #endif

@@ -49,6 +49,7 @@ namespace Engine::Render::Passes
         Render::RootSignatureBuilder builder = {};
         builder
             .AddConstantsParameter<int32>(0, 0)
+            .AddConstantsParameter<int32>(0, 1)
             .AddCBVParameter(1, 0, D3D12_SHADER_VISIBILITY_ALL)
             .AddSRVParameter(0, 1, D3D12_SHADER_VISIBILITY_ALL)
             .AddSRVParameter(1, 1, D3D12_SHADER_VISIBILITY_PIXEL)
@@ -62,11 +63,13 @@ namespace Engine::Render::Passes
         auto rasterizer = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
         rasterizer.DepthClipEnable = false;
         rasterizer.CullMode = D3D12_CULL_MODE_BACK;
+        rasterizer.FillMode = D3D12_FILL_MODE_WIREFRAME;
 
         Render::PipelineStateProxy pipelineStateCullModeBack = {
             .rootSignatureName = RootSignatureNames::Forward,
             .pixelShaderName = Shaders::ForwardPS,
             .meshShaderName = Shaders::ForwardMS,
+            .amplificationShaderName = Shaders::ForwardAS,
             .dsvFormat = DXGI_FORMAT_D32_FLOAT,
             .rtvFormats = {
                 DXGI_FORMAT_R16G16B16A16_FLOAT,
@@ -120,6 +123,7 @@ namespace Engine::Render::Passes
         const auto& mesh = renderRequest.GetSceneStorage()->GetMeshes()[meshUniform.Id];
 
         commandRecorder->SetRoot32BitConstant(0, 0, meshIndex);
+        commandRecorder->SetRoot32BitConstant(0, 1, renderRequest.GetCamera().lod);
 
         commandRecorder->DispatchMesh(mesh.GetMeshletsCount(), 1, 1);
     }

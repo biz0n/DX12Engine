@@ -22,7 +22,9 @@ project "SceneConverter"
         "%{IncludeDir.libassert}",
         "%{IncludeDir.spdlog}",
         "%{IncludeDir.meshoptimizer}",
-        "%{IncludeDir.METIS}"
+        "%{IncludeDir.METIS}",
+        "%{IncludeDir.vcglib}",
+        "%{IncludeDir.eigen}"
     }
 
     links

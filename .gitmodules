@@ -40,3 +40,6 @@
 [submodule "src/Libraries/GKlib"]
 	path = src/Libraries/GKlib
 	url = git@/github.com/KarypisLab/GKlib.git
+[submodule "src/Libraries/vcglib"]
+	path = src/Libraries/vcglib
+	url = https://github.com/cnr-isti-vclab/vcglib.git

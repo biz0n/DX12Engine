@@ -12,6 +12,9 @@ namespace Bin3D
         uint32_t VertOffset;
         uint32_t PrimCount;
         uint32_t PrimOffset;
+        uint32_t GroupId = 0;
+        uint32_t Lod = 0;
+
     };
 
     struct MeshletTriangle

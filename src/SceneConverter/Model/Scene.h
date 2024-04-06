@@ -58,14 +58,16 @@ namespace SceneConverter::Model
 
             void UnwrapNodeTree();
             void FulfillImagePaths();
-            void ComputeMeshlets();
+            void ProcessMeshes();
 
         private:
             Bin3D::DataRegion AddIndices(const std::vector<uint32_t>& indices);
             Bin3D::DataRegion AddIndices(const std::vector<uint16_t>& indices);
-            Bin3D::DataRegion AddVertices(const std::vector<Bin3D::VertexCoordinates>& coordinates, const std::vector<Bin3D::VertexProperties>& properties);
+            Bin3D::DataRegion AddVertices(const std::vector<RawVertex>& vertices);
 
             Bin3D::DataRegion AddIndices(const uint8_t* indices, uint32_t count);
+
+            std::string GetString(const Bin3D::DataRegion& region);
         private:
             std::vector<Bin3D::Mesh> mMeshes;
             std::vector<Bin3D::Material> mMaterials;

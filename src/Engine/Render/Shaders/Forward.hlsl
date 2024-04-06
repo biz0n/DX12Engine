@@ -2,9 +2,14 @@
 #include "LightUtils.hlsl"
 #include "Vertex.hlsl"
  
-cbuffer Mesh : register(b0)
+cbuffer Mesh : register(b0, space0)
 {
     int MeshIndex;
+};
+
+cbuffer LodIndex : register(b0, space1)
+{
+    int Lod;
 };
 
 ConstantBuffer<FrameUniform> FrameCB : register(b1);
@@ -23,10 +28,12 @@ struct VertexShaderOutput
     float3 PositionW : POSITION0;
    // float4 ShadowPosH : POSITION1;
     float3 NormalW : NORMAL;
-   // float2 TextureCoord : TEXCOORD;
+    float2 TextureCoord : TEXCOORD;
    // float3x3 TBN : TBN;
     
     uint indexId : INDEX;
+    uint lod : INDEX1;
+    uint group : INDEX2;
 };
 
 struct VertexOut
@@ -165,15 +172,40 @@ float3 IndexToColor(int index, float s = 0.5f, float v = 0.95f)
     return HSVToRGB(h, s, v);
 }
 
+float FilteredCheckers(in float2 p)
+{
+    float2 dpdx = ddx(p);
+    float2 dpdy = ddy(p);
+
+    float2 w = max(abs(dpdx), abs(dpdy));
+    float2 i = 2.0 * (abs(frac((p - 0.5 * w) * 0.5) - 0.5) -
+                  abs(frac((p + 0.5 * w) * 0.5) - 0.5)) / w;
+    return 0.5 - 0.5 * i.x * i.y;
+}
+
+float UnfilteredCheckers(in float2 p)
+{
+    p /= 2.0f;
+    float x = frac(p.x) < 0.5f ? 0.0f : 1.0f;
+    float y = frac(p.y) < 0.5f ? 0.0f : 1.0f;
+
+    float ret = (x == y ? 0.0f : 1.0f);
+    return ret;
+}
+
 PixelShaderOutput mainPS(VertexShaderOutput input)
 {
+    float ppp = input.lod == Lod ? 1 : -1;
+    clip(ppp);
+    
     float ambientIntensity = 0.1;
     float3 lightColor = float3(1, 1, 1);
     float3 lightDir = -normalize(float3(1, -1, 1));
 
     float3 diffuseColor;
     float shininess;
-    float3 cc = IndexToColor(input.indexId, 0.9f);
+    float filteredCheckers = UnfilteredCheckers(input.TextureCoord);
+    float3 cc = IndexToColor(input.group, 0.98f);
     
         uint meshletIndex = input.indexId;
         diffuseColor = cc;
