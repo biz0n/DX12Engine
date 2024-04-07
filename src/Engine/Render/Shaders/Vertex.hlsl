@@ -13,6 +13,13 @@ struct Vertex1N1UV1T
     float4 Tangent : TANGENT;
 };
 
+struct CullData
+{
+    float4 BoundingSphere;
+    uint NormalCone;
+    float ApexOffset;
+};
+
 struct Meshlet
 {
     uint VertCount;
@@ -21,6 +28,8 @@ struct Meshlet
     uint PrimOffset;
     uint GroupId;
     uint Lod;
+    
+    CullData CullData;
 };
 
 #endif

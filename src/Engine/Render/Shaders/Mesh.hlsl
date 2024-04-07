@@ -40,6 +40,64 @@ uint3 GetPrimitive(Meshlet m, uint index, StructuredBuffer<uint> primitiveIndice
     return UnpackPrimitive(primitiveIndices[(m.PrimOffset + index)]);
 }
 
+bool IsConeDegenerate(CullData c)
+{
+    return (c.NormalCone >> 24) == 0xff;
+}
+
+float4 UnpackCone(uint packed)
+{
+    float4 v;
+    v.x = float((packed >> 0) & 0xFF);
+    v.y = float((packed >> 8) & 0xFF);
+    v.z = float((packed >> 16) & 0xFF);
+    v.w = float((packed >> 24) & 0xFF);
+
+    v = v / 255.0;
+    v.xyz = v.xyz * 2.0 - 1.0;
+
+    return v;
+}
+
+bool IsVisible(CullData c, float4x4 world, float3 viewPos)
+{
+    // Do a cull test of the bounding sphere against the view frustum planes.
+    float4 center = mul(float4(c.BoundingSphere.xyz, 1), world);
+    float radius = c.BoundingSphere.w;
+
+    for (int i = 0; i < 6; ++i)
+    {
+        if (dot(center, FrameCB.Planes[i]) < -radius)
+        {
+            return false;
+        }
+    }
+
+    // Do normal cone culling
+    if (IsConeDegenerate(c))
+        return true; // Cone is degenerate - spread is wider than a hemisphere.
+
+    // Unpack the normal cone from its 8-bit uint compression
+    float4 normalCone = UnpackCone(c.NormalCone);
+
+    // Transform axis to world space
+    float3 axis = normalize(mul(float4(normalCone.xyz, 0), world)).xyz;
+
+    // Offset the normal cone axis from the meshlet center-point - make sure to account for world scaling
+    float3 apex = center.xyz - axis * c.ApexOffset;
+    float3 view = normalize(viewPos - apex);
+
+    // The normal cone w-component stores -cos(angle + 90 deg)
+    // This is the min dot product along the inverted axis from which all the meshlet's triangles are backface
+    if (dot(view, -axis) > normalCone.w)
+    {
+        return false;
+    }
+
+    // All tests passed - it will merit pixels
+    return true;
+}
+
 uint GetVertexIndex(Meshlet m, uint localIndex, ByteAddressBuffer uniqueVertexIndices, int indexSize)
 {
     localIndex = m.VertOffset + localIndex;
@@ -106,16 +164,34 @@ VertexOut GetVertexAttributes(uint meshletIndex, uint vertexIndex, MeshUniform m
 
 struct Payload
 {
-    uint meshletIndex;
+    uint MeshletIndices[AS_GROUP_SIZE];
 };
+groupshared Payload s_Payload;
 
-[NumThreads(32, 1, 1)]
+[NumThreads(AS_GROUP_SIZE, 1, 1)]
 void mainAS(uint dtid : SV_DispatchThreadID, uint gtid : SV_GroupThreadID, uint gid : SV_GroupID)
 {
-    Payload p;
-    p.meshletIndex = gid;
-    
-    DispatchMesh(1, 1, 1, p);
+    bool visible = false;
+
+    MeshUniform meshInfo = Meshes[(MeshIndex)];
+    StructuredBuffer<Meshlet> meshlets = ResourceDescriptorHeap[(meshInfo.MeshletBufferIndex)];
+    // Check bounds of meshlet cull data resource
+    if (dtid < meshInfo.MeshletCount)
+    {
+        // Do visibility testing for this thread
+        visible = IsVisible(meshlets[(dtid)].CullData, meshInfo.World, FrameCB.EyePos);
+    }
+
+    // Compact visible meshlets into the export payload array
+    if (visible)
+    {
+        uint index = WavePrefixCountBits(visible);
+        s_Payload.MeshletIndices[index] = dtid;
+    }
+
+    // Dispatch the required number of MS threadgroups to render the visible meshlets
+    uint visibleCount = WaveActiveCountBits(visible);
+    DispatchMesh(visibleCount, 1, 1, s_Payload);
     
     
 }
@@ -131,8 +207,12 @@ void mainMS(
     out vertices VertexOut verts[64]
 )
 {
-    uint meshletIndex = payload.meshletIndex;
+    
     MeshUniform meshInfo = Meshes[(MeshIndex)];
+    uint meshletIndex = payload.MeshletIndices[gid];
+    
+    if (meshletIndex >= meshInfo.MeshletCount)
+        return;
     
     StructuredBuffer<Vertex1P> verticesCoordinates = ResourceDescriptorHeap[(meshInfo.VertexBufferIndex)];
     StructuredBuffer<Vertex1N1UV1T> verticesProperties = ResourceDescriptorHeap[(meshInfo.VertexPropertiesBufferIndex)];

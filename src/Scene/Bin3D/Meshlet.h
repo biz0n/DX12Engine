@@ -6,6 +6,13 @@
 
 namespace Bin3D
 {
+    struct CullData
+    {
+        DirectX::BoundingSphere             BoundingSphere; // xyz = center, w = radius
+        DirectX::PackedVector::XMUBYTEN4    NormalCone;     // xyz = axis, w = -cos(a + 90)
+        float                               ApexOffset;     // apex = center - axis * offset
+    };
+
     struct Meshlet
     {
         uint32_t VertCount;
@@ -14,6 +21,8 @@ namespace Bin3D
         uint32_t PrimOffset;
         uint32_t GroupId = 0;
         uint32_t Lod = 0;
+
+        CullData CullData;
 
     };
 
@@ -25,10 +34,5 @@ namespace Bin3D
         uint32_t _unused : 2;
     };
 
-    struct CullData
-    {
-        DirectX::BoundingSphere             BoundingSphere; // xyz = center, w = radius
-        DirectX::PackedVector::XMUBYTEN4    NormalCone;     // xyz = axis, w = -cos(a + 90)
-        float                               ApexOffset;     // apex = center - axis * offset
-    };
+    
 }

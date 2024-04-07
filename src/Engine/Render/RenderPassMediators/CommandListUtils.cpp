@@ -25,6 +25,22 @@ namespace Engine::Render::CommandListUtils
 
         cb.LightsCount = lightsCount;
 
+        using namespace DirectX;
+        DirectX::XMVECTOR planes[6] =
+        {
+            DirectX::XMPlaneNormalize(viewProj.r[3] + viewProj.r[0]), // Left
+            DirectX::XMPlaneNormalize(viewProj.r[3] - viewProj.r[0]), // Right
+            DirectX::XMPlaneNormalize(viewProj.r[3] + viewProj.r[1]), // Bottom
+            DirectX::XMPlaneNormalize(viewProj.r[3] - viewProj.r[1]), // Top
+            DirectX::XMPlaneNormalize(viewProj.r[2]),           // Near
+            DirectX::XMPlaneNormalize(viewProj.r[3] - viewProj.r[2]), // Far
+        };
+
+        for (uint32_t i = 0; i < _countof(planes); ++i)
+        {
+            DirectX::XMStoreFloat4(&cb.Planes[i], planes[i]);
+        }
+
         return cb;
     }
 

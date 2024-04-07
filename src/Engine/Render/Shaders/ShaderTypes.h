@@ -112,6 +112,8 @@ struct FrameUniform
     float3 EyePos;
     int LightsCount;
 
+    float4 Planes[6];
+
     aligned_bool HasShadowTexture;
     int ShadowIndex;
     float2 __Padding;
