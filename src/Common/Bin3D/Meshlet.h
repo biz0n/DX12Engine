@@ -13,6 +13,12 @@ namespace Bin3D
         float                               ApexOffset;     // apex = center - axis * offset
     };
 
+    struct ClusterError
+    {
+        DirectX::XMFLOAT3 Center;
+        float Error;
+    };
+
     struct Meshlet
     {
         uint32_t VertCount;
@@ -22,8 +28,10 @@ namespace Bin3D
         uint32_t GroupId = 0;
         uint32_t Lod = 0;
 
-        CullData CullData;
+        ClusterError Error;
+        ClusterError ParentClusterError;
 
+        CullData CullData;
     };
 
     struct MeshletTriangle

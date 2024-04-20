@@ -13,5 +13,6 @@ namespace Engine::Render
         SharedPtr<PassCommandRecorder> commandRecorder;
         SharedPtr<const FrameResourceProvider> frameResourceProvider;
         SharedPtr<Memory::UploadBuffer> uploadBuffer;
+        SharedPtr<RenderContext> renderContext;
     };
 } // namespace Engine::Render

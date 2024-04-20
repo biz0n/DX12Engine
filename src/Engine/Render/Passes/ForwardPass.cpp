@@ -63,7 +63,7 @@ namespace Engine::Render::Passes
         auto rasterizer = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
         rasterizer.DepthClipEnable = false;
         rasterizer.CullMode = D3D12_CULL_MODE_BACK;
-        rasterizer.FillMode = D3D12_FILL_MODE_WIREFRAME;
+        rasterizer.FillMode = D3D12_FILL_MODE_SOLID;
 
         Render::PipelineStateProxy pipelineStateCullModeBack = {
             .rootSignatureName = RootSignatureNames::Forward,
@@ -142,6 +142,8 @@ namespace Engine::Render::Passes
 
         auto& camera = renderRequest.GetCamera();
         auto cb = CommandListUtils::GetFrameUniform(camera.viewProjection, camera.eyePosition, static_cast<uint32>(renderRequest.GetLightsCount()));
+        cb.FoV = camera.FoV;
+        cb.ScreenHeight = passContext.renderContext->GetSwapChain()->GetHeight();
         dx::XMStoreFloat4x4(&cb.View, camera.view);
 
         cb.HasShadowTexture = !renderRequest.GetShadowCameras().empty();

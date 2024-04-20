@@ -29,6 +29,9 @@ struct Meshlet
     uint GroupId;
     uint Lod;
     
+    float4 ClusterError;
+    float4 ParentClusterError;
+    
     CullData CullData;
 };
 

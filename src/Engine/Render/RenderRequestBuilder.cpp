@@ -41,6 +41,7 @@ namespace Engine::Render
         renderCamera.view = camera.view;
         renderCamera.viewProjection = camera.viewProjection;
         renderCamera.eyePosition = camera.eyePosition;
+        renderCamera.FoV = camera.camera.FoV;
         renderCamera.lod = camera.lod;
 
         return renderCamera;

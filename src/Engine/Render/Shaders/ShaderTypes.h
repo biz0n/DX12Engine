@@ -116,7 +116,9 @@ struct FrameUniform
 
     aligned_bool HasShadowTexture;
     int ShadowIndex;
-    float2 __Padding;
+
+    float FoV;
+    float ScreenHeight;
 };
 
 struct Camera

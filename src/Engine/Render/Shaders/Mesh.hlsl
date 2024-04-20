@@ -59,6 +59,52 @@ float4 UnpackCone(uint packed)
     return v;
 }
 
+float4 transformSphere(float4 sphere, float4x4 transform)
+{
+    float4 hCenter = float4(sphere.xyz, 1.0f);
+    hCenter = mul(hCenter, transform);
+    const float3 center = hCenter.xyz / hCenter.w;
+    return float4(center, length(mul(float4(sphere.w, 0, 0, 0), transform).xyz));
+}
+
+
+// project given transformed (ie in view space) sphere to an error value in pixels
+// xyz is center of sphere
+// w is radius of sphere
+float projectErrorToScreen(float4 transformedSphere)
+{
+    const float fov = FrameCB.FoV;
+    const float cotHalfFov = 1.0f / tan(fov / 2.0f);
+    
+    // https://stackoverflow.com/questions/21648630/radius-of-projected-sphere-in-screen-space
+    if (isinf(transformedSphere.w))
+    {
+        return transformedSphere.w;
+    }
+    
+    
+    float3 v = transformedSphere.xyz - FrameCB.EyePos;
+    const float d2 = dot(v, v);
+    const float r = transformedSphere.w;
+    return FrameCB.ScreenHeight * 0.5f * cotHalfFov * r / sqrt(d2 - r * r);
+}
+
+bool IsClusterVisible(MeshUniform meshInfo, Meshlet meshlet)
+{
+    const float lodErrorThreshold = 1.0f;
+    const float4x4 modelview = meshInfo.World;
+    float4 projectedBounds = float4(meshlet.ClusterError.xyz, max(meshlet.ClusterError.w, 10e-10f));
+    projectedBounds = transformSphere(projectedBounds, modelview);
+
+    float4 parentProjectedBounds = float4(meshlet.ParentClusterError.xyz, max(meshlet.ParentClusterError.w, 10e-10f));
+    parentProjectedBounds = transformSphere(parentProjectedBounds, modelview);
+
+    const float clusterError = projectErrorToScreen(projectedBounds);
+    const float parentError = projectErrorToScreen(parentProjectedBounds);
+    const bool render = clusterError <= lodErrorThreshold && parentError > lodErrorThreshold;
+    return render;
+}
+
 bool IsVisible(CullData c, float4x4 world, float3 viewPos)
 {
     // Do a cull test of the bounding sphere against the view frustum planes.
@@ -179,7 +225,7 @@ void mainAS(uint dtid : SV_DispatchThreadID, uint gtid : SV_GroupThreadID, uint 
     if (dtid < meshInfo.MeshletCount)
     {
         // Do visibility testing for this thread
-        visible = IsVisible(meshlets[(dtid)].CullData, meshInfo.World, FrameCB.EyePos);
+        visible = IsVisible(meshlets[(dtid)].CullData, meshInfo.World, FrameCB.EyePos) && IsClusterVisible(meshInfo, meshlets[(dtid)]);
     }
 
     // Compact visible meshlets into the export payload array

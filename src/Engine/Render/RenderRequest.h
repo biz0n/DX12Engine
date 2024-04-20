@@ -25,6 +25,7 @@ namespace Engine::Render
         dx::XMMATRIX view;
         dx::XMMATRIX viewProjection;
         dx::XMVECTOR eyePosition;
+        float FoV;
         int lod;
     };
 

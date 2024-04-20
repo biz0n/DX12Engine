@@ -1,8 +1,8 @@
-project "Scene"
+project "Common"
     kind "StaticLib"
     language "C++"
     cppdialect "C++20"
-    location "%{SCENE_PATH}"
+    location "%{COMMON_PATH}"
     usestandardpreprocessor "On"
 
     targetdir (bin_location .. "/%{prj.name}")
@@ -10,12 +10,12 @@ project "Scene"
 
     includedirs 
     {
-        '%{SCENE_PATH}'
+        '%{COMMON_PATH}'
     }
 
     files {
-        '%{SCENE_PATH}/**.h',
-        '%{SCENE_PATH}/**.cpp'
+        '%{COMMON_PATH}/**.h',
+        '%{COMMON_PATH}/**.cpp'
     }
 
     filter "configurations:Debug"

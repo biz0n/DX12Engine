@@ -128,6 +128,7 @@ namespace Engine::Render
         passRenderContext.uploadBuffer = mRenderContext->GetUploadBuffer();
         passRenderContext.frameResourceProvider = mFrameResourceProvider;
         passRenderContext.resourceStateTracker = MakeShared<Memory::ResourceStateTracker>(mRenderContext->GetGlobalResourceStateTracker());
+        passRenderContext.renderContext = mRenderContext;
 
         passRenderContext.commandRecorder = MakeShared<PassCommandRecorder>(
             passContext,

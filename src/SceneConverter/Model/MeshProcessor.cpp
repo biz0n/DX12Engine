@@ -18,8 +18,8 @@
 #define GenerateMeshletFunc Algorithms::MeshletGenerator::MeshOptimizerGenerateMeshlet
 //#define GenerateMeshletFunc Algorithms::MeshletGenerator::DirectXGenerateMeshlet
 
-//#define MeshSimplifyFunc Algorithms::MeshletSimplifier::MeshOptimizerSimplify
-#define MeshSimplifyFunc Algorithms::MeshletSimplifier::VCGLibSimplify
+#define MeshSimplifyFunc Algorithms::MeshletSimplifier::MeshOptimizerSimplify
+//#define MeshSimplifyFunc Algorithms::MeshletSimplifier::VCGLibSimplify
 
 
 namespace SceneConverter::Model
@@ -118,8 +118,9 @@ namespace SceneConverter::Model
         std::vector<uint32_t>& remappedIndices,
         std::vector<RawVertex>& remappedVertices,
         std::unordered_set<uint32_t>& remappedBorders);
+    DirectX::BoundingBox GetBoundingBox(const std::vector<uint32_t>& indices, const std::vector<RawVertex>& vertices);
 
-    bool GenerateNextLOD(const RawMeshletData& meshletData, const std::vector<RawVertex>& vertices, RawMeshletData& lodMeshlets, uint32_t lod, float tLod)
+    bool GenerateNextLOD(RawMeshletData& meshletData, const std::vector<RawVertex>& vertices, RawMeshletData& lodMeshlets, uint32_t lod, float tLod)
     {
         bool result = false;
         std::vector<MeshletGroup> groups;
@@ -171,12 +172,33 @@ namespace SceneConverter::Model
                     restoredIndices[i] = indexLookup[simplifiedIndices[i]];
                 }
 
+                auto simplifyBoundingBox = GetBoundingBox(restoredIndices, vertices);
+                auto extents = simplifyBoundingBox.Extents;
+                float scale = std::max(extents.x, std::max(extents.y, extents.z));
+                float scaledError = error * scale * 2;
+
+                float previousError = 0;
+                for (uint32_t meshletIndex : group.Meshlets)
+                {
+                    previousError = std::max(previousError, meshletData.Meshlets[meshletIndex].Error.Error);
+                }
+                scaledError += previousError;
+
+                Bin3D::ClusterError clusterError {simplifyBoundingBox.Center, scaledError};
+
                 auto clusterMeshlets = GenerateMeshletFunc(vertices, restoredIndices);
+
+                for (uint32_t meshletIndex : group.Meshlets)
+                {
+                    meshletData.Meshlets[meshletIndex].ParentClusterError = clusterError;
+                }
 
                 for (auto& meshlet : clusterMeshlets.Meshlets)
                 {
                     meshlet.GroupId = groupId;
                     meshlet.Lod = lod;
+                    meshlet.Error = clusterError;
+                    meshlet.ParentClusterError = { {0, 0, 0}, std::numeric_limits<float>::infinity() };
                 }
 
                 clusterMeshletCollection.push_back(clusterMeshlets);
@@ -231,6 +253,23 @@ namespace SceneConverter::Model
         }
 
         return indexLookup;
+    }
+
+    DirectX::BoundingBox GetBoundingBox(const std::vector<uint32_t>& indices, const std::vector<RawVertex>& vertices)
+    {
+        DirectX::XMVECTOR min = DirectX::XMVectorSet(+FLT_MAX, +FLT_MAX, +FLT_MAX, 0);
+        DirectX::XMVECTOR max = DirectX::XMVectorSet(-FLT_MAX, -FLT_MAX, -FLT_MAX, 0);
+
+        for (uint32_t index : indices)
+        {
+            DirectX::XMVECTOR vertex = DirectX::XMLoadFloat3(&vertices[index].Position);
+            min = DirectX::XMVectorMin(min, vertex);
+            max = DirectX::XMVectorMax(max, vertex);
+        }
+
+        DirectX::BoundingBox aabb;
+        DirectX::BoundingBox::CreateFromPoints(aabb, min, max);
+        return aabb;
     }
 
     RawMeshletData CombineMeshlets(const std::vector<RawMeshletData>& meshletDataCollection)
@@ -440,6 +479,11 @@ namespace SceneConverter::Model
     {
         auto meshlets = GenerateMeshletFunc(mesh.Vertices, mesh.Indices);
         uint32_t maxLod = std::ceil(std::log2(meshlets.Meshlets.size()));
+
+        for (auto& meshlet : meshlets.Meshlets)
+        {
+            meshlet.Error = { mesh.AABB.Center, 0 };
+        }
 
         spdlog::info("Expected max LOD: {}", maxLod - 1);
         spdlog::info("LOD{}: Meshlets count: {}; Faces count: {}; 100% : 100%", 0, meshlets.Meshlets.size(), meshlets.PrimitiveIndices.size());

@@ -2,7 +2,7 @@ project "Engine"
     kind "WindowedApp"
     language "C++"
     cppdialect "C++20"
-    flags { "NoPCH" }
+    flags { "NoPCH", "FloatFast" }
     systemversion "latest"
     characterset "MBCS"
     location "%{ENGINE_PATH}"
@@ -21,7 +21,7 @@ project "Engine"
     includedirs
     {
         "%{ENGINE_PATH}",
-        "%{SCENE_PATH}",
+        "%{COMMON_PATH}",
         "%{IncludeDir.DirectXHeaders}",
         "%{IncludeDir.DirectXShaderCompiler}",
         "%{IncludeDir.DirectXTex}",
@@ -43,7 +43,7 @@ project "Engine"
 
     links
     {
-        "Scene",
+        "Common",
         "DirectXTex",
         "ImGui",
         "ImGuizmo",

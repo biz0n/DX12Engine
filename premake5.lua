@@ -30,7 +30,7 @@ include "src/premake/SceneConverter"
 
 group ""
     include "src/premake/Engine"
-    include "src/premake/Scene"
+    include "src/premake/Common"
 
 
 project "_Premake"

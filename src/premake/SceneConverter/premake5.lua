@@ -14,7 +14,7 @@ project "SceneConverter"
     includedirs 
     {
         '%{SCENE_CONVERTER_PATH}',
-        "%{SCENE_PATH}",
+        "%{COMMON_PATH}",
         "%{IncludeDir.AssImp}",
         "%{IncludeDir.AssImpEx}",
         "%{IncludeDir.DirectXMesh}",
@@ -29,7 +29,7 @@ project "SceneConverter"
 
     links
     {
-        "Scene",
+        "Common",
         "DirectXMesh",
         "DirectXTex",
         "AssImp",

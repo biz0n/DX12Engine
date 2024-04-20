@@ -196,7 +196,7 @@ float UnfilteredCheckers(in float2 p)
 PixelShaderOutput mainPS(VertexShaderOutput input)
 {
     float ppp = input.lod == Lod ? 1 : -1;
-    clip(ppp);
+    //clip(ppp);
     
     float ambientIntensity = 0.1;
     float3 lightColor = float3(1, 1, 1);
@@ -205,7 +205,7 @@ PixelShaderOutput mainPS(VertexShaderOutput input)
     float3 diffuseColor;
     float shininess;
     float filteredCheckers = UnfilteredCheckers(input.TextureCoord);
-    float3 cc = IndexToColor(input.group, 0.98f);
+    float3 cc = IndexToColor(input.lod, 0.98f);
     
         uint meshletIndex = input.indexId;
         diffuseColor = cc;
